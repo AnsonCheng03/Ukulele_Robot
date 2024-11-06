@@ -50,8 +50,10 @@ OnUnitActiveSec=1min
 Unit=bluetooth-discoverable.service
 
 [Install]
-WantedBy=timers.target 4. Create the discoverable service
+WantedBy=timers.target
 ```
+
+4. Create the discoverable service
 
 Create the service that will be triggered by the timer to make Bluetooth discoverable every minute:
 
