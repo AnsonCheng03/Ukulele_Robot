@@ -74,7 +74,7 @@ Add the following content:
 Description=Keep Bluetooth Discoverable
 
 [Service]
-ExecStart=/usr/bin/bluetoothctl discoverable on
+ExecStart=/usr/bin/sudo /usr/bin/btmgmt discov on
 ```
 
 5. Reload systemd and enable the services
