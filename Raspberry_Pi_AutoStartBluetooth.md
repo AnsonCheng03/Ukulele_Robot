@@ -10,6 +10,12 @@ Bluetooth service running on your system.
 
 ## Steps
 
+0. Run the following command
+
+```
+sudo /usr/bin/btmgmt io-cap 3
+```
+
 1. Create the systemd service file
    Create a systemd service file to power on Bluetooth, make it discoverable, and pairable on startup:
 
@@ -27,6 +33,7 @@ Type=simple
 ExecStart=/usr/bin/bluetoothctl power on
 ExecStartPost=/usr/bin/bluetoothctl discoverable on
 ExecStartPost=/usr/bin/bluetoothctl pairable on
+ExecStartPost=/usr/bin/sudo /usr/bin/btmgmt io-cap 3
 RemainAfterExit=true
 
 [Install]

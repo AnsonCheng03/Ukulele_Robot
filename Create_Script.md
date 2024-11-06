@@ -48,6 +48,7 @@ Add or edit the following settings:
 AutoEnable=true
 DiscoverableTimeout = 0
 AlwaysPairable = true
+JustWorksRepairing = always
 
 
 [Policy]
