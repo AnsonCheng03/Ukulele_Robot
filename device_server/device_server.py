@@ -16,17 +16,26 @@ i2c_bus = smbus.SMBus(1)
 # Scan for I2C devices and configure found devices
 def scan_i2c():
     print("Scanning for I2C devices...")
-    detected_devices = i2c_bus.scan()
+    detected_devices = []
+    
+    for address in range(3, 128):  # Typical I2C address range
+        try:
+            # Use a dummy read to check if a device responds
+            i2c_bus.read_byte(address)
+            detected_devices.append(address)
+            name = slaves.get(address, {}).get("Name", "Unknown")
+            print(f"Device {name} found at address: {address}")
+        except OSError:
+            # No device at this address
+            pass
     
     if not detected_devices:
         print("No I2C devices found.")
     else:
-        print(f"Found {len(detected_devices)} I2C devices:")
-        for device in detected_devices:
-            name = slaves.get(device, {}).get("Name", "Unknown")
-            print(f"Device {name} found at address: {device}")
+        print(f"Found {len(detected_devices)} I2C devices.")
 
     return detected_devices
+
 
 def send_motor_config(slave_address, motor):
     config_data = f"{motor['Speed_Pin']},{motor['Direction_Pin']},{motor['Start_Pin']},{motor['Sensor_Pin'] if motor['Sensor_Pin'] else 0}"
