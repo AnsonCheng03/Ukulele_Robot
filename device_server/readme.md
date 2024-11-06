@@ -64,4 +64,6 @@ Bluetooth: Use bluetoothctl to manage devices if needed.
 
 ## Auto update script
 
+```
 curl https://raw.githubusercontent.com/AnsonCheng03/CSCI_FYP/refs/heads/read_me/device_server/device_server.py -o /home/pi/pi_device_server/device_server.py && chmod +x /home/pi/pi_device_server/device_server.py
+```

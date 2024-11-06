@@ -38,21 +38,32 @@ def scan_i2c():
 
 
 def send_motor_config(slave_address, motor):
-    config_data = f"{motor['Speed_Pin']},{motor['Direction_Pin']},{motor['Start_Pin']},{motor['Sensor_Pin'] if motor['Sensor_Pin'] else 0}"
     try:
-        i2c_bus.writeto(slave_address, b'CONFIG,' + config_data.encode())
-        print(f"Config sent to {motor['Name']} at address {slave_address}")
+        # Create a configuration string that includes all pin values separated by a comma
+        config_data = f"{motor['Speed_Pin']},{motor['Direction_Pin']},{motor['Start_Pin']},{motor['Sensor_Pin'] if motor['Sensor_Pin'] is not None else 0}"
+        
+        print(f"Configuring slave {motor['Name']} (address {slave_address}) with pins: {config_data}")
+
+        # Send motor configuration to the slave
+        # We use write_i2c_block_data to send the configuration as a byte array
+        i2c_bus.write_i2c_block_data(slave_address, 0x00, [ord(c) for c in config_data])  # Using 0x00 as the register address
+        print(f"Config sent to slave {motor['Name']} (address {slave_address})")
     except OSError as e:
-        print(f"Failed to communicate with {motor['Name']} (address {slave_address}): {e}")
+        print(f"Failed to communicate with slave {motor['Name']} (address {slave_address}): {e}")
 
 # Send motor control commands
 def send_motor_command(slave_address, speed, direction, duration):
-    control_data = f"{speed},{duration},{direction}"
     try:
-        i2c_bus.writeto(slave_address, b'CONTROL,' + control_data.encode())
-        print(f"Command sent to {slaves[slave_address]['Name']} at address {slave_address}")
+        # Create a control string that includes speed, duration, and direction separated by a comma
+        control_data = f"{speed},{duration},{direction}"
+        
+        # Send motor control command to the slave
+        # We use write_i2c_block_data to send the control data as a byte array
+        i2c_bus.write_i2c_block_data(slave_address, 0x01, [ord(c) for c in control_data])  # Using 0x01 as the register address
+        print(f"Command sent to slave {slaves[slave_address]['Name']} (address {slave_address})")
     except OSError as e:
-        print(f"Failed to communicate with {slaves[slave_address]['Name']} (address {slave_address}): {e}")
+        print(f"Failed to communicate with slave {slaves[slave_address]['Name']} (address {slave_address}): {e}")
+
 
 # Bluetooth server for pairing and command input
 def bluetooth_server():
