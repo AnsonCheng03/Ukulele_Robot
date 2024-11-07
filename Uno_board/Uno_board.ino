@@ -42,7 +42,6 @@ void setup()
 
     // Initialize communication
     Wire.begin(boardAddress); // Assuming board address 8, change it to your board address
-    Wire.onRequest(requestEvents);
     Wire.onReceive(receiveEvent);
 
     // Start the motor controller in idle state
@@ -71,11 +70,6 @@ void preloadMotor()
 }
 
 // Function to calibrate the motor or slider
-
-void requestEvents()
-{
-  Serial.print(F("sending value : "));
-}
 
 void receiveEvent(int bytes) {
     // Buffer to store incoming data
@@ -169,9 +163,9 @@ void sendConfig() {
     Serial.println(configData[5]);
 
     // Begin transmission to the master device (assuming the master address is known)
-    // Wire.beginTransmission(0x01); // Replace with actual I2C address if needed
+    Wire.beginTransmission(0x01); // Replace with actual I2C address if needed
     Wire.write(configData, sizeof(configData)); // Send configuration data as bytes
-    // Wire.endTransmission();
+    Wire.endTransmission();
 
     Serial.println("Configuration data sent");
 
