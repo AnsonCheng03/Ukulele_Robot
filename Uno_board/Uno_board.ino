@@ -169,9 +169,9 @@ void sendConfig() {
     Serial.println(configData[5]);
 
     // Begin transmission to the master device (assuming the master address is known)
-    Wire.beginTransmission(0x01); // Replace with actual I2C address if needed
-    // Wire.write(configData, sizeof(configData)); // Send configuration data as bytes
-    Wire.endTransmission();
+    // Wire.beginTransmission(0x01); // Replace with actual I2C address if needed
+    Wire.write(configData, sizeof(configData)); // Send configuration data as bytes
+    // Wire.endTransmission();
 
     Serial.println("Configuration data sent");
 
