@@ -76,8 +76,7 @@ def send_motor_command(slave_address, target, speed, direction, duration):
         # Send the control data over I2C
         # make it to a list of bytes
 
-        control_data = [2,
-                        target,
+        control_data = [target,
                         (speed >> 8) & 0xFF,
                         speed & 0xFF, 
                         (duration >> 24) & 0xFF,
