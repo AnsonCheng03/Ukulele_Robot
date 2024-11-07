@@ -72,26 +72,21 @@ def receive_motor_config(slave_address, motor):
 # Send motor control commands
 def send_motor_command(slave_address, target, speed, direction, duration):
     try:
-        # Pack the data according to the expected structure by the slave
-        control_data = bytearray(9)  # Total 9 bytes
-        control_data[0] = 0x02  # Assuming CMD_CONTROL has a value of 0x02 (command byte)
-        control_data[1] = target  # 1 for slider, 2 for motor
-        
-        # Pack speed (2 bytes)
-        control_data[2] = (speed >> 8) & 0xFF  # High byte of speed
-        control_data[3] = speed & 0xFF         # Low byte of speed
-        
-        # Pack duration (4 bytes)
-        control_data[4] = (duration >> 24) & 0xFF  # High byte
-        control_data[5] = (duration >> 16) & 0xFF
-        control_data[6] = (duration >> 8) & 0xFF
-        control_data[7] = duration & 0xFF          # Low byte
-        
-        # Pack direction (1 byte)
-        control_data[8] = direction
         
         # Send the control data over I2C
-        # i2c.writeto(slave_address, control_data)
+        # make it to a list of bytes
+
+        control_data = [2,
+                        target,
+                        (speed >> 8) & 0xFF,
+                        speed & 0xFF, 
+                        (duration >> 24) & 0xFF,
+                        (duration >> 16) & 0xFF, 
+                        (duration >> 8) & 0xFF, 
+                        duration & 0xFF, 
+                        direction
+                        ]
+        
         i2c_bus.write_i2c_block_data(slave_address, 0x02, control_data)
         print(f"Command sent to slave {slaves[slave_address]['Name']} (address {hex(slave_address)})")
     except OSError as e:
@@ -126,7 +121,10 @@ def bluetooth_server():
 
 def manual_input_handler():
     while True:
-        command = input("Enter command (e.g., 'control [slave_address] [target] [speed] [direction] [duration]'):\n").strip()
+        print("Enter 'control' or 'config' followed by the parameters.")
+        print("Control format: 'control [slave_address] [target] [speed] [direction] [duration]'")
+        print("Config format: 'config [slave_address]'")
+        command = input("Enter command \n").strip()
         
         if command.startswith("control"):
             try:
