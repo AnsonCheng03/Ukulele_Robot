@@ -30,10 +30,10 @@ After=bluetooth.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/sudo /usr/bin/btmgmt discov on
+ExecStart=/usr/bin/sudo /usr/bin/btmgmt power on
 ExecStartPost=/usr/bin/sudo /usr/bin/btmgmt connectable on
 ExecStartPost=/usr/bin/sudo/usr/bin/btmgmt pairable on
-ExecStartPost=/usr/bin/sudo /usr/bin/btmgmt power on
+ExecStartPost=/usr/bin/sudo /usr/bin/btmgmt discov on
 ExecStartPost=/usr/bin/sudo /usr/bin/btmgmt io-cap 3
 ExecStartPost=/usr/bin/sudo /usr/bin/hciconfig hci0 sspmode disable
 RemainAfterExit=true

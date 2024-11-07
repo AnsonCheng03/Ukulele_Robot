@@ -122,5 +122,5 @@ sudo systemctl status pi_device_server.service
 ```
 
 Notes
-Logs: Logs for the service can be viewed with journalctl -u pi_device_server.service.
+Logs: Logs for the service can be viewed with `journalctl -u pi_device_server.service`.
 Modifications: If device_server.py is modified, restart the service with sudo systemctl restart pi_device_server.service.
