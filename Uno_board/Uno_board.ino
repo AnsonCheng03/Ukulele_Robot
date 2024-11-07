@@ -12,6 +12,10 @@
 #define motor_direction_pin 5
 #define motor_speed_pin 6
 
+#define CMD_CONFIG 1
+#define CMD_CONTROL 2
+#define CMD_CALIBRATE 3
+
 Servo motor; // Servo motor object
  
 float speed_hz, duration;
@@ -66,92 +70,102 @@ void preloadMotor()
 
 // Function to calibrate the motor or slider
 
-void receiveEvent(int bytes)
-{
-    // Read the incoming command into a buffer
-    char command[32]; // Adjust the size as needed
+void receiveEvent(int bytes) {
+    // Buffer to store incoming data
+    uint8_t buffer[32]; // Adjust size as needed
     int index = 0;
 
-    while (Wire.available() && index < sizeof(command) - 1)
-    {
-        command[index++] = Wire.read();
+    // Read incoming data into buffer
+    while (Wire.available() && index < sizeof(buffer)) {
+        buffer[index++] = Wire.read();
     }
-    command[index] = '\0'; // Null-terminate the string
 
-    // Print the received command for debugging
-    Serial.print("Received command: ");
-    Serial.println(command);
-
-    if (strncmp(command, "CONFIG", 6) == 0)
-    {
-        // Send the configuration for all ports
-        sendConfig();
+    // Print received data for debugging
+    Serial.print("Received data: ");
+    for (int i = 0; i < index; i++) {
+        Serial.print(buffer[i], HEX);
+        Serial.print(" ");
     }
-    else if (strncmp(command, "CONTROL,", 8) == 0)
-    {
-        // Parse the control command to select either slider or motor
-        if (bytes >= 8)
-        {                                           // CONTROL + 1 type + 1 speed + 1 direction + 4 duration
-            char *token = strtok(command + 8, ","); // Start reading after "CONTROL,"
-            if (token)
-            {
-                // Parse control target (slider or motor)
-                char *target = token;
-                token = strtok(NULL, ","); // speed
-                if (token)
-                    speed_hz = atoi(token);
+    Serial.println();
 
-                token = strtok(NULL, ","); // duration
-                if (token)
-                    duration = atof(token);
+    // Process command
+    switch (buffer[0]) {
+        case CMD_CONFIG:
+            sendConfig();
+            break;
 
-                token = strtok(NULL, ","); // direction
-                if (token)
-                    direction = atoi(token);
+        case CMD_CONTROL:
+            if (index >= 8) { // Ensure enough bytes for CONTROL command
+                uint8_t target = buffer[1]; // 1 for slider, 2 for motor
+                uint16_t speed_hz = (buffer[2] << 8) | buffer[3]; // 2 bytes for speed
+                uint32_t duration = ((uint32_t)buffer[4] << 24) | ((uint32_t)buffer[5] << 16) |
+                                    ((uint32_t)buffer[6] << 8) | buffer[7]; // 4 bytes for duration
+                uint8_t direction = buffer[8]; // 1 byte for direction
 
                 // Print control details
-                Serial.print("Controlling ");
-                Serial.print(target);
-                Serial.print(" - ");
-                Serial.print("Direction: ");
+                Serial.print("Controlling target: ");
+                Serial.print(target == 1 ? "slider" : "motor");
+                Serial.print(", Direction: ");
                 Serial.print(direction);
                 Serial.print(", Speed: ");
                 Serial.print(speed_hz);
                 Serial.print(", Duration: ");
                 Serial.println(duration);
 
-                // Control either slider or motor based on the target
-                if (strcmp(target, "slider") == 0)
-                {
+                // Control the target
+                if (target == 1) {
                     controlSlider();
-                }
-                else if (strcmp(target, "motor") == 0)
-                {
+                } else if (target == 2) {
                     controlMotor();
-                }
-                else
-                {
+                } else {
                     Serial.println("Unknown target specified.");
                 }
+            } else {
+                Serial.println("Not enough data for CONTROL.");
             }
-            else
-            {
-                Serial.println("Not enough parameters for CONTROL.");
-            }
-        }
-        else
-        {
-            Serial.println("Not enough bytes for CONTROL.");
-        }
+            break;
+
+        case CMD_CALIBRATE:
+            calibrateSensor();
+            break;
+
+        default:
+            Serial.println("Unknown command.");
+            break;
     }
-    else if (strncmp(command, "CALIBRATE", 9) == 0)
-    {
-        calibrateSensor();
-    }
-    else
-    {
-        Serial.println("Sensor not activated for calibration.");
-    }
+}
+
+// Function to send configuration of ports
+void sendConfig() {
+    uint8_t configData[6]; // Array to hold configuration data for transmission
+
+    // Fill in the configuration data
+    configData[0] = slider_start_pin;
+    configData[1] = slider_speed_pin;
+    configData[2] = slider_sensor_pin;
+    configData[3] = motor_start_pin;
+    configData[4] = motor_speed_pin;
+    configData[5] = motor_direction_pin;
+
+    // Begin transmission to the master device (assuming the master address is known)
+    Wire.beginTransmission(0x01); // Replace with actual I2C address if needed
+    Wire.write(configData, sizeof(configData)); // Send configuration data as bytes
+    Wire.endTransmission();
+
+    // Debugging output
+    Serial.println("Configuration data sent:");
+    Serial.print("Slider Start Pin: ");
+    Serial.println(configData[0]);
+    Serial.print("Slider Speed Pin: ");
+    Serial.println(configData[1]);
+    Serial.print("Slider Sensor Pin: ");
+    Serial.println(configData[2]);
+    Serial.print("Motor Start Pin: ");
+    Serial.println(configData[3]);
+    Serial.print("Motor Speed Pin: ");
+    Serial.println(configData[4]);
+    Serial.print("Motor Direction Pin: ");
+    Serial.println(configData[5]);
 }
 
 void calibrateSensor()
@@ -176,30 +190,6 @@ void calibrateSensor()
     }
 
     // If you need motor calibration as well, you can add similar logic here
-}
-
-// Function to send configuration of ports
-void sendConfig()
-{
-    Serial.println("Sending configuration...");
-
-    // Send slider configuration
-    Serial.print("Slider Config - ");
-    Serial.print("Start Pin: ");
-    Serial.print(slider_start_pin);
-    Serial.print(", Speed Pin: ");
-    Serial.print(slider_speed_pin);
-    Serial.print(", Sensor Pin: ");
-    Serial.println(slider_sensor_pin);
-
-    // Send motor configuration
-    Serial.print("Motor Config - ");
-    Serial.print("Start Pin: ");
-    Serial.print(motor_start_pin);
-    Serial.print(", Speed Pin: ");
-    Serial.print(motor_speed_pin);
-    Serial.print(", Direction Pin: ");
-    Serial.println(motor_direction_pin);
 }
 
 // Function to control the slider motor

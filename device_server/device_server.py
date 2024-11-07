@@ -38,18 +38,33 @@ def scan_i2c():
 
     return detected_devices
 
-
 def receive_motor_config(slave_address, motor):
     try:
-        i2c_bus.write_i2c_block_data(slave_address, 0, [ord(c) for c in "CONFIG"])
+        # Send CMD_CONFIG to request configuration
+        i2c_bus.write_i2c_block_data(slave_address, 0, [1])  # 1 corresponds to CMD_CONFIG
 
+        # Read the 6-byte configuration response from the slave
+        response = i2c_bus.read_i2c_block_data(slave_address, 0, 6)
         
-        # Read the response from the slave
-        # We use read_i2c_block_data to read a byte array from the slave
-        response = i2c_bus.read_i2c_block_data(slave_address, 0, 32)
-        motor["Config"] = response
-        print(f"Received configuration from slave {motor['Name']} (address {slave_address}): {response}")
-            
+        # Assign the configuration data to the motor dictionary with descriptive keys
+        motor["Config"] = {
+            "slider_start_pin": response[0],
+            "slider_speed_pin": response[1],
+            "slider_sensor_pin": response[2],
+            "motor_start_pin": response[3],
+            "motor_speed_pin": response[4],
+            "motor_direction_pin": response[5]
+        }
+
+        # Print received configuration for debugging
+        print(f"Received configuration from slave {motor['Name']} (address {slave_address}):")
+        print(f"  Slider Start Pin: {response[0]}")
+        print(f"  Slider Speed Pin: {response[1]}")
+        print(f"  Slider Sensor Pin: {response[2]}")
+        print(f"  Motor Start Pin: {response[3]}")
+        print(f"  Motor Speed Pin: {response[4]}")
+        print(f"  Motor Direction Pin: {response[5]}")
+
     except OSError as e:
         print(f"Failed to communicate with slave {motor['Name']} (address {slave_address}): {e}")
 
