@@ -42,7 +42,7 @@ def scan_i2c():
 def receive_motor_config(slave_address, motor):
     try:
         # Send CMD_CONFIG to request configuration
-        i2c_bus.write_i2c_block_data(slave_address, 0, [1])  # 1 corresponds to CMD_CONFIG
+        i2c_bus.write_i2c_block_data(slave_address, 1, [])  # 1 corresponds to CMD_CONFIG
 
         # Read the 6-byte configuration response from the slave
         response = i2c_bus.read_i2c_block_data(slave_address, 0, 6)

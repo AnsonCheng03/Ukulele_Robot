@@ -88,9 +88,6 @@ void receiveEvent(int bytes) {
     }
     Serial.println();
 
-    Serial.print("Command: buffer[0] = ");
-    Serial.println(buffer[0]);
-
     // Process command
     switch (buffer[0]) {
         case CMD_CONFIG:
@@ -150,13 +147,7 @@ void sendConfig() {
     configData[4] = motor_speed_pin;
     configData[5] = motor_direction_pin;
 
-    // Begin transmission to the master device (assuming the master address is known)
-    Wire.beginTransmission(0x01); // Replace with actual I2C address if needed
-    Wire.write(configData, sizeof(configData)); // Send configuration data as bytes
-    Wire.endTransmission();
-
     // Debugging output
-    Serial.println("Configuration data sent:");
     Serial.print("Slider Start Pin: ");
     Serial.println(configData[0]);
     Serial.print("Slider Speed Pin: ");
@@ -169,6 +160,14 @@ void sendConfig() {
     Serial.println(configData[4]);
     Serial.print("Motor Direction Pin: ");
     Serial.println(configData[5]);
+
+    // Begin transmission to the master device (assuming the master address is known)
+    // Wire.beginTransmission(0x01); // Replace with actual I2C address if needed
+    // Wire.write(configData, sizeof(configData)); // Send configuration data as bytes
+    // Wire.endTransmission();
+
+    Serial.println("Configuration data sent");
+
 }
 
 void calibrateSensor()
