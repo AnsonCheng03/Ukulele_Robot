@@ -46,6 +46,8 @@ def receive_motor_config(slave_address, motor):
 
         # Read the 6-byte configuration response from the slave
         response = i2c_bus.read_i2c_block_data(slave_address, 0, 6)
+        
+        print(response)
 
         # Assign the configuration data to the motor dictionary with descriptive keys
         motor["Config"] = {

@@ -163,9 +163,7 @@ void sendConfig() {
     Serial.println(configData[5]);
 
     // Begin transmission to the master device (assuming the master address is known)
-    Wire.beginTransmission(boardAddress);
     Wire.write(configData, sizeof(configData)); // Send configuration data as bytes
-    Wire.endTransmission();
 
     Serial.println("Configuration data sent");
 
