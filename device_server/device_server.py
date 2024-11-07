@@ -68,6 +68,13 @@ def receive_motor_config(slave_address, motor):
                 
     except OSError as e:
         print(f"Failed to communicate with slave {motor['Name']} (address {slave_address}): {e}")
+        
+def calibrate_motor(slave_address, sensor_pin):
+    try:
+        i2c_bus.write_i2c_block_data(slave_address, 3, [])
+        print(f"Calibration command sent to slave at address {hex(slave_address)}")
+    except OSError as e:
+        print(f"Failed to calibrate slave at address {hex(slave_address)}: {e}")
 
 # Send motor control commands
 def send_motor_command(slave_address, target, speed, direction, duration):
@@ -149,13 +156,16 @@ def manual_input_handler():
             except Exception as e:
                 print(f"An error occurred: {e}")
         
-        elif command.startswith("config"):
+        elif command.startswith("config") or command.startswith("calibrate"):
             try:
                 _, slave_address = command.split()
                 slave_address = int(slave_address, 16)  # Convert to integer if needed
                 
                 if slave_address in slaves:
-                    receive_motor_config(slave_address, slaves[slave_address])
+                    if command.startswith("calibrate"):
+                        calibrate_motor(slave_address, slaves[slave_address]["Sensor_Pin"])
+                    else:
+                        receive_motor_config(slave_address, slaves[slave_address])
                 else:
                     print(f"Unknown slave address: {hex(slave_address)}")
             except ValueError:
