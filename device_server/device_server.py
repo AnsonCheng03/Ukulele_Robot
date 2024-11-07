@@ -41,10 +41,8 @@ def scan_i2c():
 
 def receive_motor_config(slave_address, motor):
     try:
-        # Send "CONFIG" command to the slave then wait for a response
-        # We use write_byte to send a single byte command
-        i2c_bus.write_byte(slave_address, 0x02)  # Using 0x02 as the CONFIG command
-        time.sleep(0.1)  # Wait for the slave to process the command
+        i2c_bus.write_i2c_block_data(slave_address, 0, [ord(c) for c in "CONFIG"])
+
         
         # Read the response from the slave
         # We use read_i2c_block_data to read a byte array from the slave
