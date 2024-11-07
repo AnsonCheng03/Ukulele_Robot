@@ -104,20 +104,13 @@ def bluetooth_server():
     server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
     server_sock.bind(("", bluetooth.PORT_ANY))
     server_sock.listen(1)
-    bluetooth.advertise_service(
-        server_sock,
-        "MotorControlServer",
-        service_classes=[bluetooth.SERIAL_PORT_CLASS],
-        profiles=[bluetooth.SERIAL_PORT_PROFILE],
-    )
-    print("Bluetooth pairing mode enabled. Always discoverable. Waiting for connections...")
+    print("Bluetooth pairing mode enabled. Waiting for connections...")
 
     while True:
         client_sock, client_info = server_sock.accept()
         print(f"Connected to {client_info}")
         
         try:
-            # Keep the connection open for continuous communication
             while True:
                 data = client_sock.recv(1024).decode("utf-8").strip()
                 if data:
@@ -127,6 +120,7 @@ def bluetooth_server():
             print(f"Bluetooth connection closed: {e}")
         finally:
             client_sock.close()
+
             
 def handle_command_input(command):
     if command.startswith("control"):
