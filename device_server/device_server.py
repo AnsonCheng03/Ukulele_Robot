@@ -104,26 +104,73 @@ def bluetooth_server():
     server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
     server_sock.bind(("", bluetooth.PORT_ANY))
     server_sock.listen(1)
-    print("Bluetooth pairing mode enabled. Waiting for connections...")
+    bluetooth.advertise_service(
+        server_sock,
+        "MotorControlServer",
+        service_classes=[bluetooth.SERIAL_PORT_CLASS],
+        profiles=[bluetooth.SERIAL_PORT_PROFILE],
+    )
+    print("Bluetooth pairing mode enabled. Always discoverable. Waiting for connections...")
 
     while True:
         client_sock, client_info = server_sock.accept()
         print(f"Connected to {client_info}")
-
+        
         try:
+            # Keep the connection open for continuous communication
             while True:
                 data = client_sock.recv(1024).decode("utf-8").strip()
-                parsed_input = parse_input(data)
-                if parsed_input:
-                    slave_address, speed, direction, duration = parsed_input
-                    if slave_address in slaves:
-                        send_motor_command(slave_address, speed, direction, duration)
-                    else:
-                        print(f"Unknown slave address: {slave_address}")
-        except bluetooth.BluetoothError:
-            print("Bluetooth connection closed.")
+                if data:
+                    print(f"Received data: {data}")
+                    handle_command_input(data)
+        except bluetooth.BluetoothError as e:
+            print(f"Bluetooth connection closed: {e}")
         finally:
             client_sock.close()
+            
+def handle_command_input(command):
+    if command.startswith("control"):
+        try:
+            # Split and parse the command input
+            _, slave_address, target, speed, direction, duration = command.split()
+            
+            # Convert input parameters to the appropriate data types
+            slave_address = int(slave_address, 16)  # Convert slave address to integer (hex)
+            target = int(target)  # 1 for slider, 2 for motor
+            speed = int(speed)  # Speed in Hz
+            direction = int(direction)  # Direction value (0 or 1)
+            duration = int(duration)  # Duration in milliseconds
+            
+            # Check if the provided slave address exists
+            if slave_address in slaves:
+                send_motor_command(slave_address, target, speed, direction, duration)
+            else:
+                print(f"Unknown slave address: {hex(slave_address)}")
+        
+        except ValueError:
+            print("Invalid input format. Please ensure you use the format: 'control [slave_address] [target] [speed] [direction] [duration]'")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+    
+    elif command.startswith("config") or command.startswith("calibrate"):
+        try:
+            _, slave_address = command.split()
+            slave_address = int(slave_address, 16)  # Convert to integer if needed
+            
+            if slave_address in slaves:
+                if command.startswith("calibrate"):
+                    calibrate_motor(slave_address, slaves[slave_address]["Sensor_Pin"])
+                else:
+                    receive_motor_config(slave_address, slaves[slave_address])
+            else:
+                print(f"Unknown slave address: {hex(slave_address)}")
+        except ValueError:
+            print("Invalid input format. Use: 'config [slave_address]'")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+    
+    else:
+        print("Unknown command. Please use 'control' or 'config'.")
 
 def manual_input_handler():
     while True:
@@ -131,50 +178,7 @@ def manual_input_handler():
         print("Control format: 'control [slave_address] [target] [speed] [direction] [duration]'")
         print("Config format: 'config [slave_address]'")
         command = input("Enter command \n").strip()
-        
-        if command.startswith("control"):
-            try:
-                # Split and parse the command input
-                _, slave_address, target, speed, direction, duration = command.split()
-                
-                # Convert input parameters to the appropriate data types
-                slave_address = int(slave_address, 16)  # Convert slave address to integer (hex)
-                target = int(target)  # 1 for slider, 2 for motor
-                speed = int(speed)  # Speed in Hz
-                direction = int(direction)  # Direction value (0 or 1)
-                duration = int(duration)  # Duration in milliseconds
-                
-                # Check if the provided slave address exists
-                if slave_address in slaves:
-                    # Call the function to send the motor command
-                    send_motor_command(slave_address, target, speed, direction, duration)
-                else:
-                    print(f"Unknown slave address: {hex(slave_address)}")
-            
-            except ValueError:
-                print("Invalid input format. Please ensure you use the format: 'control [slave_address] [target] [speed] [direction] [duration]'")
-            except Exception as e:
-                print(f"An error occurred: {e}")
-        
-        elif command.startswith("config") or command.startswith("calibrate"):
-            try:
-                _, slave_address = command.split()
-                slave_address = int(slave_address, 16)  # Convert to integer if needed
-                
-                if slave_address in slaves:
-                    if command.startswith("calibrate"):
-                        calibrate_motor(slave_address, slaves[slave_address]["Sensor_Pin"])
-                    else:
-                        receive_motor_config(slave_address, slaves[slave_address])
-                else:
-                    print(f"Unknown slave address: {hex(slave_address)}")
-            except ValueError:
-                print("Invalid input format. Use: 'config [slave_address]'")
-            except Exception as e:
-                print(f"An error occurred: {e}")
-        
-        else:
-            print("Unknown command. Please use 'control' or 'config'.")
+        handle_command_input(command)
 
 def parse_input(input_str):
     try:
