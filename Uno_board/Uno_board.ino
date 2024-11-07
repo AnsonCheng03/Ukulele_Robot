@@ -88,6 +88,9 @@ void receiveEvent(int bytes) {
     }
     Serial.println();
 
+    Serial.print("Command: buffer[0] = ");
+    Serial.println(buffer[0]);
+
     // Process command
     switch (buffer[0]) {
         case CMD_CONFIG:

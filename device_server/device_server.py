@@ -1,6 +1,7 @@
 import smbus
 import serial
 import bluetooth
+import threading
 import time
 
 # Dictionary of I2C slaves with motor configurations
@@ -108,6 +109,17 @@ def bluetooth_server():
         finally:
             client_sock.close()
 
+def manual_input_handler():
+    while True:
+        command = input("Enter command (e.g., 'config [slave_address]'):\n").strip()
+        if command.startswith("config"):
+            _, slave_address = command.split()
+            slave_address = int(slave_address, 16)  # Convert to integer if needed
+            if slave_address in slaves:
+                receive_motor_config(slave_address, slaves[slave_address])
+            else:
+                print(f"Unknown slave address: {slave_address}")
+
 def parse_input(input_str):
     try:
         parts = input_str.replace(' ', '').split(',')
@@ -132,4 +144,8 @@ for address, motor in slaves.items():
         receive_motor_config(address, motor)
 
 # Start Bluetooth server for command input
-bluetooth_server()
+bluetooth_thread = threading.Thread(target=bluetooth_server, daemon=True)
+bluetooth_thread.start()
+
+# Handle manual input in the main thread
+manual_input_handler()
