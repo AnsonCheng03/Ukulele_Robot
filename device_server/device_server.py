@@ -5,9 +5,11 @@ import time
 
 # Dictionary of I2C slaves with motor configurations
 slaves = {
-    8: {"Name": "Left First Motor", "Speed_Pin": 9, "Direction_Pin": 10, "Start_Pin": 11, "Sensor_Pin": None},
-    9: {"Name": "Right First Motor", "Speed_Pin": 8, "Direction_Pin": 9, "Start_Pin": 10, "Sensor_Pin": 11},
-    # Additional devices can be added here
+    8: {"Name": "Left First Motor"},
+    9: {"Name": "Right First Motor"},
+    10: {"Name": "Left Second Motor"},
+    11: {"Name": "Right Second Motor"},
+    14: {"Name": "Control Motor"},
 }
 
 # Initialize I2C bus (1 for Raspberry Pi)
@@ -37,17 +39,19 @@ def scan_i2c():
     return detected_devices
 
 
-def send_motor_config(slave_address, motor):
+def receive_motor_config(slave_address, motor):
     try:
-        # Create a configuration string that includes all pin values separated by a comma
-        config_data = f"{motor['Speed_Pin']},{motor['Direction_Pin']},{motor['Start_Pin']},{motor['Sensor_Pin'] if motor['Sensor_Pin'] is not None else 0}"
+        # Send "CONFIG" command to the slave then wait for a response
+        # We use write_byte to send a single byte command
+        i2c_bus.write_byte(slave_address, 0x02)  # Using 0x02 as the CONFIG command
+        time.sleep(0.1)  # Wait for the slave to process the command
         
-        print(f"Configuring slave {motor['Name']} (address {slave_address}) with pins: {config_data}")
-
-        # Send motor configuration to the slave
-        # We use write_i2c_block_data to send the configuration as a byte array
-        i2c_bus.write_i2c_block_data(slave_address, 0x00, [ord(c) for c in config_data])  # Using 0x00 as the register address
-        print(f"Config sent to slave {motor['Name']} (address {slave_address})")
+        # Read the response from the slave
+        # We use read_i2c_block_data to read a byte array from the slave
+        response = i2c_bus.read_i2c_block_data(slave_address, 0, 32)
+        motor["Config"] = response
+        print(f"Received configuration from slave {motor['Name']} (address {slave_address}): {response}")
+            
     except OSError as e:
         print(f"Failed to communicate with slave {motor['Name']} (address {slave_address}): {e}")
 
@@ -112,7 +116,7 @@ def parse_input(input_str):
 found_devices = scan_i2c()
 for address, motor in slaves.items():
     if address in found_devices:
-        send_motor_config(address, motor)
+        receive_motor_config(address, motor)
 
 # Start Bluetooth server for command input
 bluetooth_server()

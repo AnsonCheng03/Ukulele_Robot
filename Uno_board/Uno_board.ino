@@ -13,7 +13,7 @@
 #define motor_speed_pin 6
 
 Servo motor; // Servo motor object
-
+ 
 float speed_hz, duration;
 byte direction;
 
