@@ -91,7 +91,8 @@ def send_motor_command(slave_address, target, speed, direction, duration):
         control_data[8] = direction
         
         # Send the control data over I2C
-        i2c.writeto(slave_address, control_data)
+        # i2c.writeto(slave_address, control_data)
+        i2c_bus.write_i2c_block_data(slave_address, 0x02, control_data)
         print(f"Command sent to slave {slaves[slave_address]['Name']} (address {hex(slave_address)})")
     except OSError as e:
         print(f"Failed to communicate with slave {slaves[slave_address]['Name']} (address {hex(slave_address)}): {e}")
