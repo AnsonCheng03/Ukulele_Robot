@@ -1,4 +1,4 @@
-import machine
+import smbus
 import serial
 import bluetooth
 import threading
@@ -13,44 +13,52 @@ slaves = {
     14: {"Name": "Control Motor"},
 }
 
-# Initialize I2C bus (assuming bus ID 1 and default pins)
-i2c = machine.I2C(1, freq=10000)  # Adjust the bus ID and frequency as needed
+# Initialize I2C bus (1 for Raspberry Pi)
+i2c_bus = smbus.SMBus(1)
 
 # Scan for I2C devices and configure found devices
 def scan_i2c():
     print("Scanning for I2C devices...")
-    detected_devices = i2c.scan()
-
-    if detected_devices:
-        for address in detected_devices:
-            name = slaves.get(address, {}).get("Name", "Unknown")
-            print(f"Device {name} found at address: {hex(address)}")
-        print(f"Found {len(detected_devices)} I2C devices.")
-    else:
-        print("No I2C devices found.")
+    detected_devices = []
     
+    for address in range(3, 128):  # Typical I2C address range
+        try:
+            # Use a dummy read to check if a device responds
+            i2c_bus.read_byte(address)
+            detected_devices.append(address)
+            name = slaves.get(address, {}).get("Name", "Unknown")
+            print(f"Device {name} found at address: {address}")
+        except OSError:
+            # No device at this address
+            pass
+    
+    if not detected_devices:
+        print("No I2C devices found.")
+    else:
+        print(f"Found {len(detected_devices)} I2C devices.")
+
     return detected_devices
 
 def receive_motor_config(slave_address, motor):
     try:
-        # Send a command to request configuration (CMD_CONFIG is represented by 0x01)
-        i2c.writeto(slave_address, bytes([0x01]))
 
-        # Read 6-byte response from the slave
-        response = i2c.readfrom(slave_address, 6)
+        # Read the 6-byte configuration response from the slave
+        response = i2c_bus.read_i2c_block_data(slave_address, 1, 6)
         
-        # Decode response and assign to motor dictionary
-        motor["Config"] = {
-            "slider_start_pin": response[0],
-            "slider_speed_pin": response[1],
-            "slider_sensor_pin": response[2],
-            "motor_start_pin": response[3],
-            "motor_speed_pin": response[4],
-            "motor_direction_pin": response[5]
-        }
+        print(response)
+
+        # Assign the configuration data to the motor dictionary with descriptive keys
+        # motor["Config"] = {
+        #     "slider_start_pin": response[0],
+        #     "slider_speed_pin": response[1],
+        #     "slider_sensor_pin": response[2],
+        #     "motor_start_pin": response[3],
+        #     "motor_speed_pin": response[4],
+        #     "motor_direction_pin": response[5]
+        # }
 
         # Print received configuration for debugging
-        print(f"Received configuration from slave {motor['Name']} (address {hex(slave_address)}):")
+        print(f"Received configuration from slave {motor['Name']} (address {slave_address}):")
         print(f"  Slider Start Pin: {response[0]}")
         print(f"  Slider Speed Pin: {response[1]}")
         print(f"  Slider Sensor Pin: {response[2]}")
@@ -59,14 +67,31 @@ def receive_motor_config(slave_address, motor):
         print(f"  Motor Direction Pin: {response[5]}")
                 
     except OSError as e:
-        print(f"Failed to communicate with slave {motor['Name']} (address {hex(slave_address)}): {e}")
+        print(f"Failed to communicate with slave {motor['Name']} (address {slave_address}): {e}")
 
 # Send motor control commands
-def send_motor_command(slave_address, speed, direction, duration):
+def send_motor_command(slave_address, target, speed, direction, duration):
     try:
-        # Create control data as bytes to send over I2C
-        control_data = f"{speed},{duration},{direction}"
-        i2c.writeto(slave_address, control_data.encode())
+        # Pack the data according to the expected structure by the slave
+        control_data = bytearray(9)  # Total 9 bytes
+        control_data[0] = 0x02  # Assuming CMD_CONTROL has a value of 0x02 (command byte)
+        control_data[1] = target  # 1 for slider, 2 for motor
+        
+        # Pack speed (2 bytes)
+        control_data[2] = (speed >> 8) & 0xFF  # High byte of speed
+        control_data[3] = speed & 0xFF         # Low byte of speed
+        
+        # Pack duration (4 bytes)
+        control_data[4] = (duration >> 24) & 0xFF  # High byte
+        control_data[5] = (duration >> 16) & 0xFF
+        control_data[6] = (duration >> 8) & 0xFF
+        control_data[7] = duration & 0xFF          # Low byte
+        
+        # Pack direction (1 byte)
+        control_data[8] = direction
+        
+        # Send the control data over I2C
+        i2c.writeto(slave_address, control_data)
         print(f"Command sent to slave {slaves[slave_address]['Name']} (address {hex(slave_address)})")
     except OSError as e:
         print(f"Failed to communicate with slave {slaves[slave_address]['Name']} (address {hex(slave_address)}): {e}")
@@ -100,14 +125,48 @@ def bluetooth_server():
 
 def manual_input_handler():
     while True:
-        command = input("Enter command (e.g., 'config [slave_address]'):\n").strip()
-        if command.startswith("config"):
-            _, slave_address = command.split()
-            slave_address = int(slave_address, 16)  # Convert to integer if needed
-            if slave_address in slaves:
-                receive_motor_config(slave_address, slaves[slave_address])
-            else:
-                print(f"Unknown slave address: {slave_address}")
+        command = input("Enter command (e.g., 'control [slave_address] [target] [speed] [direction] [duration]'):\n").strip()
+        
+        if command.startswith("control"):
+            try:
+                # Split and parse the command input
+                _, slave_address, target, speed, direction, duration = command.split()
+                
+                # Convert input parameters to the appropriate data types
+                slave_address = int(slave_address, 16)  # Convert slave address to integer (hex)
+                target = int(target)  # 1 for slider, 2 for motor
+                speed = int(speed)  # Speed in Hz
+                direction = int(direction)  # Direction value (0 or 1)
+                duration = int(duration)  # Duration in milliseconds
+                
+                # Check if the provided slave address exists
+                if slave_address in slaves:
+                    # Call the function to send the motor command
+                    send_motor_command(slave_address, target, speed, direction, duration)
+                else:
+                    print(f"Unknown slave address: {hex(slave_address)}")
+            
+            except ValueError:
+                print("Invalid input format. Please ensure you use the format: 'control [slave_address] [target] [speed] [direction] [duration]'")
+            except Exception as e:
+                print(f"An error occurred: {e}")
+        
+        elif command.startswith("config"):
+            try:
+                _, slave_address = command.split()
+                slave_address = int(slave_address, 16)  # Convert to integer if needed
+                
+                if slave_address in slaves:
+                    receive_motor_config(slave_address, slaves[slave_address])
+                else:
+                    print(f"Unknown slave address: {hex(slave_address)}")
+            except ValueError:
+                print("Invalid input format. Use: 'config [slave_address]'")
+            except Exception as e:
+                print(f"An error occurred: {e}")
+        
+        else:
+            print("Unknown command. Please use 'control' or 'config'.")
 
 def parse_input(input_str):
     try:

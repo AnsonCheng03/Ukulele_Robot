@@ -115,9 +115,9 @@ void receiveEvent(int bytes) {
 
                 // Control the target
                 if (target == 1) {
-                    controlSlider();
+                    controlDevice(slider_direction_pin, slider_speed_pin, slider_start_pin, direction, speed_hz, duration);
                 } else if (target == 2) {
-                    controlMotor();
+                    controlDevice(motor_direction_pin, motor_speed_pin, motor_start_pin, direction, speed_hz, duration);
                 } else {
                     Serial.println("Unknown target specified.");
                 }
@@ -194,13 +194,13 @@ void calibrateSensor()
 }
 
 // Function to control the slider motor
-void controlSlider()
+void controlDevice(int direction_pin, int speed_pin, int start_pin, int direction, int speed_hz, int duration)
 {
-    digitalWrite(slider_direction_pin, direction);
-    analogWrite(slider_speed_pin, speed_hz); // Control speed using PWM
-    digitalWrite(slider_start_pin, HIGH);    // Start motor
-    delay(duration * 1000);                  // Wait for the duration
-    digitalWrite(slider_start_pin, LOW);     // Stop motor
+    digitalWrite(direction_pin, direction);
+    analogWrite(speed_pin, speed_hz); // Control speed using PWM
+    digitalWrite(start_pin, HIGH);    // Start the device
+    delay(duration * 1000);           // Wait for the duration
+    digitalWrite(start_pin, LOW);     // Stop the device
 }
 
 // Function to control the motor
