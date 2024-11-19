@@ -1,27 +1,3 @@
-## Device Server on Raspberry Pi
-
-This project sets up a Raspberry Pi as a networked device server. It will:
-
-Detect I2C devices connected to the Raspberry Pi.
-Allow Bluetooth pairing mode to automatically accept incoming connections.
-Enable command forwarding from connected Bluetooth devices to an Arduino Uno.
-Requirements
-Raspberry Pi with Bluetooth and I2C capabilities.
-Arduino Uno connected via USB.
-Bluetooth-enabled device (phone, laptop) to connect and send commands.
-Setup Instructions
-
-1. Enable I2C and Bluetooth on Raspberry Pi
-   Enable I2C:
-
-Open the Raspberry Pi configuration tool:
-
-```
-sudo raspi-config
-```
-
-Navigate to Interfacing Options > I2C and enable it.
-
 2. Set Up Device Detection Script
 
 Create and open the script file:
@@ -34,32 +10,6 @@ Follow the instructions in device_server and copy the code `device_server.py` in
 
 3. Configure Bluetooth for Auto Pairing
    Edit the Bluetooth configuration to allow automatic pairing and multiple connections:
-
-Open the Bluetooth configuration file:
-
-```
-sudo nano /etc/bluetooth/main.conf
-```
-
-Add or edit the following settings:
-
-```
-[General]
-AutoEnable=true
-DiscoverableTimeout = 0
-AlwaysPairable = true
-JustWorksRepairing = always
-
-
-[Policy]
-AutoPair=true
-```
-
-Edit the machine name `/etc/machine-info`
-
-```
-PRETTY_HOSTNAME=GuitarRobot
-```
 
 4. Running the Device Server Script
    Run the script to start the device server:

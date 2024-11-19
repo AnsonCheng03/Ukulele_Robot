@@ -8,62 +8,69 @@ This project runs a device server on a Raspberry Pi, enabling I2C device configu
 - Connected Arduino Uno or ESP32 via I2C
 - Bluetooth-enabled device to connect and send commands
 
-# Setup
+## Setup
 
-## 1. Enable I2C and Bluetooth on Raspberry Pi
+### 0. Flash Raspberry Pi Image
+
+Set the user name to Pi
+
+### 1. Enable I2C and Bluetooth on Raspberry Pi
 
 ```bash
 sudo raspi-config
 ```
 
-### Enable I2C under Interfacing Options
+Choose Interface Options
+Choose I2C
+Then enable.
 
-Install necessary libraries:
+### 2. Install necessary libraries: (Make sure you are connected to internet)
 
 ```bash
 sudo apt update
-sudo apt install -y i2c-tools python3-smbus bluetooth bluez blueman python3-serial libbluetooth-dev
-pip3 install pybluez
+sudo apt install -y i2c-tools python3-smbus bluetooth bluez blueman python3-serial libbluetooth-dev git build-essential libglib2.0-dev
+git clone https://github.com/IanHarvey/bluepy.git
+cd bluepy
+sudo python3 setup.py build
+sudo python3 setup.py install
+sudo pip3 install bluedot git+https://github.com/pybluez/pybluez.git#egg=pybluez --break-system-packages
+cd ../
+git clone https://github.com/cbusuioceanu/Raspberry-Pi-Bluetooth-Manager.git rpibtman && cd rpibtman && sudo bash rpibtman.sh
 ```
 
-## 2. Save and Run Script
+### 3. Setup Bluetooth
 
-### Create Script Directory
+#### 1. Edit Bluetooth configuration file
 
 ```bash
-mkdir -p /home/pi/pi_device_server
+sudo nano /etc/bluetooth/main.conf
 ```
 
-### Save Script
+Add or edit the following settings:
 
-Save the script to `/home/pi/pi_device_server/device_server.py`
-Make Executable:
+```md
+[General]
+AutoEnable=true
+DiscoverableTimeout = 0
+AlwaysPairable = true
+JustWorksRepairing = always
+
+[Policy]
+AutoPair=true
+```
+
+#### 2. Edit the machine name
+
+Goto `sudo nano /etc/machine-info`
+
+```md
+PRETTY_HOSTNAME=GuitarRobot
+```
+
+### 4. Change Startup Settings
+
+#### 1. Set bluetooth
 
 ```bash
-chmod +x /home/pi/pi_device_server/device_server.py
-```
-
-### Run Script
-
-```bash
-python3 /home/pi/pi_device_server/device_server.py
-```
-
-## 3. Bluetooth Pairing and Command Format
-
-Use any Bluetooth-enabled device to pair and send commands to the Raspberry Pi.
-
-Command Format
-Use the format: (address, Speed-Hz, 1/0, second)
-Examples:
-
-8, 100, 1, 5 - Send a command to device at address 8 to run at 100 Hz speed for 5 seconds in forward direction.
-Troubleshooting
-Device Detection: Ensure all I2C devices are properly connected.
-Bluetooth: Use bluetoothctl to manage devices if needed.
-
-## Auto update script
-
-```
-curl https://raw.githubusercontent.com/AnsonCheng03/CSCI_FYP/refs/heads/read_me/device_server/device_server.py -o /home/pi/pi_device_server/device_server.py && chmod +x /home/pi/pi_device_server/device_server.py
+sudo /usr/bin/btmgmt io-cap 3
 ```

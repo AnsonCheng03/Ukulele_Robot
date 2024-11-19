@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <Servo.h>
 
-#define boardAddress 8 // Define the I2C address of this slave
+#define boardAddress 6 // Define the I2C address of this slave
 
 #define slider_start_pin 9
 #define slider_direction_pin 10
