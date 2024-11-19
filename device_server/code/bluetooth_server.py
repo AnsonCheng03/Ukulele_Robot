@@ -1,29 +1,42 @@
-import bluetooth
+from bluedot.btcomm import BluetoothServer
+from signal import pause
 from motor_control import handle_command_input
 
-def start_bluetooth_server():
-    server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-    server_sock.bind(("", bluetooth.PORT_ANY))
-    server_sock.listen(1)
-    bluetooth.advertise_service(
-        server_sock,
-        "MotorControlServer",
-        service_classes=[bluetooth.SERIAL_PORT_CLASS],
-        profiles=[bluetooth.SERIAL_PORT_PROFILE],
-    )
-    print("Bluetooth pairing mode enabled. Always discoverable. Waiting for connections...")
+# Buffer to store incoming data for each client
+data_buffers = {}
 
-    while True:
-        client_sock, client_info = server_sock.accept()
-        print(f"Connected to {client_info}")
+# Define command terminator
+COMMAND_TERMINATOR = "###"  # Use a specific symbol as the command terminator
 
-        try:
-            while True:
-                data = client_sock.recv(1024).decode("utf-8").strip()
-                if data:
-                    print(f"Received data: {data}")
-                    handle_command_input(data)
-        except bluetooth.BluetoothError as e:
-            print(f"Bluetooth connection closed: {e}")
-        finally:
-            client_sock.close()
+def data_received(data, client_address):
+    # Initialize buffer for the client if not already present
+    if client_address not in data_buffers:
+        data_buffers[client_address] = ""
+
+    # Append received data to the client's buffer
+    data_buffers[client_address] += data
+    
+    # Check if a full command (ending with the terminator) is received
+    if COMMAND_TERMINATOR in data_buffers[client_address]:
+        # Split the buffer by the command terminator to get complete commands
+        commands = data_buffers[client_address].split(COMMAND_TERMINATOR)
+        # Keep any incomplete command in the buffer
+        data_buffers[client_address] = commands.pop()
+        
+        # Process each complete command
+        for command in commands:
+            command = command.strip()
+            if command:
+                # Handle cases where command is "a" or "aa" and treat as "aaa"
+                if command == "a" or command == "aa":
+                    command = "aaa"
+                print(f"Received command from {client_address}: {command}")
+                handle_command_input(command)
+                s.send(command)  # Echo back the received command if needed
+
+# Initialize the Bluetooth server
+s = BluetoothServer(data_received)
+print("Bluetooth pairing mode enabled. Always discoverable. Waiting for connections...")
+
+# Pause to keep the script running and handle connections
+pause()
