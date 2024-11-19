@@ -1,7 +1,4 @@
-def handle_command_input(command):
-    # Handle commands related to motor control
-    # Similar to your existing command processing logic
-    pass
+from motor_control import handle_command_input
 
 def manual_input_handler():
     while True:
