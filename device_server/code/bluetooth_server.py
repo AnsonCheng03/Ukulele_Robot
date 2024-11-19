@@ -1,6 +1,23 @@
+import subprocess
 from bluedot.btcomm import BluetoothServer
 from signal import pause
 from motor_control import handle_command_input
+
+# Run setup commands before starting the server and ensure they complete successfully
+def run_setup_command(command):
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"Error running command {' '.join(command)}: {result.stderr}")
+        exit(1)
+    else:
+        print(f"Successfully ran command: {' '.join(command)}")
+
+run_setup_command(["/usr/bin/btmgmt", "power", "on"])
+run_setup_command(["/usr/bin/btmgmt", "connectable", "on"])
+run_setup_command(["/usr/bin/btmgmt", "pairable", "on"])
+run_setup_command(["/usr/bin/btmgmt", "discov", "on"])
+run_setup_command(["/usr/bin/btmgmt", "io-cap", "3"])
+run_setup_command(["/usr/bin/hciconfig", "hci0", "sspmode", "disable"])
 
 # Buffer to store incoming data for each client
 data_buffers = {}
