@@ -19,6 +19,26 @@ run_setup_command(["/usr/bin/btmgmt", "discov", "on"])
 run_setup_command(["/usr/bin/btmgmt", "io-cap", "3"])
 run_setup_command(["/usr/bin/hciconfig", "hci0", "sspmode", "disable"])
 
+# Remove all connected devices
+def remove_connected_devices():
+    result = subprocess.run(["/usr/bin/btmgmt", "info"], capture_output=True, text=True)
+    if result.returncode == 0:
+        lines = result.stdout.splitlines()
+        for line in lines:
+            if "connected" in line:
+                parts = line.split()
+                if len(parts) > 1:
+                    mac_address = parts[-1]
+                    disconnect_result = subprocess.run(["/usr/bin/btmgmt", "disconnect", mac_address], capture_output=True, text=True)
+                    if disconnect_result.returncode == 0:
+                        print(f"Successfully disconnected device: {mac_address}")
+                    else:
+                        print(f"Error disconnecting device {mac_address}: {disconnect_result.stderr}")
+    else:
+        print(f"Error getting connected devices: {result.stderr}")
+
+remove_connected_devices()
+
 # Buffer to store incoming data for each client
 data_buffers = {}
 
