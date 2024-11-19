@@ -17,8 +17,9 @@ run_setup_command(["/usr/bin/btmgmt", "connectable", "on"])
 run_setup_command(["/usr/bin/btmgmt", "pairable", "on"])
 run_setup_command(["/usr/bin/btmgmt", "discov", "on"])
 run_setup_command(["/usr/bin/btmgmt", "io-cap", "3"])
+run_setup_command(["/usr/bin/btmgmt", "le", "on"])
+run_setup_command(["/usr/bin/btmgmt", "bredr", "off"])
 # run_setup_command(["/usr/bin/hciconfig", "hci0", "sspmode", "disable"])
-# run_setup_command(["/usr/bin/btmgmt", "clr-devices"])
 
 # Buffer to store incoming data for each client
 data_buffers = {}
