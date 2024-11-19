@@ -28,7 +28,7 @@ Then enable.
 
 ```bash
 sudo apt update
-sudo apt install -y i2c-tools python3-smbus bluetooth bluez blueman python3-serial libbluetooth-dev git build-essential libglib2.0-dev
+sudo apt install -y i2c-tools python3-smbus bluetooth bluez python3-serial libbluetooth-dev git build-essential libglib2.0-dev
 git clone https://github.com/IanHarvey/bluepy.git
 cd bluepy
 sudo python3 setup.py build
@@ -67,10 +67,4 @@ Goto `sudo nano /etc/machine-info`
 PRETTY_HOSTNAME=GuitarRobot
 ```
 
-### 4. Change Startup Settings
-
-#### 1. Set bluetooth
-
-```bash
-sudo /usr/bin/btmgmt io-cap 3
-```
+### 4. Get script

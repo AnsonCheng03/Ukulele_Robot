@@ -60,6 +60,8 @@ def data_received(data):
     data_buffers[client_address] += data
     
     # Check if a full command (ending with the terminator) is received
+    s.send(command) # Echo back the received command if needed
+      
     if COMMAND_TERMINATOR in data_buffers[client_address]:
         # Split the buffer by the command terminator to get complete commands
         commands = data_buffers[client_address].split(COMMAND_TERMINATOR)
@@ -75,7 +77,6 @@ def data_received(data):
                     command = "aaa"
                 print(f"Received command from {client_address}: {command}")
                 handle_command_input(command)
-                s.send(command)  # Echo back the received command if needed
 
 # Initialize the Bluetooth server
 s = BluetoothServer(data_received)
