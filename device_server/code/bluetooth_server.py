@@ -8,7 +8,13 @@ data_buffers = {}
 # Define command terminator
 COMMAND_TERMINATOR = "###"  # Use a specific symbol as the command terminator
 
-def data_received(data, client_address):
+def data_received(data):
+    # Get the client's MAC address
+    client_address = s.client_address
+    if client_address is None:
+        print("No client connected.")
+        return
+
     # Initialize buffer for the client if not already present
     if client_address not in data_buffers:
         data_buffers[client_address] = ""
