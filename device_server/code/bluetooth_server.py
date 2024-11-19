@@ -27,6 +27,7 @@ data_buffers = {}
 COMMAND_TERMINATOR = "###"  # Use a specific symbol as the command terminator
 
 def data_received(data):
+    s.send(data)  # Echo back the received data immediately
     # Get the client's MAC address
     client_address = s.client_address
     if client_address is None:
@@ -39,7 +40,6 @@ def data_received(data):
 
     # Append received data to the client's buffer
     data_buffers[client_address] += data
-    s.send(data)  # Echo back the received data immediately
 
     # Handle cases where COMMAND_TERMINATOR might be incomplete
     data_buffers[client_address] = data_buffers[client_address].replace("#", "###")
