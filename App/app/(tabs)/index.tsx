@@ -1,31 +1,20 @@
-import { StyleSheet } from 'react-native';
+import React from "react";
+import { createStackNavigator } from "@react-navigation/stack";
+import TabOneScreen from "../Pages/SelectDeviceScreen";
+import ControlDeviceScreen from "../Pages/ControlDeviceScreen";
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+export type RootStackParamList = {
+  "Select Device": undefined;
+  "Control Device": { device: { name: string; id: string } };
+};
 
-export default function TabOneScreen() {
+const Stack = createStackNavigator<RootStackParamList>();
+
+export default function AppNavigator() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    <Stack.Navigator>
+      <Stack.Screen name="Select Device" component={TabOneScreen} />
+      <Stack.Screen name="Control Device" component={ControlDeviceScreen} />
+    </Stack.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});
