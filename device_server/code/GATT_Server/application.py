@@ -1,8 +1,7 @@
 from __future__ import print_function
 import dbus
 import dbus.service
-from service import Service
-from heart_rate_service import HeartRateService
+from motor_service import MotorService
 from constants import DBUS_OM_IFACE
 
 class Application(dbus.service.Object):
@@ -13,7 +12,7 @@ class Application(dbus.service.Object):
         self.path = '/'
         self.services = []
         dbus.service.Object.__init__(self, bus, self.path)
-        self.add_service(HeartRateService(bus, 0))
+        self.add_service(MotorService(bus, 0))
 
     def get_path(self):
         return dbus.ObjectPath(self.path)
