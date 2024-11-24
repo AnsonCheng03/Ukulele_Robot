@@ -5,7 +5,14 @@ import ControlDeviceScreen from "../Pages/ControlDeviceScreen";
 
 export type RootStackParamList = {
   "Select Device": undefined;
-  "Control Device": { device: { name: string; id: string } };
+  "Control Device": {
+    device: {
+      connect(): unknown;
+      discoverAllServicesAndCharacteristics(): unknown;
+      name: string;
+      id: string;
+    };
+  };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();

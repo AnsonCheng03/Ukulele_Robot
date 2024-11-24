@@ -7,7 +7,7 @@ import {
   Button,
 } from "react-native";
 import { Text, View } from "@/components/Themed";
-import { BleManager } from "react-native-ble-plx";
+import { BleService } from "../services/BleService";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../(tabs)/index";
@@ -15,8 +15,8 @@ import { RootStackParamList } from "../(tabs)/index";
 export default function TabOneScreen() {
   const [devices, setDevices] = useState<any[]>([]);
   const [scanning, setScanning] = useState(false);
-  const manager = new BleManager();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const bleService = BleService.getInstance();
 
   useEffect(() => {
     if (Platform.OS === "android") {
@@ -45,8 +45,7 @@ export default function TabOneScreen() {
     }
 
     return () => {
-      manager.stopDeviceScan();
-      manager.destroy();
+      bleService.stopScan();
     };
   }, []);
 
@@ -58,7 +57,9 @@ export default function TabOneScreen() {
         "0000180a-0000-1000-8000-00805f9b34fb", // Device Information
       ];
 
-      const connectedDevices = await manager.connectedDevices(serviceUUIDs);
+      const connectedDevices = await bleService.getConnectedDevices(
+        serviceUUIDs
+      );
 
       setDevices((prevDevices) => {
         const newDevices = connectedDevices.filter(
@@ -76,32 +77,25 @@ export default function TabOneScreen() {
   };
 
   const startBluetoothScan = () => {
-    const subscription = manager.onStateChange((state) => {
+    bleService.onStateChange((state) => {
       if (state === "PoweredOn") {
         console.log("Bluetooth is PoweredOn, starting periodic scan...");
         startPeriodicScanning();
-        subscription.remove();
       }
-    }, true);
+    });
   };
 
   const startPeriodicScanning = () => {
     const scanInterval = setInterval(() => {
       if (scanning) {
-        manager.stopDeviceScan();
+        bleService.stopScan();
         setScanning(false);
       } else {
-        manager.startDeviceScan(null, null, (error, device) => {
-          if (error) {
-            console.error("Scan error:", error);
-            return;
-          }
-
+        bleService.startScan((device) => {
           if (device && device.name) {
             setDevices((prevDevices) => {
               if (!prevDevices.some((d) => d.id === device.id)) {
                 console.log(`Found device: ${device.name}`, device);
-
                 return [...prevDevices, device];
               }
               return prevDevices;

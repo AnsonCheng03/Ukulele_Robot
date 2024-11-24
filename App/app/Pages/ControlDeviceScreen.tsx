@@ -9,38 +9,34 @@ import {
 } from "react-native";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../(tabs)/index";
-import { BleManager, Device } from "react-native-ble-plx";
+import { BleService } from "../services/BleService";
+import { Device } from "react-native-ble-plx";
 
 interface ControlDeviceScreenProps {
   route: RouteProp<RootStackParamList, "Control Device">;
 }
 
-const manager = new BleManager();
-
 export default function ControlDeviceScreen({
   route,
 }: ControlDeviceScreenProps) {
-  const [command, setCommand] = useState("");
+  const [command, setCommand] = useState<string>("");
   const [receivedCommands, setReceivedCommands] = useState<string[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   if (!route || !route.params) return <Text>route.params is undefined</Text>;
 
-  const { device } = route.params;
+  const { device } = route.params as { device: Device };
+  const bleService = BleService.getInstance();
 
   useEffect(() => {
-    device
-      .connect()
-      .then((device) => {
-        console.log("Discovering services and characteristics");
-        return device.discoverAllServicesAndCharacteristics();
-      })
+    bleService
+      .connectToDevice(device)
       .then(() => {
         setIsConnected(true);
         setLoading(false);
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         console.error(error.message);
         setLoading(false);
       });
@@ -49,32 +45,12 @@ export default function ControlDeviceScreen({
   const sendCommand = () => {
     if (!isConnected) return;
 
-    device
-      .discoverAllServicesAndCharacteristics()
-      .then(async (device) => {
-        const services = await device.services();
-        for (const service of services) {
-          const characteristics = await service.characteristics();
-          for (const characteristic of characteristics) {
-            if (characteristic.isWritableWithResponse) {
-              console.log(
-                `Service UUID: ${service.uuid}, Characteristic UUID: ${characteristic.uuid}`
-              );
-              return device.writeCharacteristicWithResponseForService(
-                service.uuid,
-                characteristic.uuid,
-                btoa(command)
-              );
-            }
-          }
-        }
-        throw new Error("No writable characteristic found");
-      })
-      .then((characteristic) => {
-        console.log(characteristic.value);
+    bleService
+      .sendCommandToDevice(device, command)
+      .then(() => {
         setReceivedCommands((prevCommands) => [...prevCommands, command]);
       })
-      .catch((error) => {
+      .catch((error: Error) => {
         console.error(error.message);
       });
   };
