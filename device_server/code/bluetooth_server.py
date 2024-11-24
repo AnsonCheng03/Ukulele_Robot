@@ -21,8 +21,6 @@ def run_setup_command(command):
     if result.returncode != 0:
         print(f"Error running command {' '.join(command)}: {result.stderr}")
         exit(1)
-    else:
-        print(f"Successfully ran command: {' '.join(command)}")
 
 run_setup_command(["/usr/bin/btmgmt", "power", "on"])
 run_setup_command(["/usr/bin/btmgmt", "connectable", "on"])
@@ -33,6 +31,7 @@ run_setup_command(["/usr/bin/btmgmt", "le", "on"])
 run_setup_command(["/usr/bin/btmgmt", "bredr", "off"])
 run_setup_command(["/usr/bin/btmgmt", "advertising", "on"])
 run_setup_command(["/usr/bin/btmgmt", "name", "Guitar Robot"])
+print("Setup commands completed successfully")
 
 
 # run_setup_command(["/usr/bin/hciconfig", "hci0", "sspmode", "disable"])
