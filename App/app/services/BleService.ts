@@ -41,39 +41,37 @@ export class BleService {
     command: string
   ): Promise<void> {
     let attempts = 0;
-    while (attempts < 3) {
+    try {
       try {
-        if (!device.isConnected) {
-          console.log(`Attempt ${attempts + 1}: Connecting to device...`);
-          await this.connectToDevice(device);
-        }
-
-        const services = await device.services();
-        for (const service of services) {
-          const characteristics = await service.characteristics();
-          for (const characteristic of characteristics) {
-            if (characteristic.isWritableWithResponse) {
-              console.log(
-                `Service UUID: ${service.uuid}, Characteristic UUID: ${characteristic.uuid}`
-              );
-              await device.writeCharacteristicWithResponseForService(
-                service.uuid,
-                characteristic.uuid,
-                btoa(command)
-              );
-              return;
+        while (attempts < 3) {
+          const services = await device.services();
+          for (const service of services) {
+            const characteristics = await service.characteristics();
+            for (const characteristic of characteristics) {
+              if (characteristic.isWritableWithResponse) {
+                console.log(
+                  `Service UUID: ${service.uuid}, Characteristic UUID: ${characteristic.uuid}`
+                );
+                await device.writeCharacteristicWithResponseForService(
+                  service.uuid,
+                  characteristic.uuid,
+                  btoa(command)
+                );
+                return;
+              }
             }
           }
+          throw new Error("No writable characteristic found");
         }
-        throw new Error("No writable characteristic found");
       } catch (error) {
-        console.error("Error sending command: ", error);
+        console.log(`Attempt ${attempts + 1}: Connecting to device...`);
+        await this.connectToDevice(device);
         attempts++;
-        if (attempts >= 3) {
-          throw new Error(
-            "Failed to connect and send command after 3 attempts"
-          );
-        }
+      }
+    } catch (error) {
+      console.error("Error sending command: ", error);
+      if (attempts >= 3) {
+        throw new Error("Failed to connect and send command after 3 attempts");
       }
     }
   }

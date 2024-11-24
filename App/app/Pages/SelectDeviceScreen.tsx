@@ -109,7 +109,12 @@ export default function TabOneScreen() {
     return () => clearInterval(scanInterval);
   };
 
-  const selectDevice = (device: { name: string; id: string }) => {
+  const selectDevice = (device: {
+    name: string;
+    id: string;
+    connect: () => unknown;
+    discoverAllServicesAndCharacteristics: () => unknown;
+  }) => {
     navigation.navigate("Control Device", { device });
   };
 
