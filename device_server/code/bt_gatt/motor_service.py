@@ -48,6 +48,7 @@ class MotorWriteChrc(Characteristic):
 
         # Extract byte value from value[0] and convert to character
         byte_values = value[0]
+        print('Byte values: ' + repr(byte_values))
         command = ''.join(chr(b) for b in byte_values).strip()
 
         client_address = options.get('client_address', 'default')
