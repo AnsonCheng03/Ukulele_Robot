@@ -42,33 +42,30 @@ export class BleService {
   ): Promise<void> {
     let attempts = 0;
     try {
-      try {
-        while (attempts < 3) {
-          const services = await device.services();
-          for (const service of services) {
-            const characteristics = await service.characteristics();
-            for (const characteristic of characteristics) {
-              if (characteristic.isWritableWithResponse) {
-                console.log(
-                  `Service UUID: ${service.uuid}, Characteristic UUID: ${characteristic.uuid}`
-                );
-                await device.writeCharacteristicWithResponseForService(
-                  service.uuid,
-                  characteristic.uuid,
-                  btoa(command)
-                );
-                return;
-              }
+      while (attempts < 3) {
+        const services = await device.services();
+        for (const service of services) {
+          const characteristics = await service.characteristics();
+          for (const characteristic of characteristics) {
+            if (characteristic.isWritableWithResponse) {
+              console.log(
+                `Service UUID: ${service.uuid}, Characteristic UUID: ${characteristic.uuid}`
+              );
+              await device.writeCharacteristicWithResponseForService(
+                service.uuid,
+                characteristic.uuid,
+                btoa(command)
+              );
+              return;
             }
           }
-          throw new Error("No writable characteristic found");
         }
-      } catch (error) {
-        console.log(`Attempt ${attempts + 1}: Connecting to device...`);
-        await this.connectToDevice(device);
-        attempts++;
+        throw new Error("No writable characteristic found");
       }
     } catch (error) {
+      console.log(`Attempt ${attempts + 1}: Connecting to device...`);
+      await this.connectToDevice(device);
+      attempts++;
       console.error("Error sending command: ", error);
       if (attempts >= 3) {
         throw new Error("Failed to connect and send command after 3 attempts");
