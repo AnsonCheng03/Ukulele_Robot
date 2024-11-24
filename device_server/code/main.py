@@ -5,6 +5,7 @@ from utils import manual_input_handler
 from motor_control import slaves
 
 # Initial scan and configuration
+print("Scanning for I2C devices...")
 found_devices = scan_i2c()
 print("Found devices: %s" % found_devices)
 
