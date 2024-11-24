@@ -44,24 +44,19 @@ class MotorWriteChrc(Characteristic):
                 service)
 
     def WriteValue(self, value, options):
-        print('WriteValue: ' + repr(value))
+        print('WriteValue: ' + repr(value) + ' options: ' + repr(options))
 
         # Extract byte value from value[0] and convert to character
-        byte_values = value
-        print('Byte values: ' + repr(byte_values))
-        command = ''.join(chr(b) for b in byte_values).strip()
+        command = ''.join(chr(b) for b in value).strip()
 
         client_address = options.get('client_address', 'default')
-        print(f"Received command from {client_address}: {command}")
         handle_command_input(command)
-        print(f"Processed command: {command}")
+        print(f"Received command from {client_address}: {command}")
 
-        # Update motor status with the last received byte if it is a single-byte command
-        if len(byte_values) == 1:
-            byte = byte_values[0]
+        if len(value) == 1:
+            byte = value[0]
             print('Motor control value: ' + repr(byte))
 
-            # Update motor status
             self.service.motor_status = byte
             print('Motor status updated to: ' + str(self.service.motor_status))
         else:
