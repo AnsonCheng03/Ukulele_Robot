@@ -2,7 +2,7 @@ import dbus
 import functools
 import adapters
 from constants import BLUEZ_SERVICE_NAME, GATT_MANAGER_IFACE, DBUS_OM_IFACE
-from service import HeartRateService
+from heart_rate_service import HeartRateService
 
 class Application(dbus.service.Object):
     """
