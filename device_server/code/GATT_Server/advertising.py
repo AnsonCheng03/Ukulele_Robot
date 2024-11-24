@@ -123,9 +123,9 @@ def advertising_main(mainloop, bus, adapter_name):
     ad_manager = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
                                 LE_ADVERTISING_MANAGER_IFACE)
 
-    test_advertisement = TestAdvertisement(bus, 0)
+    advertisement = Advertisement(bus, 0)
 
-    ad_manager.RegisterAdvertisement(test_advertisement.get_path(), {},
+    ad_manager.RegisterAdvertisement(advertisement.get_path(), {},
                                      reply_handler=register_ad_cb,
                                      error_handler=functools.partial(register_ad_error_cb, mainloop))
 
