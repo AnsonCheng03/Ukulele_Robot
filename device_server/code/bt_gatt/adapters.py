@@ -23,7 +23,6 @@ def find_adapter(bus, adapter_interface_name, adapter_name):
     objects = remote_om.GetManagedObjects()
 
     for o, props in objects.items():
-        print('checking adapter %s' % (o,))
         if adapter_interface_name in props.keys():
             if '/' + adapter_name in o:
                 print('returning adapter %s' % (o,))

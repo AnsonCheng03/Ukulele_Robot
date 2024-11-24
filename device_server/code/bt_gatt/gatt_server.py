@@ -23,8 +23,6 @@ def gatt_server_main(mainloop, bus, adapter_name):
 
     app = Application(bus)
 
-    print('Registering GATT application...')
-
     service_manager.RegisterApplication(app.get_path(), {},
                                     reply_handler=register_app_cb,
                                     error_handler=functools.partial(register_app_error_cb, mainloop))

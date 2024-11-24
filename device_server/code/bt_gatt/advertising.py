@@ -112,7 +112,6 @@ def register_ad_error_cb(mainloop, error):
 
 def advertising_main(mainloop, bus, adapter_name):
     adapter = adapters.find_adapter(bus, LE_ADVERTISING_MANAGER_IFACE, adapter_name)
-    print('adapter: %s' % (adapter,))
     if not adapter:
         raise Exception('LEAdvertisingManager1 interface not found')
 
