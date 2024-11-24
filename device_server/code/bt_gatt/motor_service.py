@@ -1,9 +1,9 @@
 from service import Service, Characteristic
 from ..motor_control import handle_command_input
 import dbus
-from constants import GATT_CHRC_IFACE
+from bt_gatt.constants import GATT_CHRC_IFACE
 from random import randint
-import exceptions
+import bt_gatt.exceptions as exceptions
 
 class MotorService(Service):
     """

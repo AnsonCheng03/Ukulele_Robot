@@ -1,7 +1,7 @@
 import dbus
 import dbus.service
-import exceptions
-from constants import DBUS_PROP_IFACE, GATT_SERVICE_IFACE, GATT_CHRC_IFACE, GATT_DESC_IFACE
+import bt_gatt.exceptions as exceptions
+from bt_gatt.constants import DBUS_PROP_IFACE, GATT_SERVICE_IFACE, GATT_CHRC_IFACE, GATT_DESC_IFACE
 
 class Service(dbus.service.Object):
     """

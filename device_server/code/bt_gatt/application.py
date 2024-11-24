@@ -1,8 +1,7 @@
-from __future__ import print_function
 import dbus
 import dbus.service
-from motor_service import MotorService
-from constants import DBUS_OM_IFACE
+from bt_gatt.motor_service import MotorService
+from bt_gatt.constants import DBUS_OM_IFACE
 
 class Application(dbus.service.Object):
     """

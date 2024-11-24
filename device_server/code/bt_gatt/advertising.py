@@ -1,12 +1,10 @@
-from __future__ import print_function
 import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
 import functools
-
-import exceptions
-import adapters
+import bt_gatt.exceptions as exceptions
+import bt_gatt.adapters as adapters
 
 
 BLUEZ_SERVICE_NAME = 'org.bluez'

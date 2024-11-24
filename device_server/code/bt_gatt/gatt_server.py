@@ -1,9 +1,9 @@
 import dbus
 import functools
-import adapters
-from constants import BLUEZ_SERVICE_NAME, GATT_MANAGER_IFACE, DBUS_OM_IFACE
-from motor_service import MotorService  
-from application import Application
+import bt_gatt.adapters as adapters
+from bt_gatt.constants import BLUEZ_SERVICE_NAME, GATT_MANAGER_IFACE, DBUS_OM_IFACE
+from bt_gatt.motor_service import MotorService
+from bt_gatt.application import Application
 
 def register_app_cb():
     print('GATT application registered')

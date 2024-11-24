@@ -1,4 +1,3 @@
-from __future__ import print_function
 import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
