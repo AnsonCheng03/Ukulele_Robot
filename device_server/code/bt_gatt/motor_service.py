@@ -1,5 +1,5 @@
-from service import Service, Characteristic
-from ..motor_control import handle_command_input
+from bt_gatt.service import Service, Characteristic
+from motor_control import handle_command_input
 import dbus
 from bt_gatt.constants import GATT_CHRC_IFACE
 from random import randint
