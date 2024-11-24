@@ -47,11 +47,8 @@ class MotorWriteChrc(Characteristic):
         print('WriteValue: ' + repr(value))
 
         # Extract byte value from value[0] and convert to character
-        if isinstance(value[0], dbus.Array):
-            byte_values = value[0]
-            command = ''.join(chr(b) for b in byte_values).strip()
-        else:
-            raise exceptions.InvalidValueLengthException("Expected dbus.Array in value[0]")
+        byte_values = value[0]
+        command = ''.join(chr(b) for b in byte_values).strip()
 
         client_address = options.get('client_address', 'default')
         print(f"Received command from {client_address}: {command}")
