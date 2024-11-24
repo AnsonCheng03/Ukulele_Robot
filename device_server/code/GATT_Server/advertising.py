@@ -48,6 +48,11 @@ class Advertisement(dbus.service.Object):
                                                         signature='sv')
         if self.include_tx_power is not None:
             properties['IncludeTxPower'] = dbus.Boolean(self.include_tx_power)
+            
+            
+        properties['DiscoverableTimeout'] = dbus.UInt16(0)
+            
+            
         return {LE_ADVERTISEMENT_IFACE: properties}
 
     def get_path(self):
@@ -123,9 +128,9 @@ def advertising_main(mainloop, bus, adapter_name):
     ad_manager = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
                                 LE_ADVERTISING_MANAGER_IFACE)
 
-    advertisement = Advertisement(bus, 0)
+    test_advertisement = TestAdvertisement(bus, 0)
 
-    ad_manager.RegisterAdvertisement(advertisement.get_path(), {},
+    ad_manager.RegisterAdvertisement(test_advertisement.get_path(), {},
                                      reply_handler=register_ad_cb,
                                      error_handler=functools.partial(register_ad_error_cb, mainloop))
 
