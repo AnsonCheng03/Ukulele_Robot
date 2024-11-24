@@ -6,6 +6,8 @@ from motor_control import slaves
 
 # Initial scan and configuration
 found_devices = scan_i2c()
+print("Found devices: %s" % found_devices)
+
 for address, motor in slaves.items():
     if address in found_devices:
         receive_motor_config(address, motor)

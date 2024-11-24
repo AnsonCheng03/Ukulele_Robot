@@ -56,5 +56,4 @@ def handle_command_input(command):
         print(f"Invalid slave address: {e}")
     except OSError as e:
         print(f"Failed to send command: {e}")
-        
     pass
