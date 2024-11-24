@@ -1,7 +1,5 @@
 import subprocess
 from signal import pause
-from motor_control import handle_command_input
-from __future__ import print_function
 import dbus
 import dbus.exceptions
 import dbus.mainloop.glib

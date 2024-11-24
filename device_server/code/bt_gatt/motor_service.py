@@ -1,4 +1,5 @@
 from service import Service, Characteristic
+from ..motor_control import handle_command_input
 import dbus
 from constants import GATT_CHRC_IFACE
 from random import randint
@@ -93,9 +94,3 @@ class MotorWriteChrc(Characteristic):
 #                 handle_command_input(command)
 #                 s.send(command)  # Echo back the received command if needed
 
-# # Initialize the Bluetooth server
-# s = BluetoothServer(data_received)
-# print("Bluetooth pairing mode enabled. Always discoverable. Waiting for connections...")
-
-# # Pause to keep the script running and handle connections
-# pause()
