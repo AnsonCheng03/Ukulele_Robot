@@ -4,6 +4,7 @@ import {
   ScrollView,
   Platform,
   PermissionsAndroid,
+  Button,
 } from "react-native";
 import { Text, View } from "@/components/Themed";
 import { BleManager } from "react-native-ble-plx";
@@ -34,10 +35,12 @@ export default function TabOneScreen() {
         ) {
           console.warn("Location or Bluetooth permission denied");
         } else {
+          getConnectedDevices();
           startBluetoothScan();
         }
       });
     } else {
+      getConnectedDevices();
       startBluetoothScan();
     }
 
@@ -46,6 +49,31 @@ export default function TabOneScreen() {
       manager.destroy();
     };
   }, []);
+
+  const getConnectedDevices = async () => {
+    try {
+      // Replace with valid UUIDs of your target services
+      const serviceUUIDs = [
+        "00001800-0000-1000-8000-00805f9b34fb", // Generic Access
+        "0000180a-0000-1000-8000-00805f9b34fb", // Device Information
+      ];
+
+      const connectedDevices = await manager.connectedDevices(serviceUUIDs);
+
+      setDevices((prevDevices) => {
+        const newDevices = connectedDevices.filter(
+          (device) => !prevDevices.some((d) => d.id === device.id)
+        );
+        return [...prevDevices, ...newDevices];
+      });
+
+      connectedDevices.forEach((device) => {
+        console.log(`Already connected device: ${device.name}`, device);
+      });
+    } catch (error) {
+      console.error("Failed to get connected devices:", error);
+    }
+  };
 
   const startBluetoothScan = () => {
     const subscription = manager.onStateChange((state) => {
@@ -69,13 +97,11 @@ export default function TabOneScreen() {
             return;
           }
 
-          if (
-            device &&
-            (device.name?.includes("Guitar") || device.name?.includes("Robot"))
-          ) {
+          if (device && device.name) {
             setDevices((prevDevices) => {
               if (!prevDevices.some((d) => d.id === device.id)) {
-                console.log("Found new device:", device);
+                console.log(`Found device: ${device.name}`, device);
+
                 return [...prevDevices, device];
               }
               return prevDevices;
@@ -95,19 +121,45 @@ export default function TabOneScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Available Devices</Text>
+      <View style={styles.titleContainer}>
+        <Text style={styles.title}>Available Devices</Text>
+        <View style={{ flexDirection: "row" }}>
+          <Button title="Refresh" onPress={getConnectedDevices} />
+          <Button
+            title="Clear"
+            onPress={() =>
+              setDevices((prevDevices) =>
+                prevDevices.filter((device) => device.isPaired)
+              )
+            }
+          />
+        </View>
+      </View>
       <ScrollView>
-        {devices.map((device) => (
-          <View
-            key={device.id}
-            style={styles.device}
-            onTouchEnd={() => selectDevice(device)}
-          >
-            <Text>{`Device: ${device.name || "Unnamed"} (ID: ${
-              device.id
-            })`}</Text>
-          </View>
-        ))}
+        {devices
+          .sort((a, b) => {
+            const aPriority =
+              a.name?.includes("Guitar") || a.name?.includes("Robot") ? -1 : 1;
+            const bPriority =
+              b.name?.includes("Guitar") || b.name?.includes("Robot") ? -1 : 1;
+            return aPriority - bPriority;
+          })
+          .map((device) => (
+            <View
+              key={device.id}
+              style={
+                device.name?.includes("Guitar") ||
+                device.name?.includes("Robot")
+                  ? styles.highlightedDevice
+                  : styles.device
+              }
+              onTouchEnd={() => selectDevice(device)}
+            >
+              <Text>{`Device: ${device.name || "Unnamed"} (ID: ${
+                device.id
+              })`}</Text>
+            </View>
+          ))}
       </ScrollView>
     </View>
   );
@@ -118,6 +170,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  titleContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 20,
@@ -130,6 +189,14 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderWidth: 1,
     borderColor: "#ccc",
+    borderRadius: 5,
+  },
+  highlightedDevice: {
+    marginVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: "#ff9800",
     borderRadius: 5,
   },
 });
