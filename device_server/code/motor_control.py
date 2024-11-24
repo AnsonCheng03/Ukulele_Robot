@@ -37,6 +37,24 @@ def calibrate_motor(slave_address, sensor_pin):
         print(f"Failed to calibrate slave at address {hex(slave_address)}: {e}")
 
 def handle_command_input(command):
-    # Handle commands related to motor control
-    # Similar to your existing command processing logic
+    command_parts = command.split()
+    if len(command_parts) < 2:
+        print("Invalid command format")
+        return
+    try:
+        slave_address = int(command_parts[0])
+        target = int(command_parts[1])
+        speed = int(command_parts[2])
+        direction = int(command_parts[3])
+        duration = int(command_parts[4])
+        send_motor_command(slave_address, target, speed, direction, duration)
+    except ValueError as e:
+        print(f"Invalid command format: {e}")
+    except IndexError as e:
+        print(f"Invalid command format: {e}")
+    except KeyError as e:
+        print(f"Invalid slave address: {e}")
+    except OSError as e:
+        print(f"Failed to send command: {e}")
+        
     pass

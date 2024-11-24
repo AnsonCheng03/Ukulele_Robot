@@ -44,11 +44,7 @@ class MotorWriteChrc(Characteristic):
                 service)
 
     def WriteValue(self, value, options):
-        print('WriteValue: ' + repr(value) + ' options: ' + repr(options))
-
-        # Extract byte value from value[0] and convert to character
         command = ''.join(chr(b) for b in value).strip()
-
         client_address = options.get('client_address', 'default')
         handle_command_input(command)
         print(f"Received command from {client_address}: {command}")
