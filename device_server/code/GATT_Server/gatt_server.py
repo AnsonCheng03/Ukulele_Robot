@@ -338,7 +338,7 @@ class HeartRateControlPointChrc(Characteristic):
                 service)
 
     def WriteValue(self, value, options):
-        print('Heart Rate Control Point WriteValue called')
+        print('WriteValue: ' + repr(value))
 
         if len(value) != 1:
             raise exceptions.InvalidValueLengthException()
@@ -351,8 +351,6 @@ class HeartRateControlPointChrc(Characteristic):
 
         print('Energy Expended field reset!')
         self.service.energy_expended = 0
-
-
 
 
 
