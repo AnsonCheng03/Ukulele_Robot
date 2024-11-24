@@ -5,7 +5,6 @@
 # 1. Enable I2C and Bluetooth on Raspberry Pi
 echo "Enabling I2C and Bluetooth..."
 sudo raspi-config nonint do_i2c 0
-sudo raspi-config nonint do_bluetooth 0
 
 # 2. Install necessary libraries
 echo "Updating package lists and installing necessary libraries..."
@@ -39,6 +38,10 @@ sudo sed -i '/^\[Policy\]/a AutoPair=true' /etc/bluetooth/main.conf
 # 6. Update machine name
 echo "Updating machine name to GuitarRobot..."
 echo "PRETTY_HOSTNAME=GuitarRobot" | sudo tee /etc/machine-info > /dev/null
+
+# 7. Add main.py to run on startup
+echo "Adding ./code/main.py to run on startup..."
+echo "sudo python3 /home/pi/code/main.py" | sudo tee -a /etc/rc.local > /dev/null
 
 # Finish
 echo "Setup complete. Please reboot the Raspberry Pi for all changes to take effect."
