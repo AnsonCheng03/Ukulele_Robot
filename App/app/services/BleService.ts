@@ -29,6 +29,10 @@ export class BleService {
       })
       .then(() => {
         console.log("Device connected and services discovered");
+      })
+      .catch((error) => {
+        console.error("Error connecting to device: ", error);
+        throw error;
       });
   }
 
@@ -36,24 +40,42 @@ export class BleService {
     device: Device,
     command: string
   ): Promise<void> {
-    const services = await device.services();
-    for (const service of services) {
-      const characteristics = await service.characteristics();
-      for (const characteristic of characteristics) {
-        if (characteristic.isWritableWithResponse) {
-          console.log(
-            `Service UUID: ${service.uuid}, Characteristic UUID: ${characteristic.uuid}`
+    let attempts = 0;
+    while (attempts < 3) {
+      try {
+        if (!device.isConnected) {
+          console.log(`Attempt ${attempts + 1}: Connecting to device...`);
+          await this.connectToDevice(device);
+        }
+
+        const services = await device.services();
+        for (const service of services) {
+          const characteristics = await service.characteristics();
+          for (const characteristic of characteristics) {
+            if (characteristic.isWritableWithResponse) {
+              console.log(
+                `Service UUID: ${service.uuid}, Characteristic UUID: ${characteristic.uuid}`
+              );
+              await device.writeCharacteristicWithResponseForService(
+                service.uuid,
+                characteristic.uuid,
+                btoa(command)
+              );
+              return;
+            }
+          }
+        }
+        throw new Error("No writable characteristic found");
+      } catch (error) {
+        console.error("Error sending command: ", error);
+        attempts++;
+        if (attempts >= 3) {
+          throw new Error(
+            "Failed to connect and send command after 3 attempts"
           );
-          await device.writeCharacteristicWithResponseForService(
-            service.uuid,
-            characteristic.uuid,
-            btoa(command)
-          );
-          return;
         }
       }
     }
-    throw new Error("No writable characteristic found");
   }
 
   public getConnectedDevices(serviceUUIDs: string[]): Promise<Device[]> {

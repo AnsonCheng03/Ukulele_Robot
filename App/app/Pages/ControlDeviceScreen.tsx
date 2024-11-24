@@ -29,7 +29,8 @@ export default function ControlDeviceScreen({
   const { device } = route.params as { device: Device };
   const bleService = BleService.getInstance();
 
-  useEffect(() => {
+  const connectToDevice = () => {
+    setLoading(true);
     bleService
       .connectToDevice(device)
       .then(() => {
@@ -38,8 +39,13 @@ export default function ControlDeviceScreen({
       })
       .catch((error: Error) => {
         console.error(error.message);
+        setIsConnected(false);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    connectToDevice();
   }, [device]);
 
   const sendCommand = () => {
@@ -52,6 +58,7 @@ export default function ControlDeviceScreen({
       })
       .catch((error: Error) => {
         console.error(error.message);
+        setIsConnected(false); // Assume connection lost if sending command fails
       });
   };
 
@@ -81,7 +88,10 @@ export default function ControlDeviceScreen({
           </ScrollView>
         </>
       ) : (
-        <Text style={styles.errorText}>Failed to connect to device</Text>
+        <>
+          <Text style={styles.errorText}>Failed to connect to device</Text>
+          <Button title="Retry" onPress={connectToDevice} />
+        </>
       )}
     </View>
   );
