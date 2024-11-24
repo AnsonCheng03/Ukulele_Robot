@@ -2,7 +2,6 @@ from bt_gatt.service import Service, Characteristic
 from motor_control import handle_command_input
 import dbus
 from bt_gatt.constants import GATT_CHRC_IFACE
-from random import randint
 import bt_gatt.exceptions as exceptions
 
 class MotorService(Service):
@@ -36,7 +35,6 @@ class MotorReadChrc(Characteristic):
 
 class MotorWriteChrc(Characteristic):
     MOTOR_WRITE_UUID = '00002a39-0000-1000-8000-00805f9b34fb'
-    COMMAND_TERMINATOR = "###"  # Use a specific symbol as the command terminator
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(
@@ -48,38 +46,21 @@ class MotorWriteChrc(Characteristic):
     def WriteValue(self, value, options):
         print('WriteValue: ' + repr(value))
 
-        # Convert value to string for easier command processing
-        data = ''.join(chr(b) for b in value)
+        # Extract byte value from value[0] and convert to character
+        if isinstance(value[0], dbus.Array):
+            byte_values = value[0]
+            command = ''.join(chr(b) for b in byte_values).strip()
+        else:
+            raise exceptions.InvalidValueLengthException("Expected dbus.Array in value[0]")
+
         client_address = options.get('client_address', 'default')
-
-        # Initialize buffer for the client if not already present
-        if client_address not in self.service.data_buffers:
-            self.service.data_buffers[client_address] = ""
-
-        # Append received data to the client's buffer
-        self.service.data_buffers[client_address] += data
-
-        # Handle cases where COMMAND_TERMINATOR might be incomplete
-        self.service.data_buffers[client_address] = self.service.data_buffers[client_address].replace("#", "###")
-
-        # Check if a full command (ending with the terminator) is received
-        if self.COMMAND_TERMINATOR in self.service.data_buffers[client_address]:
-            # Split the buffer by the command terminator to get complete commands
-            commands = self.service.data_buffers[client_address].split(self.COMMAND_TERMINATOR)
-            # Keep any incomplete command in the buffer
-            self.service.data_buffers[client_address] = commands.pop()
-
-            # Process each complete command
-            for command in commands:
-                command = command.strip()
-                if command:
-                    print(f"Received command from {client_address}: {command}")
-                    handle_command_input(command)
-                    print(f"Processed command: {command}")
+        print(f"Received command from {client_address}: {command}")
+        handle_command_input(command)
+        print(f"Processed command: {command}")
 
         # Update motor status with the last received byte if it is a single-byte command
-        if len(value) == 1:
-            byte = value[0]
+        if len(byte_values) == 1:
+            byte = byte_values[0]
             print('Motor control value: ' + repr(byte))
 
             # Update motor status
