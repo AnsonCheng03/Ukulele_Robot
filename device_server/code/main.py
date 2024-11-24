@@ -15,8 +15,8 @@ for address, motor in slaves.items():
 
 # Start Bluetooth server for command input
 print("Starting Bluetooth server...", flush=True)
-bluetooth_thread = threading.Thread(target=start_bluetooth_server, daemon=True)
-bluetooth_thread.start()
+# bluetooth_thread = threading.Thread(target=start_bluetooth_server, daemon=True)
+# bluetooth_thread.start()
 
 # Manual input handler started
 print("Starting manual input handler...", flush=True)
