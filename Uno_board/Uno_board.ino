@@ -27,7 +27,7 @@ public:
         start();
         analogWrite(speedPin, speedHz);
         setDirection(direction);
-        startMovement(durationTenths * 100);
+        startMovement(durationTenths);
     }
 
     void update() {
@@ -42,11 +42,11 @@ protected:
     unsigned long moveStartMillis;
     unsigned long moveDuration;
 
-    void startMovement(unsigned long duration) {
+    void startMovement(unsigned long durationTenths) {
         isMoving = true;
         moveStartMillis = millis();
-        moveDuration = duration;
-        Serial.println("Movement started for duration: " + String(duration * 0.1) + "s");
+        moveDuration = durationTenths * 100;
+        Serial.println("Movement started for duration: " + String(durationTenths * 0.1) + "s");
     }
 
     void stopMovement() {
@@ -164,8 +164,8 @@ void receiveEvent(int bytes) {
         case CMD_CONTROL:
             if (index >= 9) {
                 uint8_t target = buffer[1];
-                uint16_t speedHz = (buffer[2]) | (buffer[3] << 8);
-                uint32_t durationTenths = (buffer[4]) | (buffer[5] << 8) | (buffer[6] << 16) | (buffer[7] << 24);
+                uint16_t speedHz = (buffer[2] << 8) | buffer[3];
+                uint32_t durationTenths = ((uint32_t)buffer[4] << 24) | ((uint32_t)buffer[5] << 16) | ((uint32_t)buffer[6] << 8) | buffer[7];
                 uint8_t direction = buffer[8];
 
                 Serial.println("CMD_CONTROL: Target = " + String(target) + ", Speed = " + String(speedHz) + ", Duration = " + String(durationTenths * 0.1) + "s, Direction = " + String(direction));
