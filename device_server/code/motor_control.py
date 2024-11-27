@@ -63,8 +63,8 @@ def handle_command_input(command):
         if len(command_parts) < 4:
             if command_type_input in command_mapping:
                 command_type = command_mapping[command_type_input]
-                target = int(command_parts[2])
-                args = list(map(int, command_parts[3:]))
+                target = int(command_parts[1])
+                args = list(map(int, command_parts[2:]))
                 send_motor_command(slave_address, command_type, target, *args)
             else:
                 print("Invalid command type")
@@ -72,9 +72,10 @@ def handle_command_input(command):
         elif 4 <= len(command_parts) <= 5:
             # If 4 or 5 parts, it must be a control command
             command_type = 0  # Force command to be Control
-            target = int(command_parts[2])
-            speed = int(command_parts[3])
-            duration = int(command_parts[4]) if len(command_parts) == 5 else 0
+            command_sub = len(command_parts) - 4
+            target = int(command_parts[command_sub + 1])
+            speed = int(command_parts[command_sub + 2])
+            duration = int(command_parts[command_sub + 3]) 
             send_motor_command(slave_address, command_type, target, speed, duration)
         else:
             print("Invalid command format: too many arguments")

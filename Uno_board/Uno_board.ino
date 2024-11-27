@@ -148,10 +148,10 @@ void receiveEvent(int bytes) {
 
     switch (buffer[0]) {
         case CMD_CONTROL:
-            if (index >= 8) {
+            if (index >= 9) {
                 uint8_t target = buffer[1];
-                uint16_t speedHz = (buffer[2] << 8) | buffer[3];
-                uint32_t durationTenths = ((uint32_t)buffer[4] << 24) | ((uint32_t)buffer[5] << 16) | ((uint32_t)buffer[6] << 8) | buffer[7];
+                uint16_t speedHz = buffer[2] | (buffer[3] << 8);
+                uint32_t durationTenths = buffer[4] | (buffer[5] << 8) | (buffer[6] << 16) | (buffer[7] << 24);
                 uint8_t direction = buffer[8];
 
                 Serial.println("CMD_CONTROL: Target = " + String(target) + ", Speed = " + String(speedHz) + ", Duration = " + String(durationTenths * 0.1) + "s, Direction = " + String(direction));
@@ -169,8 +169,19 @@ void receiveEvent(int bytes) {
             break;
 
         case CMD_CALIBRATE:
-            Serial.println("CMD_CALIBRATE received");
-            slider.calibrate();
+            if (index >= 2) {
+                uint8_t target = buffer[1];
+                Serial.println("CMD_CALIBRATE: Target = " + String(target));
+                if (target == 1) {
+                    slider.calibrate();
+                } else if (target == 2) {
+                    Serial.println("No calibration implemented for motorDevice.");
+                } else {
+                    Serial.println("Unknown target for CALIBRATE.");
+                }
+            } else {
+                Serial.println("Not enough data for CALIBRATE.");
+            }
             break;
 
         case CMD_MOVE:
