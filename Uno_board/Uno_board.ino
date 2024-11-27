@@ -1,87 +1,144 @@
 #include <Wire.h>
 #include <Servo.h>
 
-#define boardAddress 6 // Define the I2C address of this slave
+#define boardAddress 5
+#define CMD_CONTROL 0
+#define CMD_CALIBRATE 1
+#define CMD_MOVE 2
+#define CMD_FINGERING 3
+#define CMD_CHORD 4
 
-#define slider_start_pin 9
-#define slider_direction_pin 10
-#define slider_speed_pin 11
-#define slider_sensor_pin 12
+Servo servoMotor;
 
-#define motor_start_pin 4
-#define motor_direction_pin 5
-#define motor_speed_pin 6
+class Device {
+public:
+    Device(int startPin, int directionPin, int speedPin)
+        : startPin(startPin), directionPin(directionPin), speedPin(speedPin), isMoving(false), moveStartMillis(0), moveDuration(0) {}
 
-#define CMD_CONFIG 1
-#define CMD_CONTROL 2
-#define CMD_CALIBRATE 3
+    void setup() {
+        pinMode(startPin, OUTPUT);
+        pinMode(directionPin, OUTPUT);
+        pinMode(speedPin, OUTPUT);
+        Serial.println("Device setup for pins: " + String(startPin) + ", " + String(directionPin) + ", " + String(speedPin));
+    }
 
-Servo motor; // Servo motor object
- 
-float speed_hz, duration;
-byte direction;
+    void control(int direction, int speedHz, int durationTenths) {
+        Serial.println("Control device - Direction: " + String(direction) + ", Speed: " + String(speedHz) + ", Duration: " + String(durationTenths * 0.1) + "s");
+        start();
+        analogWrite(speedPin, speedHz);
+        setDirection(direction);
+        startMovement(durationTenths * 100);
+    }
 
-void setup()
-{
-    Serial.begin(9600); // Start serial communication for debugging
-    Serial.println("Current board address: " + String(boardAddress));
-    Serial.println("Starting motor controller");
+    void update() {
+        if (isMoving && millis() - moveStartMillis >= moveDuration) {
+            stopMovement();
+        }
+    }
 
-    pinMode(slider_start_pin, OUTPUT);
-    pinMode(slider_direction_pin, OUTPUT);
-    pinMode(slider_speed_pin, OUTPUT);
-    pinMode(slider_sensor_pin, INPUT);
-    pinMode(motor_start_pin, OUTPUT);
-    pinMode(motor_direction_pin, OUTPUT);
-    pinMode(motor_speed_pin, OUTPUT);
+protected:
+    int startPin, directionPin, speedPin;
+    bool isMoving;
+    unsigned long moveStartMillis;
+    unsigned long moveDuration;
 
-    preloadMotor();
+    void startMovement(unsigned long duration) {
+        isMoving = true;
+        moveStartMillis = millis();
+        moveDuration = duration;
+        Serial.println("Movement started for duration: " + String(duration * 0.1) + "s");
+    }
 
-    // Check sensor condition and calibrate before initializing Wire communication
-    calibrateSensor();
+    void stopMovement() {
+        stop();
+        isMoving = false;
+        Serial.println("Device stopped at pin: " + String(startPin));
+    }
 
-    // Initialize communication
-    Wire.begin(boardAddress); // Assuming board address 8, change it to your board address
+    void start() {
+        digitalWrite(startPin, LOW);
+        Serial.println("Start pin " + String(startPin) + " set to LOW");
+    }
+
+    void stop() {
+        digitalWrite(startPin, HIGH);
+        Serial.println("Start pin " + String(startPin) + " set to HIGH");
+    }
+
+    void setDirection(int direction) {
+        digitalWrite(directionPin, direction);
+        Serial.println("Direction pin " + String(directionPin) + " set to " + String(direction));
+    }
+};
+
+class Slider : public Device {
+public:
+    Slider(int startPin, int directionPin, int speedPin, int sensorPin)
+        : Device(startPin, directionPin, speedPin), sensorPin(sensorPin), isCalibrating(false) {}
+
+    void setup() {
+        Device::setup();
+        pinMode(sensorPin, INPUT);
+        Serial.println("Slider setup for sensor pin: " + String(sensorPin));
+    }
+
+    void calibrate() {
+        Serial.println("Calibrating slider...");
+        if (digitalRead(sensorPin) == HIGH) {
+            isCalibrating = true;
+            analogWrite(speedPin, 500);
+            setDirection(LOW);
+            startMovement(100);
+            Serial.println("Calibration started: Moving slider backward");
+        } else {
+            Serial.println("Sensor not activated for calibration.");
+        }
+    }
+
+    void update() {
+        Device::update();
+        if (isCalibrating && !isMoving && digitalRead(sensorPin) == HIGH) {
+            startMovement(100);
+            Serial.println("Continuing calibration movement...");
+        } else if (isCalibrating && digitalRead(sensorPin) == LOW) {
+            isCalibrating = false;
+            stop();
+            Serial.println("Slider calibration complete.");
+        }
+    }
+
+private:
+    int sensorPin;
+    bool isCalibrating;
+};
+
+Slider slider(9, 10, 11, 12);
+Device motorDevice(4, 5, 6);
+
+void setup() {
+    Serial.begin(9600);
+    Serial.println("Board address: " + String(boardAddress));
+    slider.setup();
+    motorDevice.setup();
+    Wire.begin(boardAddress);
     Wire.onReceive(receiveEvent);
-
-    // Start the motor controller in idle state
-    Serial.println("Starting broadcast");
+    Serial.println("Broadcast started");
 }
 
-void loop()
-{
-    // Loop is empty as all actions are triggered by I2C commands
+void loop() {
+    slider.update();
+    motorDevice.update();
+    delay(50);
 }
-
-void preloadMotor()
-{
-    digitalWrite(slider_start_pin, LOW);
-    digitalWrite(motor_start_pin, LOW);
-    analogWrite(slider_speed_pin, 1000);
-    analogWrite(motor_speed_pin, 1000);
-    digitalWrite(slider_direction_pin, LOW);
-    digitalWrite(motor_direction_pin, LOW);
-    delay(1000);
-    digitalWrite(slider_direction_pin, HIGH);
-    digitalWrite(motor_direction_pin, HIGH);
-    delay(1000);
-    digitalWrite(slider_start_pin, HIGH);
-    digitalWrite(motor_start_pin, HIGH);
-}
-
-// Function to calibrate the motor or slider
 
 void receiveEvent(int bytes) {
-    // Buffer to store incoming data
-    uint8_t buffer[32]; // Adjust size as needed
+    uint8_t buffer[32];
     int index = 0;
 
-    // Read incoming data into buffer
     while (Wire.available() && index < sizeof(buffer)) {
         buffer[index++] = Wire.read();
     }
 
-    // Print received data for debugging
     Serial.print("Received data: ");
     for (int i = 0; i < index; i++) {
         Serial.print(buffer[i], HEX);
@@ -89,37 +146,22 @@ void receiveEvent(int bytes) {
     }
     Serial.println();
 
-    // Process command
     switch (buffer[0]) {
-        case CMD_CONFIG:
-            sendConfig();
-            break;
-
         case CMD_CONTROL:
-            if (index >= 8) { // Ensure enough bytes for CONTROL command
-                uint8_t target = buffer[1]; // 1 for slider, 2 for motor
-                uint16_t speed_hz = (buffer[2] << 8) | buffer[3]; // 2 bytes for speed
-                uint32_t duration = ((uint32_t)buffer[4] << 24) | ((uint32_t)buffer[5] << 16) |
-                                    ((uint32_t)buffer[6] << 8) | buffer[7]; // 4 bytes for duration
-                uint8_t direction = buffer[8]; // 1 byte for direction
+            if (index >= 8) {
+                uint8_t target = buffer[1];
+                uint16_t speedHz = (buffer[2] << 8) | buffer[3];
+                uint32_t durationTenths = ((uint32_t)buffer[4] << 24) | ((uint32_t)buffer[5] << 16) | ((uint32_t)buffer[6] << 8) | buffer[7];
+                uint8_t direction = buffer[8];
 
-                // Print control details
-                Serial.print("Controlling target: ");
-                Serial.print(target == 1 ? "slider" : "motor");
-                Serial.print(", Direction: ");
-                Serial.print(direction);
-                Serial.print(", Speed: ");
-                Serial.print(speed_hz);
-                Serial.print(", Duration: ");
-                Serial.println(duration);
+                Serial.println("CMD_CONTROL: Target = " + String(target) + ", Speed = " + String(speedHz) + ", Duration = " + String(durationTenths * 0.1) + "s, Direction = " + String(direction));
 
-                // Control the target
                 if (target == 1) {
-                    controlDevice(slider_direction_pin, slider_speed_pin, slider_start_pin, direction, speed_hz, duration);
+                    slider.control(direction, speedHz, durationTenths);
                 } else if (target == 2) {
-                    controlDevice(motor_direction_pin, motor_speed_pin, motor_start_pin, direction, speed_hz, duration);
+                    motorDevice.control(direction, speedHz, durationTenths);
                 } else {
-                    Serial.println("Unknown target specified.");
+                    Serial.println("Unknown target.");
                 }
             } else {
                 Serial.println("Not enough data for CONTROL.");
@@ -127,88 +169,27 @@ void receiveEvent(int bytes) {
             break;
 
         case CMD_CALIBRATE:
-            calibrateSensor();
+            Serial.println("CMD_CALIBRATE received");
+            slider.calibrate();
+            break;
+
+        case CMD_MOVE:
+            Serial.println("CMD_MOVE received");
+            // Implementation for CMD_MOVE will be added later
+            break;
+
+        case CMD_FINGERING:
+            Serial.println("CMD_FINGERING received");
+            // Implementation for CMD_FINGERING will be added later
+            break;
+
+        case CMD_CHORD:
+            Serial.println("CMD_CHORD received");
+            // Implementation for CMD_CHORD will be added later
             break;
 
         default:
             Serial.println("Unknown command.");
             break;
     }
-}
-
-// Function to send configuration of ports
-void sendConfig() {
-    uint8_t configData[6]; // Array to hold configuration data for transmission
-
-    // Fill in the configuration data
-    configData[0] = slider_start_pin;
-    configData[1] = slider_speed_pin;
-    configData[2] = slider_sensor_pin;
-    configData[3] = motor_start_pin;
-    configData[4] = motor_speed_pin;
-    configData[5] = motor_direction_pin;
-
-    // Debugging output
-    Serial.print("Slider Start Pin: ");
-    Serial.println(configData[0]);
-    Serial.print("Slider Speed Pin: ");
-    Serial.println(configData[1]);
-    Serial.print("Slider Sensor Pin: ");
-    Serial.println(configData[2]);
-    Serial.print("Motor Start Pin: ");
-    Serial.println(configData[3]);
-    Serial.print("Motor Speed Pin: ");
-    Serial.println(configData[4]);
-    Serial.print("Motor Direction Pin: ");
-    Serial.println(configData[5]);
-
-    // Begin transmission to the master device (assuming the master address is known)
-    Wire.write(configData, sizeof(configData)); // Send configuration data as bytes
-
-    Serial.println("Configuration data sent");
-
-}
-
-void calibrateSensor()
-{
-    Serial.println("Calibrating...");
-
-    // Check if sensor is set for slider calibration
-    if (digitalRead(slider_sensor_pin) == HIGH)
-    {
-        while (digitalRead(slider_sensor_pin) == HIGH)
-        {
-            analogWrite(slider_speed_pin, 500); // Move motor backward for calibration
-            digitalWrite(slider_direction_pin, LOW);
-            delay(100); // Short delay during calibration
-        }
-        digitalWrite(slider_start_pin, HIGH); // Mark calibration complete
-        Serial.println("Slider calibration complete.");
-    }
-    else
-    {
-        Serial.println("Sensor not activated for slider calibration.");
-    }
-
-    // If you need motor calibration as well, you can add similar logic here
-}
-
-// Function to control the slider motor
-void controlDevice(int direction_pin, int speed_pin, int start_pin, int direction, int speed_hz, int duration)
-{
-    digitalWrite(direction_pin, direction);
-    analogWrite(speed_pin, speed_hz); // Control speed using PWM
-    digitalWrite(start_pin, HIGH);    // Start the device
-    delay(duration * 1000);           // Wait for the duration
-    digitalWrite(start_pin, LOW);     // Stop the device
-}
-
-// Function to control the motor
-void controlMotor()
-{
-    digitalWrite(motor_direction_pin, direction);
-    analogWrite(motor_speed_pin, speed_hz); // Control speed using PWM
-    digitalWrite(motor_start_pin, HIGH);    // Start motor
-    delay(duration * 1000);                 // Wait for the duration
-    digitalWrite(motor_start_pin, LOW);     // Stop motor
 }
