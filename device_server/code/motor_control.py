@@ -65,8 +65,8 @@ def handle_command_input(command):
         if len(command_parts) < 5:
             if command_type_input in command_mapping:
                 command_type = command_mapping[command_type_input]
-                target = int(command_parts[1])
-                args = list(map(int, command_parts[2:]))
+                target = int(command_parts[2])
+                args = list(map(int, command_parts[3:]))
                 send_motor_command(slave_address, command_type, target, *args)
             else:
                 print("Invalid command type")

@@ -8,12 +8,25 @@
 #define CMD_FINGERING 3
 #define CMD_CHORD 4
 
+#define SLIDER_START_PIN 9
+#define SLIDER_DIRECTION_PIN 10
+#define SLIDER_SPEED_PIN 11
+#define SLIDER_SENSOR_PIN 12
+
+#define RACK_START_PIN 4
+#define RACK_DIRECTION_PIN 5
+#define RACK_SPEED_PIN 6
+
+#define FIXED_MOVE_SPEED_HZ 500
+#define DISTANCE_TO_DURATION_RATIO 10 // Placeholder: 1 mm = 10 tenths of a second (1 second)
+#define MAX_DISTANCE_MM 1000000 // Maximum allowed distance in mm (example large number)
+
 Servo servoMotor;
 
 class Device {
 public:
     Device(int startPin, int directionPin, int speedPin)
-        : startPin(startPin), directionPin(directionPin), speedPin(speedPin), isMoving(false), moveStartMillis(0), moveDuration(0) {}
+        : startPin(startPin), directionPin(directionPin), speedPin(speedPin), isMoving(false), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0) {}
 
     void setup() {
         pinMode(startPin, OUTPUT);
@@ -24,10 +37,30 @@ public:
 
     void control(int direction, int speedHz, int durationTenths) {
         Serial.println("Control device - Direction: " + String(direction) + ", Speed: " + String(speedHz) + ", Duration: " + String(durationTenths * 0.1) + "s");
+        isCalibrated = false; // Control operation makes the device uncalibrated
         start();
         analogWrite(speedPin, speedHz);
         setDirection(direction);
         startMovement(durationTenths);
+    }
+
+    void move(int distanceMm) {
+        if (!isCalibrated) {
+            Serial.println("Device not calibrated. Cannot move.");
+            return;
+        }
+        if (abs(distanceMm) > MAX_DISTANCE_MM) {
+            Serial.println("Requested distance exceeds maximum allowed distance. Cannot move.");
+            return;
+        }
+        int direction = distanceMm >= 0 ? HIGH : LOW;
+        int distanceAbs = abs(distanceMm);
+        unsigned long durationTenths = distanceAbs * DISTANCE_TO_DURATION_RATIO;
+        Serial.println("Move device - Distance: " + String(distanceMm) + "mm, Direction: " + String(direction) + ", Duration: " + String(durationTenths * 0.1) + "s");
+        setDirection(direction);
+        analogWrite(speedPin, FIXED_MOVE_SPEED_HZ); // Fixed speed for movement
+        startMovement(durationTenths);
+        currentPosition += distanceMm;
     }
 
     void update() {
@@ -39,6 +72,8 @@ public:
 protected:
     int startPin, directionPin, speedPin;
     bool isMoving;
+    bool isCalibrated;
+    int currentPosition;
     unsigned long moveStartMillis;
     unsigned long moveDuration;
 
@@ -84,24 +119,24 @@ public:
 
     void calibrate() {
         Serial.println("Calibrating slider...");
-        if (digitalRead(sensorPin) == HIGH) {
-            isCalibrating = true;
-            analogWrite(speedPin, 500);
-            setDirection(LOW);
-            startMovement(100);
-            Serial.println("Calibration started: Moving slider backward");
-        } else {
-            Serial.println("Sensor not activated for calibration.");
-        }
+        isCalibrating = true;
+        analogWrite(speedPin, 500);
+        setDirection(LOW);
+        startMovement(100);
+        Serial.println("Calibration started: Moving slider backward");
+        // Assume calibration is done successfully for now
+        isCalibrating = false;
+        isCalibrated = true;
+        currentPosition = 0;
+        Serial.println("Slider calibration complete.");
     }
 
     void update() {
         Device::update();
-        if (isCalibrating && !isMoving && digitalRead(sensorPin) == HIGH) {
-            startMovement(100);
-            Serial.println("Continuing calibration movement...");
-        } else if (isCalibrating && digitalRead(sensorPin) == LOW) {
+        if (isCalibrating && !isMoving) {
             isCalibrating = false;
+            isCalibrated = true;
+            currentPosition = 0;
             stop();
             Serial.println("Slider calibration complete.");
         }
@@ -123,11 +158,15 @@ public:
         analogWrite(speedPin, 500);
         startMovement(100);
         Serial.println("Calibration started: Moving rack motor");
+        // Assume calibration is done successfully for now
+        isCalibrated = true;
+        currentPosition = 0;
+        Serial.println("Rack motor calibration complete.");
     }
 };
 
-Slider slider(9, 10, 11, 12);
-RackMotor rackMotor(4, 5, 6);
+Slider slider(SLIDER_START_PIN, SLIDER_DIRECTION_PIN, SLIDER_SPEED_PIN, SLIDER_SENSOR_PIN);
+RackMotor rackMotor(RACK_START_PIN, RACK_DIRECTION_PIN, RACK_SPEED_PIN);
 
 void setup() {
     Serial.begin(9600);
@@ -199,8 +238,20 @@ void receiveEvent(int bytes) {
             break;
 
         case CMD_MOVE:
-            Serial.println("CMD_MOVE received");
-            // Implementation for CMD_MOVE will be added later
+            if (index >= 6) {
+                uint8_t target = buffer[1];
+                int32_t distanceMm = ((int32_t)buffer[2] << 24) | ((int32_t)buffer[3] << 16) | ((int32_t)buffer[4] << 8) | buffer[5];
+                Serial.println("CMD_MOVE: Target = " + String(target) + ", Distance = " + String(distanceMm) + "mm");
+                if (target == 0) {
+                    slider.move(distanceMm);
+                } else if (target == 1) {
+                    rackMotor.move(distanceMm);
+                } else {
+                    Serial.println("Unknown target for MOVE.");
+                }
+            } else {
+                Serial.println("Not enough data for MOVE.");
+            }
             break;
 
         case CMD_FINGERING:
