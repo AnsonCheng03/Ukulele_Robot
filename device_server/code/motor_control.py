@@ -14,7 +14,7 @@ i2c_bus = smbus.SMBus(1)
 
 def send_motor_command(slave_address, command_type, target, *args):
     try:
-        control_data = [command_type, target]
+        control_data = [target]
         if command_type == 0:  # Control
             speed = args[0]
             duration = args[1]
@@ -60,7 +60,7 @@ def handle_command_input(command):
         command_mapping = {"0": 0, "control": 0, "1": 1, "calibrate": 1, "2": 2, "move": 2, "3": 3, "fingering": 3, "4": 4, "chord": 4}
         command_type_input = command_parts[1].lower()
 
-        if len(command_parts) < 4:
+        if len(command_parts) < 5:
             if command_type_input in command_mapping:
                 command_type = command_mapping[command_type_input]
                 target = int(command_parts[1])
@@ -69,10 +69,10 @@ def handle_command_input(command):
             else:
                 print("Invalid command type")
                 return
-        elif 4 <= len(command_parts) <= 5:
+        elif 5 <= len(command_parts) <= 6:
             # If 4 or 5 parts, it must be a control command
             command_type = 0  # Force command to be Control
-            command_sub = len(command_parts) - 4
+            command_sub = len(command_parts) - 5
             target = int(command_parts[command_sub + 1])
             speed = int(command_parts[command_sub + 2])
             duration = int(command_parts[command_sub + 3]) 
