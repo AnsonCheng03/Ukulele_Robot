@@ -13,6 +13,7 @@ slaves = {
 i2c_bus = smbus.SMBus(1)
 
 def send_motor_command(slave_address, command_type, target, *args):
+    print(f"Sending command to slave {slaves[slave_address]['Name']} (address {hex(slave_address)}) with type {command_type}, target {target} and args {args}")
     try:
         control_data = [target]
         if command_type == 0:  # Control
@@ -46,7 +47,6 @@ def send_motor_command(slave_address, command_type, target, *args):
             control_data.extend(chord_details)
 
         i2c_bus.write_i2c_block_data(slave_address, command_type, control_data) # 0x00 is control command
-        print(f"Sending command to slave {slaves[slave_address]['Name']} (address {hex(slave_address)}) with type {command_type}, target {target} and args {args}")
     except OSError as e:
         print(f"Failed to communicate with slave {slaves[slave_address]['Name']} (address {hex(slave_address)}): {e}")
 
