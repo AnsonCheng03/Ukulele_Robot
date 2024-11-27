@@ -112,14 +112,28 @@ private:
     bool isCalibrating;
 };
 
+class RackMotor : public Device {
+public:
+    RackMotor(int startPin, int directionPin, int speedPin)
+        : Device(startPin, directionPin, speedPin) {}
+
+    void calibrate() {
+        Serial.println("Calibrating rack motor...");
+        setDirection(HIGH);
+        analogWrite(speedPin, 500);
+        startMovement(100);
+        Serial.println("Calibration started: Moving rack motor");
+    }
+};
+
 Slider slider(9, 10, 11, 12);
-Device motorDevice(4, 5, 6);
+RackMotor rackMotor(4, 5, 6);
 
 void setup() {
     Serial.begin(9600);
     Serial.println("Board address: " + String(boardAddress));
     slider.setup();
-    motorDevice.setup();
+    rackMotor.setup();
     Wire.begin(boardAddress);
     Wire.onReceive(receiveEvent);
     Serial.println("Broadcast started");
@@ -127,7 +141,7 @@ void setup() {
 
 void loop() {
     slider.update();
-    motorDevice.update();
+    rackMotor.update();
     delay(50);
 }
 
@@ -150,16 +164,16 @@ void receiveEvent(int bytes) {
         case CMD_CONTROL:
             if (index >= 9) {
                 uint8_t target = buffer[1];
-                uint16_t speedHz = buffer[2] | (buffer[3] << 8);
-                uint32_t durationTenths = buffer[4] | (buffer[5] << 8) | (buffer[6] << 16) | (buffer[7] << 24);
+                uint16_t speedHz = (buffer[2]) | (buffer[3] << 8);
+                uint32_t durationTenths = (buffer[4]) | (buffer[5] << 8) | (buffer[6] << 16) | (buffer[7] << 24);
                 uint8_t direction = buffer[8];
 
                 Serial.println("CMD_CONTROL: Target = " + String(target) + ", Speed = " + String(speedHz) + ", Duration = " + String(durationTenths * 0.1) + "s, Direction = " + String(direction));
 
-                if (target == 1) {
+                if (target == 0) {
                     slider.control(direction, speedHz, durationTenths);
-                } else if (target == 2) {
-                    motorDevice.control(direction, speedHz, durationTenths);
+                } else if (target == 1) {
+                    rackMotor.control(direction, speedHz, durationTenths);
                 } else {
                     Serial.println("Unknown target.");
                 }
@@ -172,10 +186,10 @@ void receiveEvent(int bytes) {
             if (index >= 2) {
                 uint8_t target = buffer[1];
                 Serial.println("CMD_CALIBRATE: Target = " + String(target));
-                if (target == 1) {
+                if (target == 0) {
                     slider.calibrate();
-                } else if (target == 2) {
-                    Serial.println("No calibration implemented for motorDevice.");
+                } else if (target == 1) {
+                    rackMotor.calibrate();
                 } else {
                     Serial.println("Unknown target for CALIBRATE.");
                 }

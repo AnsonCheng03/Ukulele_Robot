@@ -18,13 +18,15 @@ def send_motor_command(slave_address, command_type, target, *args):
         if command_type == 0:  # Control
             speed = args[0]
             duration = args[1]
+            direction = args[2]
             control_data.extend([
                 (speed >> 8) & 0xFF,
                 speed & 0xFF,
                 (duration >> 24) & 0xFF,
                 (duration >> 16) & 0xFF,
                 (duration >> 8) & 0xFF,
-                duration & 0xFF
+                duration & 0xFF,
+                direction & 0xFF
             ])
         elif command_type == 1:  # Calibrate
             pass
@@ -76,7 +78,8 @@ def handle_command_input(command):
             target = int(command_parts[command_sub + 1])
             speed = int(command_parts[command_sub + 2])
             duration = int(command_parts[command_sub + 3]) 
-            send_motor_command(slave_address, command_type, target, speed, duration)
+            direction = int(command_parts[command_sub + 4]) 
+            send_motor_command(slave_address, command_type, target, speed, duration, direction)
         else:
             print("Invalid command format: too many arguments")
             return
