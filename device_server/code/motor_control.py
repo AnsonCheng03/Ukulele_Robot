@@ -105,11 +105,11 @@ def handle_command_input(command):
         print("Invalid command format")
         return
     try:
-        slave_address = int(command_parts[0])
-
         # Simplified command mapping
         command_mapping = {"0": 0, "control": 0, "1": 1, "calibrate": 1, "2": 2, "move": 2, "3": 3, "fingering": 3, "4": 4, "chord": 4, "debug": 5}
-        command_type_input = command_parts[1].lower()
+        command_type_input = command_parts[0].lower()
+        
+        slave_address = command_parts[1] if len(command_parts) != 5 else command_parts[0]
 
         if len(command_parts) < 5 or command_type_input == "debug":
             if command_type_input in command_mapping:
@@ -127,7 +127,7 @@ def handle_command_input(command):
                         send_motor_command(address, 3, note)
                 else:
                     args = command_parts[2:]
-                    send_motor_command(slave_address, command_type, *args)
+                    send_motor_command(int(slave_address), command_type, *args)
             else:
                 print("Invalid command type")
                 return
