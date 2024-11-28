@@ -119,10 +119,7 @@ def handle_command_input(command):
                 command_type = command_mapping[command_type_input]
                 
                 if command_type == 4:
-                    if len(command_parts) < 3:
-                        print("Invalid chord command format")
-                        return
-                    chord = command_parts[2].upper()
+                    chord = command_parts[1].upper()
                     if chord not in chord_mapping:
                         print(f"Invalid chord: {chord}")
                         return
