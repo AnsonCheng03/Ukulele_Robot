@@ -31,9 +31,17 @@ void Device::move(int distanceMm) {
         Serial.println("Requested distance exceeds maximum allowed distance. Cannot move.");
         return;
     }
+    if(distanceMm == 0) {
+        Serial.println("Requested distance is zero. No movement needed.");
+        return;
+    }
     int direction = distanceMm >= 0 ? HIGH : LOW;
     int distanceAbs = abs(distanceMm);
     unsigned long durationTenths = distanceAbs * DISTANCE_TO_DURATION_RATIO * 100;
+    if (durationTenths <= 0) {
+        Serial.println("Requested distance is too small. Cannot move.");
+        return;
+    }
     Serial.println("Move device - Distance: " + String(distanceMm) + "mm, Direction: " + String(direction) + ", Duration: " + String(durationTenths * 0.1) + "s");
     setDirection(direction);
     analogWrite(speedPin, FIXED_MOVE_SPEED_HZ); // Fixed speed for movement
