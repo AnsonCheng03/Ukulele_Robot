@@ -45,6 +45,18 @@ def send_motor_command(slave_address, command_type, target, *args):
         elif command_type == 4:  # Chord
             chord_details = args[0]
             control_data.extend(chord_details)
+        elif command_type == 5:  # Debug
+            action = args[0]
+            control_data.extend([action])
+            if action == 0: # moveTo
+                #    int32_t positionMm = ((int32_t)buffer[3] << 24) | ((int32_t)buffer[4] << 16) | ((int32_t)buffer[5] << 8) | buffer[6];
+                position_mm = args[1]
+                control_data.extend([
+                    (position_mm >> 24) & 0xFF,
+                    (position_mm >> 16) & 0xFF,
+                    (position_mm >> 8) & 0xFF,
+                    position_mm & 0xFF
+                ])
 
         i2c_bus.write_i2c_block_data(slave_address, command_type, control_data) # 0x00 is control command
     except OSError as e:
@@ -59,7 +71,7 @@ def handle_command_input(command):
         slave_address = int(command_parts[0])
 
         # Simplified command mapping
-        command_mapping = {"0": 0, "control": 0, "1": 1, "calibrate": 1, "2": 2, "move": 2, "3": 3, "fingering": 3, "4": 4, "chord": 4}
+        command_mapping = {"0": 0, "control": 0, "1": 1, "calibrate": 1, "2": 2, "move": 2, "3": 3, "fingering": 3, "4": 4, "chord": 4, "debug": 5, "5": 5}
         command_type_input = command_parts[1].lower()
 
         if len(command_parts) < 5:

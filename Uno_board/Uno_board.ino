@@ -8,6 +8,7 @@
 #define CMD_MOVE 2
 #define CMD_FINGERING 3
 #define CMD_CHORD 4
+#define CMD_DEBUG 5
 
 #define SLIDER_START_PIN 9
 #define SLIDER_DIRECTION_PIN 10
@@ -117,6 +118,26 @@ void receiveEvent(int bytes) {
         case CMD_CHORD:
             Serial.println("CMD_CHORD received");
             // Implementation for CMD_CHORD will be added later
+            break;
+
+        case CMD_DEBUG:
+            Serial.println("CMD_DEBUG received");
+            uint8_t target = buffer[1];
+            uint8_t action = buffer[2];
+            switch (action) {
+                case 0: // moveTo
+                    int32_t positionMm = ((int32_t)buffer[3] << 24) | ((int32_t)buffer[4] << 16) | ((int32_t)buffer[5] << 8) | buffer[6];
+                    if (target == 0 || target == 1) {
+                        slider.moveTo(positionMm);
+                    }
+                    if (target == 0 || target == 2) {
+                        rackMotor.moveTo(positionMm);
+                    }
+                    break;
+
+                default:
+                    break;
+            }
             break;
 
         default:
