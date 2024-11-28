@@ -46,10 +46,10 @@ def send_motor_command(slave_address, command_type, target, *args):
             chord_details = args[0]
             control_data.extend(chord_details)
         elif command_type == 5:  # Debug
-            action = args[0]
+            action_mapping = {"0": 0, "moveTo": 0}
+            action = action_mapping[args[0].lower()]
             control_data.extend([action])
             if action == 0: # moveTo
-                #    int32_t positionMm = ((int32_t)buffer[3] << 24) | ((int32_t)buffer[4] << 16) | ((int32_t)buffer[5] << 8) | buffer[6];
                 position_mm = args[1]
                 control_data.extend([
                     (position_mm >> 24) & 0xFF,
