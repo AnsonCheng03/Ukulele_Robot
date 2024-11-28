@@ -54,13 +54,14 @@ def send_motor_command(slave_address, command_type, *args):
             control_data.extend(chord_details)
         elif command_type == 5:  # Debug
             action_mapping = {"0": 0, "moveTo": 0}
+            if args[0].lower() not in action_mapping:
+                print(f"Invalid debug action: {args[0]}")
+                return
             action = action_mapping[args[0].lower()]
             control_data.extend([action])
             if action == 0: # moveTo
-                print(f"Debugging moveTo: args {args}")
                 target = args[1]
                 position_mm = args[2]
-                print(f"Debugging moveTo: target {target}, position {position_mm}")
                 control_data.extend([
                     target,
                     (position_mm >> 24) & 0xFF,
