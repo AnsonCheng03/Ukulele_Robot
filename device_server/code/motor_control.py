@@ -83,10 +83,10 @@ def handle_command_input(command):
         command_mapping = {"0": 0, "control": 0, "1": 1, "calibrate": 1, "2": 2, "move": 2, "3": 3, "fingering": 3, "4": 4, "chord": 4, "debug": 5, "5": 5}
         command_type_input = command_parts[1].lower()
 
-        if len(command_parts) < 5:
+        if (len(command_parts) < 5 or command_parts[1].lower() in ["calibrate", "move", "fingering", "chord", "debug"]):
             if command_type_input in command_mapping:
                 command_type = command_mapping[command_type_input]
-                args = list(map(int, command_parts[2:]))
+                args = command_parts[2:]
                 send_motor_command(slave_address, command_type, *args)
             else:
                 print("Invalid command type")
