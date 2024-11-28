@@ -4,8 +4,8 @@ import smbus
 slaves = {
     5: {"Name": "Right Motor 1"}, # Near Guitar
     6: {"Name": "Right Motor 2"}, 
-    # 10: {"Name": "Left Second Motor"},
-    # 11: {"Name": "Right Second Motor"},
+    10: {"Name": "Left Second Motor"},
+    11: {"Name": "Right Second Motor"},
     # 14: {"Name": "Control Motor"},
 }
 
