@@ -57,8 +57,10 @@ def send_motor_command(slave_address, command_type, *args):
             action = action_mapping[args[0].lower()]
             control_data.extend([action])
             if action == 0: # moveTo
+                print(f"Debugging moveTo: args {args}")
                 target = args[1]
                 position_mm = args[2]
+                print(f"Debugging moveTo: target {target}, position {position_mm}")
                 control_data.extend([
                     target,
                     (position_mm >> 24) & 0xFF,
