@@ -8,8 +8,6 @@
 #define CMD_CONTROL 0
 #define CMD_CALIBRATE 1
 #define CMD_MOVE 2
-#define CMD_FINGERING 3
-#define CMD_CHORD 4
 #define CMD_DEBUG 5
 
 #define SLIDER_START_PIN 9
@@ -151,16 +149,6 @@ void receiveEvent(int bytes)
         {
             Serial.println("Not enough data for MOVE.");
         }
-        break;
-
-    case CMD_FINGERING:
-        Serial.println("CMD_FINGERING received");
-        // Implementation for CMD_FINGERING will be added later
-        break;
-
-    case CMD_CHORD:
-        Serial.println("CMD_CHORD received");
-        // Implementation for CMD_CHORD will be added later
         break;
 
     case CMD_DEBUG:
