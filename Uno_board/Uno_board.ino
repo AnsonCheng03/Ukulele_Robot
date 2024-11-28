@@ -124,14 +124,14 @@ void receiveEvent(int bytes) {
             Serial.println("CMD_DEBUG received");
             uint8_t action = buffer[1];
             switch (action) {
-                case 0: // moveTo
+                case 0: // moveBy
                     uint8_t target = buffer[2];
                     int32_t positionMm = ((int32_t)buffer[3] << 24) | ((int32_t)buffer[4] << 16) | ((int32_t)buffer[5] << 8) | buffer[6];
                     if (target == 0 || target == 1) {
-                        slider.moveTo(positionMm);
+                        slider.moveBy(positionMm);
                     }
                     if (target == 0 || target == 2) {
-                        rackMotor.moveTo(positionMm);
+                        rackMotor.moveBy(positionMm);
                     }
                     break;
 

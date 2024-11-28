@@ -22,17 +22,13 @@ void Device::control(int direction, int speedHz, int durationTenths) {
     startMovement(durationTenths);
 }
 
-void Device::move(int distanceMm) {
-    if (!isCalibrated) {
-        Serial.println("Device not calibrated. Cannot move.");
-        return;
-    }
-    if (abs(distanceMm) > MAX_DISTANCE_MM) {
-        Serial.println("Requested distance exceeds maximum allowed distance. Cannot move.");
-        return;
-    }
+void Device::moveBy(int distanceMm) {
     if(distanceMm == 0) {
         Serial.println("Requested distance is zero. No movement needed.");
+        return;
+    }
+    if(currentPosition + distanceMm < 0 || currentPosition + distanceMm > MAX_DISTANCE_MM) {
+        Serial.println("Requested distance exceeds minimum allowed distance. Cannot move.");
         return;
     }
     int direction = distanceMm >= 0 ? HIGH : LOW;
@@ -49,8 +45,16 @@ void Device::move(int distanceMm) {
     currentPosition += distanceMm;
 }
 
-void Device::moveTo(int positionMm) {
-    move(positionMm - currentPosition);
+void Device::move(int positionMm) {
+    if (!isCalibrated) {
+        Serial.println("Device not calibrated. Cannot move.");
+        return;
+    }
+    // if (abs(distanceMm) > MAX_DISTANCE_MM || distanceMm <= 0) {
+    //     Serial.println("Requested distance exceeds maximum allowed distance. Cannot move.");
+    //     return;
+    // }
+    moveBy(positionMm - currentPosition);
 }
 
 void Device::update() {

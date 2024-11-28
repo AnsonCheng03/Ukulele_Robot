@@ -10,7 +10,7 @@ public:
     void setup();
     void control(int direction, int speedHz, int durationTenths);
     void move(int distanceMm);
-    void moveTo(int positionMm);
+    void moveBy(int positionMm);
     void update();
     
 protected:
