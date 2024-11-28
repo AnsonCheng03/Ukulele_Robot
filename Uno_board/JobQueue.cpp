@@ -13,20 +13,21 @@ bool isJobQueueFull() {
     return (jobQueueEnd + 1) % MAX_QUEUE_SIZE == jobQueueStart;
 }
 
-void enqueueJob(JobFunction job) {
+void enqueueJob(JobFunction job, void* context) {
     if (!isJobQueueFull()) {
         jobQueue[jobQueueEnd].function = job;
+        jobQueue[jobQueueEnd].context = context;
         jobQueueEnd = (jobQueueEnd + 1) % MAX_QUEUE_SIZE;
     } else {
-        Serial.println("Job queue is full, cannot enqueue new job.");
+        Serial.println("Job queue is full.");
     }
 }
 
 Job dequeueJob() {
-    Job job = { nullptr };
+    Job job = { nullptr, nullptr };  // Initialize both function and context to nullptr
     if (!isJobQueueEmpty()) {
-        job = jobQueue[jobQueueStart];
-        jobQueueStart = (jobQueueStart + 1) % MAX_QUEUE_SIZE;
+        job = jobQueue[jobQueueStart];  // Retrieve the job at the start of the queue
+        jobQueueStart = (jobQueueStart + 1) % MAX_QUEUE_SIZE;  // Move the queue start pointer
     } else {
         Serial.println("Job queue is empty.");
     }

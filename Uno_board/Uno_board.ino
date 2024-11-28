@@ -1,7 +1,8 @@
+#include <Wire.h>
 #include "Slider.h"
 #include "RackMotor.h"
-#include <Wire.h>
 #include "JobQueue.h"
+#include "Fingering.h"
 
 #define boardAddress 5
 #define CMD_CONTROL 0
@@ -39,19 +40,16 @@ void setup()
     Serial.println("Broadcast started");
 }
 
-void loop()
-{
+void loop() {
     slider.update();
     rackMotor.update();
 
     // If both slider and rack motor are not moving, execute the next pending job
-    if (slider.isMovementComplete() && rackMotor.isMovementComplete() && !isJobQueueEmpty())
-    {
+    if (slider.isMovementComplete() && rackMotor.isMovementComplete() && !isJobQueueEmpty()) {
         // Get the next job from the queue
         Job nextJob = dequeueJob();
-        if (nextJob.function != nullptr)
-        {
-            nextJob.function(); // Execute the job
+        if (nextJob.function != nullptr) {
+            nextJob.function(nextJob.context); // Execute the job with context
         }
     }
 
@@ -138,15 +136,11 @@ void receiveEvent(int bytes)
 
             if (target == 0)
             {
-                rackMotor.up();
-                slider.move(distanceMm);
-                enqueueJob([]()
-                           { rackMotor.down(); });
+                moveFinger(slider, rackMotor, distanceMm);
             }
             else if (target == 1)
             {
                 slider.move(distanceMm);
-                ;
             }
             else if (target == 2)
             {
