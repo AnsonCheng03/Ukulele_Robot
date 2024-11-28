@@ -111,6 +111,6 @@ def handle_command_input(command):
         print(f"Invalid command format: {e}")
     except KeyError as e:
         print(f"Invalid slave address: {e}")
-    except OSError as e:
+    except Exception as e:
         print(f"Failed to send command: {e}")
     pass
