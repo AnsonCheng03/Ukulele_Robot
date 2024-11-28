@@ -1,6 +1,8 @@
 #include "Slider.h"
 #include "RackMotor.h"
 #include <Wire.h>
+#include <queue>
+#include <functional>
 
 #define boardAddress 5
 #define CMD_CONTROL 0
@@ -37,7 +39,17 @@ void setup() {
 void loop() {
     slider.update();
     rackMotor.update();
-    delay(50);
+
+    // If both slider and rack motor are not moving, execute the next pending job
+    if (slider.isMovementComplete() && rackMotor.isMovementComplete() && !jobQueue.empty()) {
+        // Get the next job from the queue
+        auto nextJob = jobQueue.front();
+        jobQueue.pop();
+        // Execute the job
+        nextJob();
+    }
+
+    delay(50); // Use caution with delay as it blocks the execution
 }
 
 void receiveEvent(int bytes) {
@@ -66,11 +78,17 @@ void receiveEvent(int bytes) {
                 Serial.println("CMD_CONTROL: Target = " + String(target) + ", Speed = " + String(speedHz) + ", Duration = " + String(durationTenths * 0.1) + "s, Direction = " + String(direction));
 
                 if (target == 0 || target == 1) {
-                    slider.control(direction, speedHz, durationTenths);
+                    // slider.control(direction, speedHz, durationTenths);
+                    jobQueue.push([direction, speedHz, durationTenths] {
+                        slider.control(direction, speedHz, durationTenths);
+                    });
                 } 
                 
                 if (target == 0 || target == 2) {
-                    rackMotor.control(direction, speedHz, durationTenths);
+                    // rackMotor.control(direction, speedHz, durationTenths);
+                    jobQueue.push([direction, speedHz, durationTenths] {
+                        rackMotor.control(direction, speedHz, durationTenths);
+                    });
                 } 
             } else {
                 Serial.println("Not enough data for CONTROL.");
@@ -82,11 +100,17 @@ void receiveEvent(int bytes) {
                 uint8_t target = buffer[1];
                 Serial.println("CMD_CALIBRATE: Target = " + String(target));
                 if (target == 0 || target == 1) {
-                    slider.calibrate();
+                    // slider.calibrate();
+                    jobQueue.push([] {
+                        slider.calibrate();
+                    });
                 } 
                 
                 if (target == 0 || target == 2) {
-                    rackMotor.calibrate();
+                    // rackMotor.calibrate();
+                    jobQueue.push([] {
+                        rackMotor.calibrate();
+                    });
                 } 
             } else {
                 Serial.println("Not enough data for CALIBRATE.");
@@ -99,13 +123,22 @@ void receiveEvent(int bytes) {
                 int32_t distanceMm = ((int32_t)buffer[2] << 24) | ((int32_t)buffer[3] << 16) | ((int32_t)buffer[4] << 8) | buffer[5];
                 Serial.println("CMD_MOVE: Target = " + String(target) + ", Distance = " + String(distanceMm) + "mm");
                 if (target == 0) {
-                    rackMotor.up();
-                    slider.move(distanceMm);
-                    rackMotor.down();
+                    // rackMotor.up();
+                    // slider.move(distanceMm);
+                    // rackMotor.down();
+                    jobQueue.push([distanceMm] {
+                        rackMotor.up();
+                    });
                 } else if (target == 1) {
-                    slider.move(distanceMm);
+                    // slider.move(distanceMm);
+                    jobQueue.push([distanceMm] {
+                        slider.move(distanceMm);
+                    });
                 } else if (target == 2) {
-                    rackMotor.move(distanceMm);
+                    // rackMotor.move(distanceMm);
+                    jobQueue.push([distanceMm] {
+                        rackMotor.move(distanceMm);
+                    });
                 } 
             } else {
                 Serial.println("Not enough data for MOVE.");
@@ -130,10 +163,16 @@ void receiveEvent(int bytes) {
                     uint8_t target = buffer[2];
                     int32_t positionMm = ((int32_t)buffer[3] << 24) | ((int32_t)buffer[4] << 16) | ((int32_t)buffer[5] << 8) | buffer[6];
                     if (target == 0 || target == 1) {
-                        slider.moveBy(positionMm);
+                        // slider.moveBy(positionMm);
+                        jobQueue.push([positionMm] {
+                            slider.moveBy(positionMm);
+                        });
                     }
                     if (target == 0 || target == 2) {
-                        rackMotor.moveBy(positionMm);
+                        // rackMotor.moveBy(positionMm);
+                        jobQueue.push([positionMm] {
+                            rackMotor.moveBy(positionMm);
+                        });
                     }
                     break;
 
@@ -147,3 +186,5 @@ void receiveEvent(int bytes) {
             break;
     }
 }
+
+std::queue<std::function<void()>> jobQueue;

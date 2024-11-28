@@ -92,3 +92,6 @@ void Device::setDirection(int direction) {
     Serial.println("Direction pin " + String(directionPin) + " set to " + String(direction));
 }
 
+bool Device::isMovementComplete() {
+    return !isMoving;
+}

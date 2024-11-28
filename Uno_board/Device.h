@@ -12,6 +12,7 @@ public:
     void move(int distanceMm);
     void moveBy(int positionMm);
     void update();
+    bool isMovementComplete();
     
 protected:
     int startPin, directionPin, speedPin;
