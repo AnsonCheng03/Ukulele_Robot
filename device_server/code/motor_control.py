@@ -45,11 +45,13 @@ def send_motor_command(slave_address, command_type, *args):
                 duration & 0xFF,
                 direction & 0xFF
             ])
+            i2c_bus.write_i2c_block_data(slave_address, command_type, control_data)
         elif command_type == 1:  # Calibrate
             if len(args) > 0:
                 control_data.extend(args[0]) # Calibration target
             else:
                 control_data.extend([0]) # Calibrate all
+            i2c_bus.write_i2c_block_data(slave_address, command_type, control_data)
             pass
         elif command_type == 2:  # Move
             target = int(args[0]) if len(args) == 2 else 0
@@ -61,6 +63,7 @@ def send_motor_command(slave_address, command_type, *args):
                 (distance >> 8) & 0xFF,
                 distance & 0xFF
             ])
+            i2c_bus.write_i2c_block_data(slave_address, command_type, control_data)
         elif command_type == 3:  # Fingering
             note = args[0].upper()
             if note not in note_mapping[slave_address]:
@@ -74,6 +77,7 @@ def send_motor_command(slave_address, command_type, *args):
                 (distance >> 8) & 0xFF,
                 distance & 0xFF
             ])
+            i2c_bus.write_i2c_block_data(slave_address, 2, control_data)
         elif command_type == 5:  # Debug
             action_mapping = {"moveby": 0}
             action_type_input = args[0].lower()
@@ -92,8 +96,7 @@ def send_motor_command(slave_address, command_type, *args):
                     (position_mm >> 8) & 0xFF,
                     position_mm & 0xFF
                 ])
-
-        i2c_bus.write_i2c_block_data(slave_address, command_type, control_data) # 0x00 is control command
+            i2c_bus.write_i2c_block_data(slave_address, command_type, control_data)
     except OSError as e:
         print(f"Failed to communicate with slave {slaves[slave_address]['Name']} (address {hex(slave_address)}): {e}")
     except Exception as e:
