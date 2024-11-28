@@ -17,11 +17,12 @@ def send_motor_command(slave_address, command_type, *args):
         print(f"Sending command to slave {slaves[slave_address]['Name']} (address {hex(slave_address)}) with type {command_type}, and args {args}")
         control_data = []
         if command_type == 0:  # Control
-            target = args[0]
-            speed = args[1]
-            duration = args[2]
-            direction = args[3]
+            target = int(args[0])
+            speed = int(args[1])
+            duration = int(args[2])
+            direction = int(args[3])
             control_data.extend([
+                target,
                 (speed >> 8) & 0xFF,
                 speed & 0xFF,
                 (duration >> 24) & 0xFF,
@@ -37,16 +38,17 @@ def send_motor_command(slave_address, command_type, *args):
                 control_data.extend([0]) # Calibrate all
             pass
         elif command_type == 2:  # Move
-            target = args[0]
-            distance = args[1]
+            target = int(args[0])
+            distance = int(args[1])
             control_data.extend([
+                target,
                 (distance >> 24) & 0xFF,
                 (distance >> 16) & 0xFF,
                 (distance >> 8) & 0xFF,
                 distance & 0xFF
             ])
         elif command_type == 3:  # Fingering
-            target = args[0]
+            target = int(args[0])
             fingering_details = args[1]
             control_data.extend([target, fingering_details])
         elif command_type == 4:  # Chord
@@ -61,8 +63,8 @@ def send_motor_command(slave_address, command_type, *args):
             action = action_mapping[action_type_input]
             control_data.extend([action])
             if action == 0: # moveTo
-                target = args[1]
-                position_mm = args[2]
+                target = int(args[1])
+                position_mm = int(position_mm)
                 control_data.extend([
                     target,
                     (position_mm >> 24) & 0xFF,
@@ -70,7 +72,6 @@ def send_motor_command(slave_address, command_type, *args):
                     (position_mm >> 8) & 0xFF,
                     position_mm & 0xFF
                 ])
-                print(f"Debugging moveTo: target {target}, position {position_mm}, control_data {control_data}")
 
         i2c_bus.write_i2c_block_data(slave_address, command_type, control_data) # 0x00 is control command
     except OSError as e:
