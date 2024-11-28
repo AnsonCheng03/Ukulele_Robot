@@ -80,10 +80,10 @@ def handle_command_input(command):
         slave_address = int(command_parts[0])
 
         # Simplified command mapping
-        command_mapping = {"0": 0, "control": 0, "1": 1, "calibrate": 1, "2": 2, "move": 2, "3": 3, "fingering": 3, "4": 4, "chord": 4, "debug": 5, "5": 5}
+        command_mapping = {"0": 0, "control": 0, "1": 1, "calibrate": 1, "2": 2, "move": 2, "3": 3, "fingering": 3, "4": 4, "chord": 4, "debug": 5}
         command_type_input = command_parts[1].lower()
 
-        if (len(command_parts) < 5 or command_parts[1].lower() in ["calibrate", "move", "fingering", "chord", "debug"]):
+        if len(command_parts) < 5 or command_type_input == "debug":
             if command_type_input in command_mapping:
                 command_type = command_mapping[command_type_input]
                 args = command_parts[2:]
