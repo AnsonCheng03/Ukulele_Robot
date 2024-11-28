@@ -98,11 +98,13 @@ void receiveEvent(int bytes) {
                 uint8_t target = buffer[1];
                 int32_t distanceMm = ((int32_t)buffer[2] << 24) | ((int32_t)buffer[3] << 16) | ((int32_t)buffer[4] << 8) | buffer[5];
                 Serial.println("CMD_MOVE: Target = " + String(target) + ", Distance = " + String(distanceMm) + "mm");
-                if (target == 0 || target == 1) {
+                if (target == 0) {
+                    rackMotor.up();
                     slider.move(distanceMm);
-                } 
-                
-                if (target == 0 || target == 2) {
+                    rackMotor.down();
+                } else if (target == 1) {
+                    slider.move(distanceMm);
+                } else if (target == 2) {
                     rackMotor.move(distanceMm);
                 } 
             } else {

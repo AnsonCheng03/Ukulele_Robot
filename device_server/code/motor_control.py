@@ -38,8 +38,8 @@ def send_motor_command(slave_address, command_type, *args):
                 control_data.extend([0]) # Calibrate all
             pass
         elif command_type == 2:  # Move
-            target = int(args[0])
-            distance = int(args[1])
+            target = int(args[0]) if len(args) == 2 else 0
+            distance = int(args[1]) if len(args) == 2 else int(args[0])
             control_data.extend([
                 target,
                 (distance >> 24) & 0xFF,

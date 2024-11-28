@@ -7,6 +7,8 @@ class RackMotor : public Device {
 public:
     RackMotor(int startPin, int directionPin, int speedPin);
     void calibrate();
+    void up();
+    void down();
 };
 
 #endif // RACKMOTOR_H
