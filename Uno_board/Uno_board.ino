@@ -122,10 +122,10 @@ void receiveEvent(int bytes) {
 
         case CMD_DEBUG:
             Serial.println("CMD_DEBUG received");
-            uint8_t target = buffer[1];
-            uint8_t action = buffer[2];
+            uint8_t action = buffer[1];
             switch (action) {
                 case 0: // moveTo
+                    uint8_t target = buffer[2];
                     int32_t positionMm = ((int32_t)buffer[3] << 24) | ((int32_t)buffer[4] << 16) | ((int32_t)buffer[5] << 8) | buffer[6];
                     if (target == 0 || target == 1) {
                         slider.moveTo(positionMm);

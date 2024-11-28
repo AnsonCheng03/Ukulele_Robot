@@ -12,14 +12,15 @@ slaves = {
 # Initialize I2C bus (1 for Raspberry Pi)
 i2c_bus = smbus.SMBus(1)
 
-def send_motor_command(slave_address, command_type, target, *args):
+def send_motor_command(slave_address, command_type, *args):
     print(f"Sending command to slave {slaves[slave_address]['Name']} (address {hex(slave_address)}) with type {command_type}, target {target} and args {args}")
     try:
-        control_data = [target]
+        control_data = []
         if command_type == 0:  # Control
-            speed = args[0]
-            duration = args[1]
-            direction = args[2]
+            target = args[0]
+            speed = args[1]
+            duration = args[2]
+            direction = args[3]
             control_data.extend([
                 (speed >> 8) & 0xFF,
                 speed & 0xFF,
@@ -30,9 +31,14 @@ def send_motor_command(slave_address, command_type, target, *args):
                 direction & 0xFF
             ])
         elif command_type == 1:  # Calibrate
+            if len(args) > 0:
+                control_data.extend(args[0]) # Calibration target
+            else:
+                control_data.extend([0]) # Calibrate all
             pass
         elif command_type == 2:  # Move
-            distance = args[0]
+            target = args[0]
+            distance = args[1]
             control_data.extend([
                 (distance >> 24) & 0xFF,
                 (distance >> 16) & 0xFF,
@@ -40,8 +46,9 @@ def send_motor_command(slave_address, command_type, target, *args):
                 distance & 0xFF
             ])
         elif command_type == 3:  # Fingering
-            fingering_details = args[0]
-            control_data.extend(fingering_details)
+            target = args[0]
+            fingering_details = args[1]
+            control_data.extend([target, fingering_details])
         elif command_type == 4:  # Chord
             chord_details = args[0]
             control_data.extend(chord_details)
@@ -50,8 +57,10 @@ def send_motor_command(slave_address, command_type, target, *args):
             action = action_mapping[args[0].lower()]
             control_data.extend([action])
             if action == 0: # moveTo
-                position_mm = args[1]
+                target = args[1]
+                position_mm = args[2]
                 control_data.extend([
+                    target,
                     (position_mm >> 24) & 0xFF,
                     (position_mm >> 16) & 0xFF,
                     (position_mm >> 8) & 0xFF,
@@ -77,9 +86,8 @@ def handle_command_input(command):
         if len(command_parts) < 5:
             if command_type_input in command_mapping:
                 command_type = command_mapping[command_type_input]
-                target = int(command_parts[2])
-                args = list(map(int, command_parts[3:]))
-                send_motor_command(slave_address, command_type, target, *args)
+                args = list(map(int, command_parts[2:]))
+                send_motor_command(slave_address, command_type, *args)
             else:
                 print("Invalid command type")
                 return
