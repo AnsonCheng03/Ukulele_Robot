@@ -64,7 +64,7 @@ def send_motor_command(slave_address, command_type, *args):
             control_data.extend([action])
             if action == 0: # moveTo
                 target = int(args[1])
-                position_mm = int(position_mm)
+                position_mm = int(args[2])
                 control_data.extend([
                     target,
                     (position_mm >> 24) & 0xFF,
