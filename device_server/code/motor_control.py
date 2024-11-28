@@ -53,7 +53,7 @@ def send_motor_command(slave_address, command_type, *args):
             chord_details = args[0]
             control_data.extend(chord_details)
         elif command_type == 5:  # Debug
-            action_mapping = {"0": 0, "moveTo": 0}
+            action_mapping = {"0": 0, "moveto": 0}
             action_type_input = args[0].lower()
             if action_type_input not in action_mapping:
                 print(f"Invalid debug action: {action_type_input}")
