@@ -12,6 +12,20 @@ slaves = {
 # Initialize I2C bus (1 for Raspberry Pi)
 i2c_bus = smbus.SMBus(1)
 
+note_mapping = {  # Address: Note: MoveDistance
+    5: {'A': 10, 'A#': 29, 'B': 48},
+    6: {'C': 10, 'C#': 29, 'D': 48},
+    10: {'D#': 10, 'E': 29, 'F': 48},
+    11: {'F#': 10, 'G': 29, 'G#': 48},
+    14: {'A': 10, 'A#': 29, 'B': 48}
+}
+   
+chord_mapping = {  # Chord: [Note, Address]
+    'A': [['A', 5], ['C#', 6], ['E', 10]],
+    'Am': [['A', 5], ['C', 6], ['E', 10]],
+    'B': [['B', 5], ['D#', 6], ['F#', 10]],
+} 
+
 def send_motor_command(slave_address, command_type, *args):
     try:
         print(f"Sending command to slave {slaves[slave_address]['Name']} (address {hex(slave_address)}) with type {command_type}, and args {args}")
@@ -48,12 +62,18 @@ def send_motor_command(slave_address, command_type, *args):
                 distance & 0xFF
             ])
         elif command_type == 3:  # Fingering
-            target = int(args[0])
-            fingering_details = args[1]
-            control_data.extend([target, fingering_details])
-        elif command_type == 4:  # Chord
-            chord_details = args[0]
-            control_data.extend(chord_details)
+            note = args[0].upper()
+            if note not in note_mapping[slave_address]:
+                print(f"Invalid note: {note}")
+                return
+            distance = note_mapping[slave_address][note]
+            control_data.extend([
+                0,  # Target
+                (distance >> 24) & 0xFF,
+                (distance >> 16) & 0xFF,
+                (distance >> 8) & 0xFF,
+                distance & 0xFF
+            ])
         elif command_type == 5:  # Debug
             action_mapping = {"moveby": 0}
             action_type_input = args[0].lower()
@@ -94,8 +114,20 @@ def handle_command_input(command):
         if len(command_parts) < 5 or command_type_input == "debug":
             if command_type_input in command_mapping:
                 command_type = command_mapping[command_type_input]
-                args = command_parts[2:]
-                send_motor_command(slave_address, command_type, *args)
+                
+                if command_type == 4:
+                    if len(command_parts) < 3:
+                        print("Invalid chord command format")
+                        return
+                    chord = command_parts[2].upper()
+                    if chord not in chord_mapping:
+                        print(f"Invalid chord: {chord}")
+                        return
+                    for note, address in chord_mapping[chord]:
+                        send_motor_command(address, 3, note)
+                else:
+                    args = command_parts[2:]
+                    send_motor_command(slave_address, command_type, *args)
             else:
                 print("Invalid command type")
                 return
