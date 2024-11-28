@@ -66,6 +66,7 @@ def send_motor_command(slave_address, command_type, *args):
                     (position_mm >> 8) & 0xFF,
                     position_mm & 0xFF
                 ])
+                print(f"Debugging moveTo: target {target}, position {position_mm}, control_data {control_data}")
 
         i2c_bus.write_i2c_block_data(slave_address, command_type, control_data) # 0x00 is control command
     except OSError as e:
