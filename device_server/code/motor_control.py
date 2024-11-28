@@ -14,7 +14,7 @@ i2c_bus = smbus.SMBus(1)
 
 def send_motor_command(slave_address, command_type, *args):
     try:
-        print(f"Sending command to slave {slaves[slave_address]['Name']} (address {hex(slave_address)}) with type {command_type}, target {target} and args {args}")
+        print(f"Sending command to slave {slaves[slave_address]['Name']} (address {hex(slave_address)}) with type {command_type}, and args {args}")
         control_data = []
         if command_type == 0:  # Control
             target = args[0]
