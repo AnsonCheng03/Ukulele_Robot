@@ -23,6 +23,9 @@
 Slider slider(SLIDER_START_PIN, SLIDER_DIRECTION_PIN, SLIDER_SPEED_PIN, SLIDER_SENSOR_PIN);
 RackMotor rackMotor(RACK_START_PIN, RACK_DIRECTION_PIN, RACK_SPEED_PIN);
 
+unsigned long previousMillis = 0;
+const long interval = 50;
+
 void setup()
 {
     Serial.begin(9600);
@@ -52,7 +55,11 @@ void loop()
         }
     }
 
-    delay(50); // Use caution with delay as it blocks the execution
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis;
+        // Perform time-sensitive tasks without blocking
+    }
 }
 
 void receiveEvent(int bytes)
