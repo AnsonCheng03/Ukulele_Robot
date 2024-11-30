@@ -7,6 +7,9 @@ void rackMotorDown(void* context) {
 
 void moveFinger(Slider &slider, RackMotor &rackMotor, int distanceMm) {
     rackMotor.up();
+    if (distanceMm < 0) {
+        return;
+    }
     slider.move(distanceMm);
     enqueueJob(rackMotorDown, &rackMotor); 
 }
