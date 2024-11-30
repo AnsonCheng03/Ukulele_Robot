@@ -9,7 +9,6 @@ public:
     Device(int startPin, int directionPin, int speedPin);
     void setup();
     void control(int direction, int speedHz, int durationTenths);
-    void move(int distanceMm);
     void moveBy(int positionMm);
     void update();
     bool isMovementComplete();
@@ -19,8 +18,11 @@ protected:
     bool isMoving;
     bool isCalibrated;
     int currentPosition;
+    int max_distance;
+    int fixedMoveSpeed;
     unsigned long moveStartMillis;
     unsigned long moveDuration;
+    double distanceToDurationRatio;
 
     void startMovement(unsigned long durationTenths);
     void stopMovement();

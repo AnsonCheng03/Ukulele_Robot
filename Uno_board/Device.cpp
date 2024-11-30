@@ -1,20 +1,19 @@
 #include "Device.h"
 
-#define FIXED_MOVE_SPEED_HZ 1000
-#define DISTANCE_TO_DURATION_RATIO 0.01 // Updated ratio: 0.05 seconds per mm
-#define MAX_DISTANCE_MM 1000000 // Maximum allowed distance in mm (example large number)
-
 Device::Device(int startPin, int directionPin, int speedPin)
-    : startPin(startPin), directionPin(directionPin), speedPin(speedPin), isMoving(false), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0) {}
+    : startPin(startPin), directionPin(directionPin), speedPin(speedPin), isMoving(false), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0), max_distance(0), fixedMoveSpeed(1000), distanceToDurationRatio(0.01) {}
+    
 
-void Device::setup() {
+void Device::setup()
+{
     pinMode(startPin, OUTPUT);
     pinMode(directionPin, OUTPUT);
     pinMode(speedPin, OUTPUT);
     Serial.println("Device setup for pins: " + String(startPin) + ", " + String(directionPin) + ", " + String(speedPin));
 }
 
-void Device::control(int direction, int speedHz, int durationTenths) {
+void Device::control(int direction, int speedHz, int durationTenths)
+{
     Serial.println("Control device - Direction: " + String(direction) + ", Speed: " + String(speedHz) + ", Duration: " + String(durationTenths * 0.1) + "s");
     isCalibrated = false; // Control operation makes the device uncalibrated
     analogWrite(speedPin, speedHz);
@@ -22,48 +21,44 @@ void Device::control(int direction, int speedHz, int durationTenths) {
     startMovement(durationTenths);
 }
 
-void Device::moveBy(int distanceMm) {
-    if(distanceMm == 0) {
+void Device::moveBy(int distanceMm)
+{
+    if (distanceMm == 0)
+    {
         Serial.println("Requested distance is zero. No movement needed.");
         return;
     }
-    if(currentPosition + distanceMm < 0 || currentPosition + distanceMm > MAX_DISTANCE_MM) {
+    if (max_distance != 0 &&
+        (currentPosition + distanceMm < 0 || currentPosition + distanceMm > max_distance))
+    {
         Serial.println("Requested distance exceeds minimum allowed distance. Cannot move.");
         return;
     }
     int direction = distanceMm >= 0 ? HIGH : LOW;
     int distanceAbs = abs(distanceMm);
-    unsigned long durationTenths = distanceAbs * DISTANCE_TO_DURATION_RATIO * 100;
-    if (durationTenths <= 0) {
+    unsigned long durationTenths = distanceAbs * distanceToDurationRatio * 100;
+    if (durationTenths <= 0)
+    {
         Serial.println("Requested distance is too small. Cannot move.");
         return;
     }
     Serial.println("Move device - Distance: " + String(distanceMm) + "mm, Direction: " + String(direction) + ", Duration: " + String(durationTenths * 0.1) + "s");
     setDirection(direction);
-    analogWrite(speedPin, FIXED_MOVE_SPEED_HZ); // Fixed speed for movement
+    analogWrite(speedPin, fixedMoveSpeed); // Fixed speed for movement
     startMovement(durationTenths);
     currentPosition += distanceMm;
 }
 
-void Device::move(int positionMm) {
-    if (!isCalibrated) {
-        Serial.println("Device not calibrated. Cannot move.");
-        return;
-    }
-    // if (abs(distanceMm) > MAX_DISTANCE_MM || distanceMm <= 0) {
-    //     Serial.println("Requested distance exceeds maximum allowed distance. Cannot move.");
-    //     return;
-    // }
-    moveBy(positionMm - currentPosition);
-}
-
-void Device::update() {
-    if (isMoving && millis() - moveStartMillis >= moveDuration) {
+void Device::update()
+{
+    if (isMoving && millis() - moveStartMillis >= moveDuration)
+    {
         stopMovement();
     }
 }
 
-void Device::startMovement(unsigned long durationTenths) {
+void Device::startMovement(unsigned long durationTenths)
+{
     start();
     isMoving = true;
     moveStartMillis = millis();
@@ -71,27 +66,32 @@ void Device::startMovement(unsigned long durationTenths) {
     Serial.println("Movement started for duration: " + String(durationTenths * 0.1) + "s");
 }
 
-void Device::stopMovement() {
+void Device::stopMovement()
+{
     stop();
     isMoving = false;
     Serial.println("Device stopped at pin: " + String(startPin));
 }
 
-void Device::start() {
+void Device::start()
+{
     digitalWrite(startPin, LOW);
     Serial.println("Start pin " + String(startPin) + " set to LOW");
 }
 
-void Device::stop() {
+void Device::stop()
+{
     digitalWrite(startPin, HIGH);
     Serial.println("Start pin " + String(startPin) + " set to HIGH");
 }
 
-void Device::setDirection(int direction) {
+void Device::setDirection(int direction)
+{
     digitalWrite(directionPin, direction);
     Serial.println("Direction pin " + String(directionPin) + " set to " + String(direction));
 }
 
-bool Device::isMovementComplete() {
+bool Device::isMovementComplete()
+{
     return !isMoving;
 }

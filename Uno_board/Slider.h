@@ -9,6 +9,7 @@ public:
     void setup();
     void calibrate();
     void update();
+    void move(int positionMm);
 
 private:
     int sensorPin;

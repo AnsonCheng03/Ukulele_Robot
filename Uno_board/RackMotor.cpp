@@ -1,34 +1,52 @@
 #include "RackMotor.h"
-#define RACK_CALIBRATION_START_POSITION 10
 
 RackMotor::RackMotor(int startPin, int directionPin, int speedPin)
     : Device(startPin, directionPin, speedPin) {}
 
+void RackMotor::setup() {
+    Device::setup();
+    Serial.println("Rack motor setup for pins: " + String(startPin) + ", " + String(directionPin) + ", " + String(speedPin));
+    max_distance = 0;
+    fixedMoveSpeed = 1000;
+    distanceToDurationRatio = 0.01;
+}
+
+int RackMotor::getSpeedPin() {
+    return speedPin;
+}
+
+void calibrateMotorDown(void* context) {
+    RackMotor* rackMotor = static_cast<RackMotor*>(context);
+    rackMotor->moveBy(-5);
+}
+
 void RackMotor::calibrate() {
     Serial.println("Calibrating rack motor...");
     setDirection(HIGH);
-    analogWrite(speedPin, 500);
+    analogWrite(speedPin, 10);
     startMovement(5);
     Serial.println("Calibration started: Moving rack motor");
-    // Assume calibration is done successfully for now
     isCalibrated = true;
-    currentPosition = RACK_CALIBRATION_START_POSITION;
+    enqueueJob(calibrateMotorDown, this);
     Serial.println("Rack motor calibration complete.");
+}
+
+void RackMotor::move(int positionMm)
+{
+    if(positionMm > 0) {
+        up();
+    } else {
+        down();
+    }
 }
 
 // need integrate with calibration later
 void RackMotor::up() {
     Serial.println("Rack motor moving up...");
-    setDirection(HIGH);
-    analogWrite(speedPin, 500);
-    startMovement(5);
-    Serial.println("Rack motor moving up for 0.5s");
+    moveBy(-2);
 }
 
 void RackMotor::down() {
     Serial.println("Rack motor moving down...");
-    setDirection(LOW);
-    analogWrite(speedPin, 500);
-    startMovement(5);
-    Serial.println("Rack motor moving down for 0.5s");
+    moveBy(2);
 }
