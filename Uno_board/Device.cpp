@@ -87,7 +87,7 @@ void Device::stop()
 
 void Device::setDirection(int direction)
 {
-    digitalWrite(directionPin, boardAddress >= 10 ? !direction : direction);
+    digitalWrite(directionPin, direction);
     Serial.println("Direction pin " + String(directionPin) + " set to " + String(direction));
 }
 

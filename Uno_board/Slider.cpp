@@ -5,7 +5,7 @@ Slider::Slider(int startPin, int directionPin, int speedPin, int sensorPin, int 
 
 void Slider::setup() {
     Device::setup();
-    pinMode(sensorPin, INPUT_PULLUP);
+    pinMode(sensorPin, INPUT);
     Serial.println("Slider setup for sensor pin: " + String(sensorPin));
     max_distance = 100;
     fixedMoveSpeed = 1000;
@@ -25,7 +25,7 @@ void Slider::calibrate() {
 
         // Step 1: If the sensor is already HIGH, move backward for 5 seconds
         if (digitalRead(sensorPin) == HIGH) {
-            setDirection(HIGH);
+            setDirection(boardAddress >= 10 ? LOW : HIGH);
             analogWrite(speedPin, 1000);
             startMovement(movementDuration); // Move backward for 5 seconds
 
@@ -43,7 +43,7 @@ void Slider::calibrate() {
 
         // Step 3: Move slowly until it reaches the sensor, 5 seconds per loop
         while (digitalRead(sensorPin) == LOW) {
-            setDirection(LOW);
+            setDirection(boardAddress >= 10 ? HIGH : LOW);
             analogWrite(speedPin, 1000);
             startMovement(movementDuration); // Move slowly for 5 seconds
 
@@ -77,7 +77,7 @@ void Slider::move(int positionMm)
         Serial.println("Device not calibrated. Cannot move.");
         return;
     }
-    moveBy(positionMm - currentPosition);
+    moveBy(positionMm - currentPosition, boardAddress >= 10);
 }
 
 void Slider::update() {
