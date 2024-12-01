@@ -2,8 +2,8 @@ import smbus
 
 # Dictionary of I2C slaves with motor configurations
 slaves = {
-    5: {"Name": "Right Motor 1"}, # Near Guitar
-    6: {"Name": "Right Motor 2"}, 
+    8: {"Name": "Right Motor 1"}, # Near Guitar
+    9: {"Name": "Right Motor 2"}, 
     10: {"Name": "Left Second Motor"},
     11: {"Name": "Right Second Motor"},
     # 14: {"Name": "Control Motor"},
