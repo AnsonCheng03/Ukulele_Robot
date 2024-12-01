@@ -9,7 +9,7 @@ void RackMotor::setup() {
     max_distance = 0;
     fixedMoveSpeed = 1000;
     distanceToDurationRatio = 0.01;
-    setDirection(LOW);
+    setDirection(boardAddress >= 10 ? LOW : HIGH);
     analogWrite(speedPin, 100);
     startMovement(5);
 }
@@ -25,7 +25,7 @@ void calibrateMotorDown(void* context) {
 
 void RackMotor::calibrate() {
     Serial.println("Calibrating rack motor...");
-    setDirection(HIGH);
+    setDirection(boardAddress >= 10 ? LOW : HIGH);
     analogWrite(speedPin, 100);
     startMovement(5);
     Serial.println("Calibration started: Moving rack motor");
