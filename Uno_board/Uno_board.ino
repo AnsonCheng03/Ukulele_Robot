@@ -4,7 +4,7 @@
 #include "JobQueue.h"
 #include "Fingering.h"
 
-#define boardAddress 9
+#define boardAddress 8
 #define CMD_CONTROL 0
 #define CMD_CALIBRATE 1
 #define CMD_MOVE 2
@@ -13,14 +13,15 @@
 #define SLIDER_START_PIN 9
 #define SLIDER_DIRECTION_PIN 10
 #define SLIDER_SPEED_PIN 11
-#define SLIDER_SENSOR_PIN 12
+#define SLIDER_SENSOR_PIN A0
+// #define SLIDER_SENSOR_PIN 0
 
 #define RACK_START_PIN 4
 #define RACK_DIRECTION_PIN 5
 #define RACK_SPEED_PIN 6
 
-Slider slider(SLIDER_START_PIN, SLIDER_DIRECTION_PIN, SLIDER_SPEED_PIN, SLIDER_SENSOR_PIN);
-RackMotor rackMotor(RACK_START_PIN, RACK_DIRECTION_PIN, RACK_SPEED_PIN);
+Slider slider(SLIDER_START_PIN, SLIDER_DIRECTION_PIN, SLIDER_SPEED_PIN, SLIDER_SENSOR_PIN, boardAddress);
+RackMotor rackMotor(RACK_START_PIN, RACK_DIRECTION_PIN, RACK_SPEED_PIN, boardAddress);
 
 unsigned long previousMillis = 0;
 const long interval = 50;
@@ -31,8 +32,8 @@ void setup()
     Serial.println("Board address: " + String(boardAddress));
     slider.setup();
     rackMotor.setup();
-    slider.calibrate();
     rackMotor.calibrate();
+    slider.calibrate();
     Wire.begin(boardAddress);
     Wire.onReceive(receiveEvent);
     Serial.println("Broadcast started");
@@ -58,18 +59,21 @@ void loop() {
     }
 
     // Handle Serial input if available
-    if (Serial.available() > 0) {
-        uint8_t buffer[32];
-        int length = readAndProcessInput(buffer, sizeof(buffer), "Serial");
-        if (length > 0) {
-            processCommand(buffer, length);
-        }
-    }
+    // if (Serial.available() > 0) {
+    //     uint8_t buffer[32];
+    //     int length = readAndProcessInput(buffer, sizeof(buffer), "Serial");
+    //     if (length > 0) {
+    //         processCommand(buffer, length);
+    //     }
+    // }
+
+    // print sensor value
+    // Serial.println("Sensor value: " + String(slider.getSensorValue()));
 }
 
 void receiveEvent(int bytes)
 {
-    uint8_t buffer[32];
+    uint8_t buffer[10];
     int length = readAndProcessInput(buffer, sizeof(buffer), "I2C");
     if (length > 0) {
         processCommand(buffer, length);
@@ -80,35 +84,35 @@ int readAndProcessInput(uint8_t* buffer, int bufferSize, const char* source)
 {
     int index = 0;
 
-    if (strcmp(source, "Serial") == 0) {
-        // Read data from Serial
-        unsigned long startMillis = millis();
-        while (index < bufferSize && millis() - startMillis < 1000) {
-            if (!Serial.available()) {
-                continue;
-            }
-            int c = Serial.read();
-            if (c == '\n') {
-                break;
-            }
-            // make c (string) to number
-            if(c >= '0' && c <= '9') {
-                c = c - '0';
-            } else if(c >= 'A' && c <= 'F') {
-                c = c - 'A' + 10;
-            } else if(c >= 'a' && c <= 'f') {
-                c = c - 'a' + 10;
-            } else {
-                continue;
-            }
-            buffer[index++] = c;
-        }
-    } else if (strcmp(source, "I2C") == 0) {
+    // if (strcmp(source, "Serial") == 0) {
+    //     // Read data from Serial
+    //     unsigned long startMillis = millis();
+    //     while (index < bufferSize && millis() - startMillis < 1000) {
+    //         if (!Serial.available()) {
+    //             continue;
+    //         }
+    //         int c = Serial.read();
+    //         if (c == '\n') {
+    //             break;
+    //         }
+    //         // make c (string) to number
+    //         if(c >= '0' && c <= '9') {
+    //             c = c - '0';
+    //         } else if(c >= 'A' && c <= 'F') {
+    //             c = c - 'A' + 10;
+    //         } else if(c >= 'a' && c <= 'f') {
+    //             c = c - 'a' + 10;
+    //         } else {
+    //             continue;
+    //         }
+    //         buffer[index++] = c;
+    //     }
+    // } else if (strcmp(source, "I2C") == 0) {
         // Read data from I2C
         while (Wire.available() && index < bufferSize) {
             buffer[index++] = Wire.read();
         }
-    }
+    // }
 
     // Print received data
     if (index > 0) {

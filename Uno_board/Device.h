@@ -6,15 +6,15 @@
 
 class Device {
 public:
-    Device(int startPin, int directionPin, int speedPin);
+    Device(int startPin, int directionPin, int speedPin, int boardAddress);
     void setup();
     void control(int direction, int speedHz, int durationTenths);
-    void moveBy(int positionMm);
+    void moveBy(int positionMm, bool reverse = false);
     void update();
     bool isMovementComplete();
     
 protected:
-    int startPin, directionPin, speedPin;
+    int startPin, directionPin, speedPin, boardAddress;
     bool isMoving;
     bool isCalibrated;
     int currentPosition;

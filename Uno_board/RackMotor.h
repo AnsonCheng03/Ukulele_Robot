@@ -6,9 +6,9 @@
 
 class RackMotor : public Device {
 public:
-    RackMotor(int startPin, int directionPin, int speedPin);
+    RackMotor(int startPin, int directionPin, int speedPin, int boardAddress);
     int getSpeedPin();
-    
+
     void setup();
     void calibrate();
     void move(int positionMm);

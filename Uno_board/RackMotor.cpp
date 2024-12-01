@@ -1,7 +1,7 @@
 #include "RackMotor.h"
 
-RackMotor::RackMotor(int startPin, int directionPin, int speedPin)
-    : Device(startPin, directionPin, speedPin) {}
+RackMotor::RackMotor(int startPin, int directionPin, int speedPin, int boardAddress)
+    : Device(startPin, directionPin, speedPin, boardAddress) {}
 
 void RackMotor::setup() {
     Device::setup();
@@ -9,6 +9,9 @@ void RackMotor::setup() {
     max_distance = 0;
     fixedMoveSpeed = 1000;
     distanceToDurationRatio = 0.01;
+    setDirection(LOW);
+    analogWrite(speedPin, 100);
+    startMovement(5);
 }
 
 int RackMotor::getSpeedPin() {
@@ -23,7 +26,7 @@ void calibrateMotorDown(void* context) {
 void RackMotor::calibrate() {
     Serial.println("Calibrating rack motor...");
     setDirection(HIGH);
-    analogWrite(speedPin, 10);
+    analogWrite(speedPin, 100);
     startMovement(5);
     Serial.println("Calibration started: Moving rack motor");
     isCalibrated = true;

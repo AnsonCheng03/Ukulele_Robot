@@ -1,7 +1,7 @@
 #include "Device.h"
 
-Device::Device(int startPin, int directionPin, int speedPin)
-    : startPin(startPin), directionPin(directionPin), speedPin(speedPin), isMoving(false), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0), max_distance(0), fixedMoveSpeed(1000), distanceToDurationRatio(0.01) {}
+Device::Device(int startPin, int directionPin, int speedPin, int boardAddress)
+    : startPin(startPin), directionPin(directionPin), speedPin(speedPin), boardAddress(boardAddress), isMoving(false), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0), max_distance(0), fixedMoveSpeed(1000), distanceToDurationRatio(0.01) {}
     
 
 void Device::setup()
@@ -21,7 +21,7 @@ void Device::control(int direction, int speedHz, int durationTenths)
     startMovement(durationTenths);
 }
 
-void Device::moveBy(int distanceMm)
+void Device::moveBy(int distanceMm, bool reverse)
 {
     if (distanceMm == 0)
     {
@@ -43,7 +43,7 @@ void Device::moveBy(int distanceMm)
         return;
     }
     Serial.println("Move device - Distance: " + String(distanceMm) + "mm, Direction: " + String(direction) + ", Duration: " + String(durationTenths * 0.1) + "s");
-    setDirection(direction);
+    setDirection(reverse ? !direction : direction);
     analogWrite(speedPin, fixedMoveSpeed); // Fixed speed for movement
     startMovement(durationTenths);
     currentPosition += distanceMm;
@@ -87,7 +87,7 @@ void Device::stop()
 
 void Device::setDirection(int direction)
 {
-    digitalWrite(directionPin, direction);
+    digitalWrite(directionPin, boardAddress >= 10 ? !direction : direction);
     Serial.println("Direction pin " + String(directionPin) + " set to " + String(direction));
 }
 
