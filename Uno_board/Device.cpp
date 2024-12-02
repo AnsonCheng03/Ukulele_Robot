@@ -95,3 +95,8 @@ bool Device::isMovementComplete()
 {
     return !isMoving;
 }
+
+int Device::getBoardAddress()
+{
+    return boardAddress;
+}

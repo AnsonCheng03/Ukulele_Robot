@@ -4,7 +4,7 @@
 #include "JobQueue.h"
 #include "Fingering.h"
 
-#define boardAddress 11
+#define boardAddress 9
 #define CMD_CONTROL 0
 #define CMD_CALIBRATE 1
 #define CMD_MOVE 2

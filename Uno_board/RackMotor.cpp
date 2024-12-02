@@ -20,7 +20,7 @@ int RackMotor::getSpeedPin() {
 
 void calibrateMotorDown(void* context) {
     RackMotor* rackMotor = static_cast<RackMotor*>(context);
-    rackMotor->moveBy(-5);
+    rackMotor->moveBy(rackMotor->getBoardAddress() >= 10 ? 5 : -5);
 }
 
 void RackMotor::calibrate() {
@@ -46,10 +46,10 @@ void RackMotor::move(int positionMm)
 // need integrate with calibration later
 void RackMotor::up() {
     Serial.println("Rack motor moving up...");
-    moveBy(-2);
+    moveBy(boardAddress >= 10 ? -2 : 2);
 }
 
 void RackMotor::down() {
     Serial.println("Rack motor moving down...");
-    moveBy(2);
+    moveBy(boardAddress >= 10 ? 2 : -2);
 }

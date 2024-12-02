@@ -12,6 +12,7 @@ public:
     void moveBy(int positionMm, bool reverse = false);
     void update();
     bool isMovementComplete();
+    int getBoardAddress();
     
 protected:
     int startPin, directionPin, speedPin, boardAddress;
