@@ -41,7 +41,29 @@ echo "PRETTY_HOSTNAME=GuitarRobot" | sudo tee /etc/machine-info > /dev/null
 
 # 7. Add main.py to run on startup
 echo "Adding ./code/main.py to run on startup..."
-echo "sudo python3 /home/pi/code/main.py" | sudo tee -a /etc/rc.local > /dev/null
+SERVICE_NAME="fyp_startup"
+SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME.service"
+SCRIPT_PATH="/home/pi/CSCI_FYP/device_server/code/main.py"
+echo "Creating systemd service file at $SERVICE_PATH..."
+sudo bash -c "cat > $SERVICE_PATH" <<EOL
+[Unit]
+Description=Auto Start Python Script in LXTerminal
+After=graphical.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/lxterminal -e "sudo python3 $SCRIPT_PATH"
+Restart=always
+User=pi
+Environment=DISPLAY=:0
+WorkingDirectory=/home/pi
+
+[Install]
+WantedBy=default.target
+EOL
+sudo systemctl daemon-reload
+sudo systemctl enable $SERVICE_NAME.service
+sudo systemctl start $SERVICE_NAME.service
 
 # Finish
 echo "Setup complete. Please reboot the Raspberry Pi for all changes to take effect."
