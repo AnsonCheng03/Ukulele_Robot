@@ -46,7 +46,7 @@ class FileWriteChrc(Characteristic):
         Characteristic.__init__(
             self, bus, index,
             self.FILE_WRITE_UUID,
-            ['write', 'write-with-response'],
+            ['write'],
             service)
         
     def WriteValue(self, value, options):
