@@ -56,11 +56,15 @@ class FileWriteChrc(Characteristic):
         # Store the written data
         self.service.file_data[client_address] = value
         
-        # Calculate the checksum (e.g., SHA-256)
-        checksum = hashlib.sha256(value).digest()  # Get the checksum as bytes
-        
-        # Optionally, convert the checksum to a suitable format, e.g., a byte array
-        checksum_response = dbus.Array(checksum, signature=dbus.Signature('y'))
+        try:
+            # Calculate the checksum (e.g., SHA-256)
+            checksum = hashlib.sha256(value).digest()  # Get the checksum as bytes
+            
+            # Optionally, convert the checksum to a suitable format, e.g., a byte array
+            checksum_response = dbus.Array(checksum, signature=dbus.Signature('y'))
+        except Exception as e:
+            print(f"Error calculating checksum: {e}")
+            raise exceptions.InvalidValueError(f"Error calculating checksum: {e}")
         
         # Return the checksum in the response
         return checksum_response
