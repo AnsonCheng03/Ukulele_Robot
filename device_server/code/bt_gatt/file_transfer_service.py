@@ -3,6 +3,7 @@ import dbus
 from bt_gatt.constants import GATT_CHRC_IFACE
 import bt_gatt.exceptions as exceptions
 import logging
+import hashlib
 
 logging.basicConfig(filename='file_transfer.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -43,15 +44,23 @@ class FileWriteChrc(Characteristic):
     
     def __init__(self, bus, index, service):
         Characteristic.__init__(
-                self, bus, index,
-                self.FILE_WRITE_UUID,
-                ['write'],
-                service)
+            self, bus, index,
+            self.FILE_WRITE_UUID,
+            ['write'],
+            service)
         
     def WriteValue(self, value, options):
         client_address = options.get('client_address', 'default')
         print(f"Write request from {client_address}, data: {value}")
+        
+        # Store the written data
         self.service.file_data[client_address] = value
-        return dbus.Array([], signature=dbus.Signature('y'))
-
-
+        
+        # Calculate the checksum (e.g., SHA-256)
+        checksum = hashlib.sha256(value).digest()  # Get the checksum as bytes
+        
+        # Optionally, convert the checksum to a suitable format, e.g., a byte array
+        checksum_response = dbus.Array(checksum, signature=dbus.Signature('y'))
+        
+        # Return the checksum in the response
+        return checksum_response
