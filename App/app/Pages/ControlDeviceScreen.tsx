@@ -1,15 +1,10 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  ScrollView,
-} from "react-native";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { TextInput, Button, StyleSheet, ScrollView } from "react-native";
 import { RouteProp } from "@react-navigation/native";
-import { RootStackParamList } from "../(tabs)/index";
+import { RootStackParamList } from "../(tabs)";
 import { BleService } from "../services/BleService";
 import { Device } from "react-native-ble-plx";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -26,7 +21,8 @@ export default function ControlDeviceScreen({
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  if (!route || !route.params) return <Text>route.params is undefined</Text>;
+  if (!route || !route.params)
+    return <ThemedText>route.params is undefined</ThemedText>;
 
   const { device } = route.params as { device: Device };
   const bleService = BleService.getInstance();
@@ -77,34 +73,40 @@ export default function ControlDeviceScreen({
 
   return (
     <SafeAreaProvider>
-      <View style={styles.container}>
-        <Text style={styles.title}>{`Controlling Device: ${device.name}`}</Text>
-        <Text style={styles.text}>{`Device ID: ${device.id}`}</Text>
+      <ThemedView style={styles.container}>
+        <ThemedText
+          style={styles.title}
+        >{`Controlling Device: ${device.name}`}</ThemedText>
+        <ThemedText style={styles.text}>{`Device ID: ${device.id}`}</ThemedText>
         {loading ? (
-          <Text style={styles.loadingText}>Connecting...</Text>
+          <ThemedText style={styles.loadingText}>Connecting...</ThemedText>
         ) : isConnected ? (
-          <View>
+          <ThemedView>
             <TextInput
               placeholder="Test"
               onChangeText={(text) => console.log(text)}
             />
             <Button title="Send Command" onPress={sendCommand} />
             <ScrollView style={styles.commandBox}>
-              <Text style={styles.commandTitle}>Commands Received:</Text>
+              <ThemedText style={styles.commandTitle}>
+                Commands Received:
+              </ThemedText>
               {receivedCommands.map((cmd, index) => (
-                <Text key={index} style={styles.commandText}>
+                <ThemedText key={index} style={styles.commandText}>
                   {cmd}
-                </Text>
+                </ThemedText>
               ))}
             </ScrollView>
-          </View>
+          </ThemedView>
         ) : (
-          <View>
-            <Text style={styles.errorText}>Failed to connect to device</Text>
+          <ThemedView>
+            <ThemedText style={styles.errorText}>
+              Failed to connect to device
+            </ThemedText>
             <Button title="Retry" onPress={connectToDevice} />
-          </View>
+          </ThemedView>
         )}
-      </View>
+      </ThemedView>
     </SafeAreaProvider>
   );
 }

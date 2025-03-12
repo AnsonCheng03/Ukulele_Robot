@@ -1,6 +1,5 @@
-import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-import TabOneScreen from "../Pages/SelectDeviceScreen";
+import SelectDeviceScreen from "../Pages/SelectDeviceScreen";
 import ControlDeviceScreen from "../Pages/ControlDeviceScreen";
 
 export type RootStackParamList = {
@@ -17,10 +16,10 @@ export type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-export default function AppNavigator() {
+export default function HomeScreen() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Select Device" component={TabOneScreen} />
+      <Stack.Screen name="Select Device" component={SelectDeviceScreen} />
       <Stack.Screen name="Control Device" component={ControlDeviceScreen} />
     </Stack.Navigator>
   );

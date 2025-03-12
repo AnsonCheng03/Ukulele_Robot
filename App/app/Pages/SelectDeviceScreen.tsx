@@ -6,11 +6,12 @@ import {
   PermissionsAndroid,
   Button,
 } from "react-native";
-import { Text, View } from "@/components/Themed";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
 import { BleService } from "../services/BleService";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamList } from "../(tabs)/index";
+import { RootStackParamList } from "../(tabs)";
 
 export default function TabOneScreen() {
   const [devices, setDevices] = useState<any[]>([]);
@@ -119,10 +120,10 @@ export default function TabOneScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>Available Devices</Text>
-        <View style={{ flexDirection: "row" }}>
+    <ThemedView style={styles.container}>
+      <ThemedView style={styles.titleContainer}>
+        <ThemedText style={styles.title}>Available Devices</ThemedText>
+        <ThemedView style={{ flexDirection: "row" }}>
           <Button title="Refresh" onPress={getConnectedDevices} />
           <Button
             title="Clear"
@@ -132,8 +133,8 @@ export default function TabOneScreen() {
               )
             }
           />
-        </View>
-      </View>
+        </ThemedView>
+      </ThemedView>
       <ScrollView style={styles.scrollContainer}>
         {devices
           .sort((a, b) => {
@@ -144,7 +145,7 @@ export default function TabOneScreen() {
             return aPriority - bPriority;
           })
           .map((device) => (
-            <View
+            <ThemedView
               key={device.id}
               style={
                 device.name?.includes("Guitar") ||
@@ -154,14 +155,16 @@ export default function TabOneScreen() {
               }
               onTouchEnd={() => selectDevice(device)}
             >
-              <View>
-                <Text>{device.name || "Unnamed"}</Text>
-                <Text style={{ fontSize: 10 }}>{`${device.id}`}</Text>
-              </View>
-            </View>
+              <ThemedView>
+                <ThemedText>{device.name || "Unnamed"}</ThemedText>
+                <ThemedText
+                  style={{ fontSize: 10 }}
+                >{`${device.id}`}</ThemedText>
+              </ThemedView>
+            </ThemedView>
           ))}
       </ScrollView>
-    </View>
+    </ThemedView>
   );
 }
 

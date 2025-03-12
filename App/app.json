@@ -1,28 +1,26 @@
 {
   "expo": {
-    "name": "GuitarRobot",
-    "slug": "GuitarRobot",
+    "name": "UkuleleRobot",
+    "slug": "UkuleleRobot",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.GuitarRobot"
+      "bundleIdentifier": "com.robot.ukulele",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSBluetoothAlwaysUsageDescription": "This app uses Bluetooth to connect to the Ukulele Robot"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "package": "com.anonymous.GuitarRobot"
+      }
     },
     "web": {
       "bundler": "metro",
@@ -30,7 +28,16 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -40,7 +47,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "d0f54990-b5e3-4f28-bcbf-9a16b12c3f3e"
+        "projectId": "56f516fd-992b-4ecd-9470-fb2b63261b3a"
       }
     }
   }

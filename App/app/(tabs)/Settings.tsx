@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Button, TextInput } from "react-native";
-import { Text, View } from "@/components/Themed";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+
+import { StyleSheet, TextInput } from "react-native";
 
 export default function TabTwoScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Bluetooth Client</Text>
+    <ThemedView style={styles.container}>
+      <ThemedText style={styles.title}>Bluetooth Client</ThemedText>
       {/* <Text>Received Data: {receivedData}</Text> */}
       {/* <Button title="Send Command 'aaa'" onPress={() => sendCommand("aaa")} /> */}
-      <Text>Send Command</Text>
+      <ThemedText>Send Command</ThemedText>
       <TextInput placeholder="Command" />
-    </View>
+    </ThemedView>
   );
 }
 
