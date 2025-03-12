@@ -42,6 +42,7 @@ class MotorWriteChrc(Characteristic):
                 self.MOTOR_WRITE_UUID,
                 ['write'],
                 service)
+        self.status = 0
 
     def WriteValue(self, value, options):
         command = ''.join(chr(b) for b in value).strip()
@@ -49,12 +50,13 @@ class MotorWriteChrc(Characteristic):
         handle_command_input(command)
         print(f"Received command from {client_address}: {command}")
 
-        if len(value) == 1:
-            byte = value[0]
-            print('Motor control value: ' + repr(byte))
- 
-            self.service.motor_status = byte
-            print('Motor status updated to: ' + str(self.service.motor_status))
-        else:
-            raise exceptions.InvalidValueLengthException()
+        byte = value[0]
+        print('Motor control value: ' + repr(byte))
+
+        self.service.motor_status = byte
+        print('Motor status updated to: ' + str(self.service.motor_status))
+
         return dbus.Array([1], signature=dbus.Signature('y'))
+    
+    def ReadValue(self, options):
+        return 0

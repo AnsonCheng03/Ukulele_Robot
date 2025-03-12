@@ -48,6 +48,7 @@ class FileWriteChrc(Characteristic):
             self.FILE_WRITE_UUID,
             ['write'],
             service)
+        self.last_checksum = None
         
     def WriteValue(self, value, options):
         client_address = options.get('client_address', 'default')
@@ -69,4 +70,8 @@ class FileWriteChrc(Characteristic):
             raise exceptions.InvalidValueError(f"Error calculating checksum: {e}")
         
         # Return the checksum in the response
-        return checksum_response
+        # return checksum_response
+        self.last_checksum = checksum_response
+        
+    def ReadValue(self, options):
+        return self.last_checksum
