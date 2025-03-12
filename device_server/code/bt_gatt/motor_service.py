@@ -52,7 +52,7 @@ class MotorWriteChrc(Characteristic):
         if len(value) == 1:
             byte = value[0]
             print('Motor control value: ' + repr(byte))
-
+ 
             self.service.motor_status = byte
             print('Motor status updated to: ' + str(self.service.motor_status))
         else:

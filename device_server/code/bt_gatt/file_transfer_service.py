@@ -47,11 +47,10 @@ class FileWriteChrc(Characteristic):
                 self.FILE_WRITE_UUID,
                 ['write'],
                 service)
-        logging.info("FileWriteChrc initialized")
         
     def WriteValue(self, value, options):
         client_address = options.get('client_address', 'default')
-        logging.info(f"Write request from {client_address}, data: {value}")
+        print(f"Write request from {client_address}, data: {value}")
         self.service.file_data[client_address] = value
         return dbus.Array([], signature=dbus.Signature('y'))
 
