@@ -62,7 +62,7 @@ class FileWriteChrc(Characteristic):
 
         try:
             # Calculate the checksum
-            checksum = hashlib.sha256(byte_value).digest()  
+            checksum = hashlib.sha1(byte_value).digest()  
             checksum_response = dbus.Array(checksum, signature=dbus.Signature('y'))
             print(f"Checksum calculated: {checksum}")
         except Exception as e:
