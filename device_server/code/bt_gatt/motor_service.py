@@ -40,7 +40,7 @@ class MotorWriteChrc(Characteristic):
         Characteristic.__init__(
                 self, bus, index,
                 self.MOTOR_WRITE_UUID,
-                ['write'],
+                ['read', 'write'],
                 service)
         self.status = 0
 

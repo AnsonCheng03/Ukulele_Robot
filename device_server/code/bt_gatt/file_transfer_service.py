@@ -46,7 +46,7 @@ class FileWriteChrc(Characteristic):
         Characteristic.__init__(
             self, bus, index,
             self.FILE_WRITE_UUID,
-            ['write'],
+            ['read', 'write'],
             service)
         self.last_checksum = None
         
