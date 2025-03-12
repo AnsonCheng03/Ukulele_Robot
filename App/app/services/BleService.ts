@@ -4,6 +4,7 @@ import {
   Characteristic,
   State,
 } from "react-native-ble-plx";
+import RNFS from "react-native-fs";
 
 export class BleService {
   private static instance: BleService;
@@ -25,14 +26,10 @@ export class BleService {
       .connect()
       .then((connectedDevice: Device) => {
         console.log("Discovering services and characteristics");
-        const services = connectedDevice.services();
-        const characteristics =
-          connectedDevice.discoverAllServicesAndCharacteristics();
-        return Promise.all([services, characteristics]);
+        return connectedDevice.discoverAllServicesAndCharacteristics();
       })
       .then((results) => {
-        const [services, characteristics] = results;
-        console.log("Device connected and services discovered");
+        console.log("Device connected and services discovered", results);
       })
       .catch((error) => {
         console.error("Error connecting to device: ", error);
@@ -47,24 +44,15 @@ export class BleService {
     let attempts = 0;
     try {
       while (attempts < 3) {
-        const services = await device.services();
-        for (const service of services) {
-          const characteristics = await service.characteristics();
-          for (const characteristic of characteristics) {
-            if (characteristic.isWritableWithResponse) {
-              console.log(
-                `Service UUID: ${service.uuid}, Characteristic UUID: ${characteristic.uuid}`
-              );
-              await device.writeCharacteristicWithResponseForService(
-                service.uuid,
-                characteristic.uuid,
-                btoa(command)
-              );
-              return;
-            }
-          }
-        }
-        throw new Error("No writable characteristic found");
+        console.log(
+          "sent",
+          await device.writeCharacteristicWithResponseForService(
+            "0000180d-0000-1000-8000-00805f9b34fb",
+            "00002a39-0000-1000-8000-00805f9b34fb",
+            btoa(command)
+          )
+        );
+        return;
       }
     } catch (error) {
       console.log(`Attempt ${attempts + 1}: Connecting to device...`);
@@ -75,6 +63,39 @@ export class BleService {
         throw new Error("Failed to connect and send command after 3 attempts");
       }
     }
+  }
+
+  public async readCommandResponseFromDevice(
+    device: Device
+  ): Promise<Characteristic | null> {
+    return device.readCharacteristicForService(
+      "0000180d-0000-1000-8000-00805f9b34fb",
+      "00002a37-0000-1000-8000-00805f9b34fb"
+    );
+  }
+
+  public async sendFileToDevice(device: Device, file: string): Promise<void> {
+    console.log("Sending file to device", file);
+    const fileContent = await RNFS.readFile(file, "base64");
+    const chunks = fileContent.match(/.{1,20}/g) || [];
+
+    for (let i = 0; i < chunks.length; i++) {
+      console.log("Sending chunk", i);
+      await device.writeCharacteristicWithResponseForService(
+        "0000180e-0000-1000-8000-00805f9b34fb",
+        "00002a3b-0000-1000-8000-00805f9b34fb",
+        chunks[i]
+      );
+    }
+  }
+
+  public async readFileResponseFromDevice(
+    device: Device
+  ): Promise<Characteristic | null> {
+    return device.readCharacteristicForService(
+      "0000180e-0000-1000-8000-00805f9b34fb",
+      "00002a3b-0000-1000-8000-00805f9b34fb"
+    );
   }
 
   public getConnectedDevices(serviceUUIDs: string[]): Promise<Device[]> {
