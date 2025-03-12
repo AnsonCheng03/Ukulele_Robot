@@ -56,7 +56,5 @@ class MotorWriteChrc(Characteristic):
         self.service.motor_status = byte
         print('Motor status updated to: ' + str(self.service.motor_status))
 
-        return dbus.Array([1], signature=dbus.Signature('y'))
-    
     def ReadValue(self, options):
         return 0
