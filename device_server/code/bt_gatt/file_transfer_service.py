@@ -40,7 +40,7 @@ class FileReadChrc(Characteristic):
 
 class FileWriteChrc(Characteristic):
     FILE_WRITE_UUID = '00002a3b-0000-1000-8000-00805f9b34fb'
-
+    
     def __init__(self, bus, index, service):
         Characteristic.__init__(
                 self, bus, index,
@@ -48,18 +48,11 @@ class FileWriteChrc(Characteristic):
                 ['write'],
                 service)
         logging.info("FileWriteChrc initialized")
-
+        
     def WriteValue(self, value, options):
         client_address = options.get('client_address', 'default')
-        file_content = bytes(value)
-        
-        if client_address not in self.service.file_data:
-            self.service.file_data[client_address] = b''
-        
-        self.service.file_data[client_address] += file_content
-        logging.info(f"Received file data from {client_address}: {file_content}")
-        print(f"Received file data from {client_address}: {file_content}")
-        
-        with open(f"received_{client_address}.bin", "ab") as f:
-            f.write(file_content)
-        logging.info(f"File data saved for {client_address}")
+        logging.info(f"Write request from {client_address}, data: {value}")
+        self.service.file_data[client_address] = value
+        return dbus.Array([], signature=dbus.Signature('y'))
+
+

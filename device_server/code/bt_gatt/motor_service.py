@@ -57,3 +57,4 @@ class MotorWriteChrc(Characteristic):
             print('Motor status updated to: ' + str(self.service.motor_status))
         else:
             raise exceptions.InvalidValueLengthException()
+        return dbus.Array([], signature=dbus.Signature('y'))
