@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import * as React from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +12,7 @@ import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "../(tabs)/index";
 import { BleService } from "../services/BleService";
 import { Device } from "react-native-ble-plx";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 interface ControlDeviceScreenProps {
   route: RouteProp<RootStackParamList, "Control Device">;
@@ -35,11 +37,12 @@ export default function ControlDeviceScreen({
       .connectToDevice(device)
       .then(() => {
         setIsConnected(true);
-        setLoading(false);
       })
       .catch((error: Error) => {
         console.error(error.message);
         setIsConnected(false);
+      })
+      .finally(() => {
         setLoading(false);
       });
   };
@@ -47,6 +50,16 @@ export default function ControlDeviceScreen({
   useEffect(() => {
     connectToDevice();
   }, [device]);
+
+  useEffect(() => {
+    return () => {
+      console.log("Cleaning up ControlDeviceScreen");
+      if (isConnected) {
+        console.log("Disconnecting from device");
+        device.cancelConnection();
+      }
+    };
+  }, [isConnected]);
 
   const sendCommand = () => {
     if (!isConnected) return;
@@ -63,37 +76,36 @@ export default function ControlDeviceScreen({
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{`Controlling Device: ${device.name}`}</Text>
-      <Text style={styles.text}>{`Device ID: ${device.id}`}</Text>
-      {loading ? (
-        <Text style={styles.loadingText}>Connecting...</Text>
-      ) : isConnected ? (
-        <>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Enter command"
-            placeholderTextColor="white"
-            value={command}
-            onChangeText={(text) => setCommand(text)}
-          />
-          <Button title="Send Command" onPress={sendCommand} />
-          <ScrollView style={styles.commandBox}>
-            <Text style={styles.commandTitle}>Commands Received:</Text>
-            {receivedCommands.map((cmd, index) => (
-              <Text key={index} style={styles.commandText}>
-                {cmd}
-              </Text>
-            ))}
-          </ScrollView>
-        </>
-      ) : (
-        <>
-          <Text style={styles.errorText}>Failed to connect to device</Text>
-          <Button title="Retry" onPress={connectToDevice} />
-        </>
-      )}
-    </View>
+    <SafeAreaProvider>
+      <View style={styles.container}>
+        <Text style={styles.title}>{`Controlling Device: ${device.name}`}</Text>
+        <Text style={styles.text}>{`Device ID: ${device.id}`}</Text>
+        {loading ? (
+          <Text style={styles.loadingText}>Connecting...</Text>
+        ) : isConnected ? (
+          <View>
+            <TextInput
+              placeholder="Test"
+              onChangeText={(text) => console.log(text)}
+            />
+            <Button title="Send Command" onPress={sendCommand} />
+            <ScrollView style={styles.commandBox}>
+              <Text style={styles.commandTitle}>Commands Received:</Text>
+              {receivedCommands.map((cmd, index) => (
+                <Text key={index} style={styles.commandText}>
+                  {cmd}
+                </Text>
+              ))}
+            </ScrollView>
+          </View>
+        ) : (
+          <View>
+            <Text style={styles.errorText}>Failed to connect to device</Text>
+            <Button title="Retry" onPress={connectToDevice} />
+          </View>
+        )}
+      </View>
+    </SafeAreaProvider>
   );
 }
 
@@ -106,20 +118,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 20,
-    color: "white",
+    margin: 20,
   },
   text: {
-    color: "white",
+    margin: 5,
   },
   textInput: {
     height: 40,
     borderColor: "gray",
     borderWidth: 1,
-    marginBottom: 20,
+    margin: 20,
     width: "80%",
     paddingHorizontal: 10,
-    color: "white",
   },
   commandBox: {
     marginTop: 20,
@@ -131,20 +141,18 @@ const styles = StyleSheet.create({
   },
   commandTitle: {
     fontWeight: "bold",
-    marginBottom: 10,
-    color: "white",
+    margin: 10,
   },
   commandText: {
     fontSize: 16,
-    marginBottom: 5,
-    color: "white",
+    margin: 5,
   },
   loadingText: {
     fontSize: 18,
-    color: "white",
+    margin: 20,
   },
   errorText: {
     fontSize: 18,
-    color: "red",
+    color: "gray",
   },
 });

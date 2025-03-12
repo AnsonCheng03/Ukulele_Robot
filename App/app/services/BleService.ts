@@ -25,9 +25,13 @@ export class BleService {
       .connect()
       .then((connectedDevice: Device) => {
         console.log("Discovering services and characteristics");
-        return connectedDevice.discoverAllServicesAndCharacteristics();
+        const services = connectedDevice.services();
+        const characteristics =
+          connectedDevice.discoverAllServicesAndCharacteristics();
+        return Promise.all([services, characteristics]);
       })
-      .then(() => {
+      .then((results) => {
+        const [services, characteristics] = results;
         console.log("Device connected and services discovered");
       })
       .catch((error) => {
@@ -87,18 +91,26 @@ export class BleService {
   }
 
   public startScan(onDeviceFound: (device: Device) => void) {
-    this.manager.startDeviceScan(null, null, (error, device) => {
-      if (error) {
-        console.error("Scan error:", error);
-        return;
+    this.manager.startDeviceScan(
+      null,
+      {
+        allowDuplicates: false,
+      },
+      (error, device) => {
+        if (error) {
+          console.error("Scan error:", error);
+          return;
+        }
+        if (device) {
+          onDeviceFound(device);
+        }
       }
-      if (device) {
-        onDeviceFound(device);
-      }
-    });
+    );
   }
 
   public stopScan() {
     this.manager.stopDeviceScan();
   }
 }
+
+export default BleService;

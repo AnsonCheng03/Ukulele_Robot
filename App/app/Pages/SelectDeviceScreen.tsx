@@ -95,7 +95,7 @@ export default function TabOneScreen() {
           if (device && device.name) {
             setDevices((prevDevices) => {
               if (!prevDevices.some((d) => d.id === device.id)) {
-                console.log(`Found device: ${device.name}`, device);
+                // console.log(`Found device: ${device.name}`, device);
                 return [...prevDevices, device];
               }
               return prevDevices;
@@ -134,7 +134,7 @@ export default function TabOneScreen() {
           />
         </View>
       </View>
-      <ScrollView>
+      <ScrollView style={styles.scrollContainer}>
         {devices
           .sort((a, b) => {
             const aPriority =
@@ -154,9 +154,10 @@ export default function TabOneScreen() {
               }
               onTouchEnd={() => selectDevice(device)}
             >
-              <Text>{`Device: ${device.name || "Unnamed"} (ID: ${
-                device.id
-              })`}</Text>
+              <View>
+                <Text>{device.name || "Unnamed"}</Text>
+                <Text style={{ fontSize: 10 }}>{`${device.id}`}</Text>
+              </View>
             </View>
           ))}
       </ScrollView>
@@ -169,6 +170,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+  },
+  scrollContainer: {
+    width: "100%",
+    paddingHorizontal: 20,
   },
   titleContainer: {
     flexDirection: "row",
