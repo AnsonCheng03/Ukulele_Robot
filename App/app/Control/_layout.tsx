@@ -21,7 +21,7 @@ import ChordTabScreen from "./(tabs)/Chord";
 export default function ControlLayout() {
   const navigation = useNavigation();
   const [tab, setTab] = useState<"chord" | "play" | "editing" | "score">(
-    "chord"
+    "play"
   );
 
   const renderContent = () => {
@@ -40,7 +40,6 @@ export default function ControlLayout() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top Bar */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="black" />
@@ -48,10 +47,8 @@ export default function ControlLayout() {
         <Text style={styles.status}>● Connected</Text>
       </View>
 
-      {/* Center (Hexagon placeholder) */}
       <View style={styles.middle}>{renderContent()}</View>
 
-      {/* Bottom Tab Navigation */}
       <View style={styles.bottomTabs}>
         <TouchableOpacity
           onPress={() => setTab("play")}
@@ -149,6 +146,8 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     alignItems: "center",
+    gap: 5,
+    paddingVertical: 10,
     justifyContent: "center",
   },
   tab: {

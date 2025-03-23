@@ -5,12 +5,13 @@ import {
   PanResponder,
   StyleSheet,
   View,
+  ScrollView,
   TouchableWithoutFeedback,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
-const MAX_TRANSLATE_Y = SCREEN_HEIGHT * 0.4;
+const MAX_TRANSLATE_Y = SCREEN_HEIGHT * 0.6;
 const MIN_TRANSLATE_Y = SCREEN_HEIGHT - 40;
 const DRAG_THRESHOLD = 50;
 
@@ -22,6 +23,7 @@ export default function BottomDrawer({
   const translateY = useRef(new Animated.Value(MIN_TRANSLATE_Y)).current;
   const lastOffset = useRef(MIN_TRANSLATE_Y);
   const [open, setOpen] = useState(false);
+  const scrollOffsetY = useRef(0);
 
   const animateDrawer = (toOpen: boolean) => {
     const toValue = toOpen ? MAX_TRANSLATE_Y : MIN_TRANSLATE_Y;
@@ -35,30 +37,10 @@ export default function BottomDrawer({
     });
   };
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        let newTranslateY = lastOffset.current + gestureState.dy;
-        newTranslateY = Math.max(
-          MAX_TRANSLATE_Y,
-          Math.min(newTranslateY, MIN_TRANSLATE_Y)
-        );
-        translateY.setValue(newTranslateY);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const shouldOpen = gestureState.dy < -DRAG_THRESHOLD;
-        animateDrawer(shouldOpen);
-      },
-    })
-  ).current;
-
   const renderChildrenWithDividers = () => {
     const childrenArray = React.Children.toArray(children);
     return childrenArray.map((child, index) => (
-      <View key={index} style={styles.childItem}>
+      <View key={index} style={{ flex: 1 }} style={styles.childItem}>
         {child}
         {index < childrenArray.length - 1 && <View style={styles.divider} />}
       </View>
@@ -66,10 +48,7 @@ export default function BottomDrawer({
   };
 
   return (
-    <Animated.View
-      style={[styles.drawer, { transform: [{ translateY }] }]}
-      {...panResponder.panHandlers}
-    >
+    <Animated.View style={[styles.drawer, { transform: [{ translateY }] }]}>
       <TouchableWithoutFeedback onPress={() => animateDrawer(!open)}>
         <View style={styles.handleIconWrapper}>
           <MaterialIcons
@@ -79,7 +58,18 @@ export default function BottomDrawer({
           />
         </View>
       </TouchableWithoutFeedback>
-      <View style={styles.content}>{renderChildrenWithDividers()}</View>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+        scrollEventThrottle={16}
+        onScroll={(e) => {
+          scrollOffsetY.current = e.nativeEvent.contentOffset.y;
+        }}
+      >
+        <View style={styles.content}>{renderChildrenWithDividers()}</View>
+      </ScrollView>
     </Animated.View>
   );
 }
@@ -113,10 +103,14 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 20,
   },
+  scrollView: {
+    flex: 1,
+    maxHeight: SCREEN_HEIGHT * 0.4 - 40,
+  },
   divider: {
     height: 1,
     backgroundColor: "#ddd",
-    marginVertical: 12,
+    marginVertical: 6,
   },
   childItem: {
     paddingVertical: 4,

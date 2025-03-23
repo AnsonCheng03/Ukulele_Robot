@@ -189,13 +189,14 @@ const styles = StyleSheet.create({
     color: "#777",
   },
   pairButton: {
-    backgroundColor: "#007AFF",
+    borderWidth: 2,
+    borderColor: "#007AFF",
     paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingVertical: 3,
     borderRadius: 50,
   },
   pairButtonText: {
-    color: "#fff",
+    color: "#007AFF",
     fontWeight: "600",
   },
 });
