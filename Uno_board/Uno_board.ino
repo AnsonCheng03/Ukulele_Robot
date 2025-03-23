@@ -111,6 +111,8 @@ void handleIntervalTasks() {
     }
 }
 
+String inputLine = "";
+
 void handleSerialInput() {
     while (Serial1.available()) {
         char incomingByte = Serial1.read();
@@ -120,15 +122,13 @@ void handleSerialInput() {
         Serial.println(incomingByte);
 
         if (incomingByte == '\n') {
-            // Process command when newline received
-            if (serialBufferIndex > 0) {
-                processCommand(serialBuffer, serialBufferIndex);
-                serialBufferIndex = 0;
+            inputLine.trim();
+            if (inputLine.length() > 0) {
+                processCommand(inputLine);
             }
+            inputLine = "";
         } else {
-            if (serialBufferIndex < sizeof(serialBuffer)) {
-                serialBuffer[serialBufferIndex++] = incomingByte;
-            }
+            inputLine += incomingByte;
         }
     }
 }
@@ -182,115 +182,102 @@ int readAndProcessInput(uint8_t* buffer, int bufferSize, const char* source)
     return index;
 }
 
-void processCommand(uint8_t* buffer, int length)
-{
-    if (length < 1) {
-        Serial.println("Invalid command length.");
-        return;
+void processCommand(const String& commandStr) {
+    Serial.println("Processing: " + commandStr);
+    char* tokens[8];
+    char buffer[100];
+    commandStr.toCharArray(buffer, sizeof(buffer));
+    
+    int tokenCount = 0;
+    char* token = strtok(buffer, " ");
+    while (token != nullptr && tokenCount < 8) {
+        tokens[tokenCount++] = token;
+        token = strtok(nullptr, " ");
     }
 
-    uint8_t command = buffer[0];
+    if (tokenCount == 0) return;
 
-    switch (command)
-    {
-    case CMD_CONTROL:
-        if (length >= 10)
-        {
-            uint8_t motorIndex = buffer[1];
-            uint8_t target = buffer[2];
-            uint16_t speedHz = (buffer[3] << 8) | buffer[4];
-            uint32_t durationTenths = ((uint32_t)buffer[5] << 24) | ((uint32_t)buffer[6] << 16) | ((uint32_t)buffer[7] << 8) | buffer[8];
-            uint8_t direction = buffer[9];
+    String cmd = tokens[0];
+    if (cmd == "control" && tokenCount == 6) {
+        int motorID = atoi(tokens[1]);
+        int target = atoi(tokens[2]);
+        int speed = atoi(tokens[3]);
+        int direction = atoi(tokens[4]);
+        unsigned long duration = atol(tokens[5]);
 
-            Serial.println("CMD_CONTROL: MotorIndex = " + String(motorIndex) + ", Target = " + String(target) +
-                           ", Speed = " + String(speedHz) + ", Duration = " + String(durationTenths * 0.1) +
-                           "s, Direction = " + String(direction));
+        Serial.print("CMD_CONTROL: MotorID=");
+        Serial.print(motorID);
+        Serial.print(", Target=");
+        Serial.print(target);
+        Serial.print(", Speed=");
+        Serial.print(speed);
+        Serial.print(", Direction=");
+        Serial.print(direction);
+        Serial.print(", Duration=");
+        Serial.println(duration);
 
-            if (motorIndex < 4) {
-                if (target == 0 || target == 1)
-                    sliders[motorIndex].control(direction, speedHz, durationTenths);
-                if (target == 0 || target == 2)
-                    rackMotors[motorIndex].control(direction, speedHz, durationTenths);
-            }
+
+        if (motorID < 4) {
+            if (target == 0 || target == 1)
+                sliders[motorID].control(direction, speed, duration);
+            if (target == 0 || target == 2)
+                rackMotors[motorID].control(direction, speed, duration);
         }
-        else {
-            Serial.println("Not enough data for CONTROL.");
+    } else if (cmd == "calibrate" && tokenCount == 3) {
+        int motorID = atoi(tokens[1]);
+        int target = atoi(tokens[2]);
+
+        Serial.print("CMD_CALIBRATE: MotorID=");
+        Serial.print(motorID);
+        Serial.print(", Target=");
+        Serial.print(target);
+
+        if (motorID < 4) {
+            if (target == 0 || target == 1)
+                sliders[motorID].calibrate();
+            if (target == 0 || target == 2)
+                rackMotors[motorID].calibrate();
         }
-        break;
+    } else if (cmd == "move" && tokenCount == 4) {
+        int motorID = atoi(tokens[1]);
+        int target = atoi(tokens[2]);
+        int distance = atoi(tokens[3]);
 
-    case CMD_CALIBRATE:
-        if (length >= 3)
-        {
-            uint8_t motorIndex = buffer[1];
-            uint8_t target = buffer[2];
-            Serial.println("CMD_CALIBRATE: MotorIndex = " + String(motorIndex) + ", Target = " + String(target));
+        Serial.print("CMD_MOVE: MotorID=");
+        Serial.print(motorID);
+        Serial.print(", Target=");
+        Serial.print(target);
+        Serial.print(", Distance=");
+        Serial.println(distance);
 
-            if (motorIndex < 4) {
-                if (target == 0 || target == 1)
-                    sliders[motorIndex].calibrate();
-                if (target == 0 || target == 2)
-                    rackMotors[motorIndex].calibrate();
-            }
+
+        if (motorID < 4) {
+            if (target == 0)
+                moveFinger(sliders[motorID], rackMotors[motorID], distance);
+            else if (target == 1)
+                sliders[motorID].move(distance);
+            else if (target == 2)
+                rackMotors[motorID].move(distance);
         }
-        else {
-            Serial.println("Not enough data for CALIBRATE.");
+    } else if (cmd == "debug" && tokenCount == 4) {
+        int motorID = atoi(tokens[1]);
+        int target = atoi(tokens[2]);
+        int position = atoi(tokens[3]);
+
+        Serial.print("CMD_DEBUG: MotorID=");
+        Serial.print(motorID);
+        Serial.print(", Target=");
+        Serial.print(target);
+        Serial.print(", Position=");
+        Serial.println(position);
+
+        if (motorID < 4) {
+            if (target == 0 || target == 1)
+                sliders[motorID].moveBy(position);
+            if (target == 0 || target == 2)
+                rackMotors[motorID].moveBy(position);
         }
-        break;
-
-    case CMD_MOVE:
-        if (length >= 7)
-        {
-            uint8_t motorIndex = buffer[1];
-            uint8_t target = buffer[2];
-            int32_t distanceMm = ((int32_t)buffer[3] << 24) | ((int32_t)buffer[4] << 16) |
-                                 ((int32_t)buffer[5] << 8) | buffer[6];
-            Serial.println("CMD_MOVE: MotorIndex = " + String(motorIndex) + ", Target = " + String(target) +
-                           ", Distance = " + String(distanceMm) + "mm");
-
-            if (motorIndex < 4) {
-                if (target == 0)
-                    moveFinger(sliders[motorIndex], rackMotors[motorIndex], distanceMm);
-                else if (target == 1)
-                    sliders[motorIndex].move(distanceMm);
-                else if (target == 2)
-                    rackMotors[motorIndex].move(distanceMm);
-            }
-        }
-        else {
-            Serial.println("Not enough data for MOVE.");
-        }
-        break;
-
-    case CMD_DEBUG:
-        Serial.println("CMD_DEBUG received");
-        if (length >= 8) {
-            uint8_t action = buffer[1];
-            uint8_t motorIndex = buffer[2];
-            uint8_t target = buffer[3];
-            int32_t positionMm = ((int32_t)buffer[4] << 24) | ((int32_t)buffer[5] << 16) |
-                                 ((int32_t)buffer[6] << 8) | buffer[7];
-
-            if (motorIndex < 4) {
-                switch (action)
-                {
-                case 0: // moveBy
-                    if (target == 0 || target == 1)
-                        sliders[motorIndex].moveBy(positionMm);
-                    if (target == 0 || target == 2)
-                        rackMotors[motorIndex].moveBy(positionMm);
-                    break;
-                default:
-                    Serial.println("Unknown debug action.");
-                    break;
-                }
-            }
-        } else {
-            Serial.println("Not enough data for DEBUG.");
-        }
-        break;
-
-    default:
-        Serial.println("Unknown command.");
-        break;
+    } else {
+        Serial.println("Unknown or invalid command.");
     }
 }

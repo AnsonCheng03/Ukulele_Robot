@@ -158,6 +158,7 @@ def send_motor_command(motor_id, command_type, *args):
             return
 
         # Send over UART
+        print(f"Sending command: {msg.strip()}")
         serial_port.write(msg.encode('utf-8'))
 
     except Exception as e:
