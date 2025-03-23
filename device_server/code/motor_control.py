@@ -9,8 +9,6 @@ slaves = {
     # 14: {"Name": "Control Motor"},
 }
 
-# Initialize I2C bus (1 for Raspberry Pi)
-i2c_bus = smbus.SMBus(1)
 
 note_mapping = {  # Address: Note: MoveDistance
     9: {'A': -1, '0': -1,
