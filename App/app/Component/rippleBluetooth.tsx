@@ -5,43 +5,56 @@ import { View, Easing, StyleSheet, Animated } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function rippleBluetooth() {
-  const rippleAnim = useRef(new Animated.Value(0)).current;
-
-  const rippleScale = rippleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 2.5],
-  });
-
-  const rippleOpacity = rippleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.6, 0],
-  });
+  const rippleCount = 3;
+  const duration = 2000;
+  const ripples = Array.from({ length: rippleCount }).map(
+    () => useRef(new Animated.Value(0)).current
+  );
 
   useEffect(() => {
-    Animated.loop(
-      Animated.timing(rippleAnim, {
-        toValue: 1,
-        duration: 1500,
-        easing: Easing.out(Easing.circle),
-        useNativeDriver: true,
-      })
-    ).start();
+    ripples.forEach((rippleAnim, index) => {
+      Animated.loop(
+        Animated.timing(rippleAnim, {
+          toValue: 1,
+          duration,
+          delay: index * (duration / rippleCount),
+          easing: Easing.out(Easing.circle),
+          useNativeDriver: true,
+        })
+      ).start();
+    });
   }, []);
 
   return (
     <View style={styles.rippleWrapper}>
-      <Animated.View
-        style={[
-          styles.rippleCircle,
-          {
-            transform: [{ scale: rippleScale }],
-            opacity: rippleOpacity,
-            position: "absolute",
-          },
-        ]}
-      />
+      {ripples.map((rippleAnim, index) => {
+        const scale = rippleAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 4],
+        });
+
+        const opacity = rippleAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.4, 0],
+        });
+
+        return (
+          <Animated.View
+            key={index}
+            style={[
+              styles.rippleCircle,
+              {
+                transform: [{ scale }],
+                opacity,
+                position: "absolute",
+              },
+            ]}
+          />
+        );
+      })}
+
       <View style={styles.iconCircle}>
-        <MaterialCommunityIcons name="bluetooth" size={40} color="#007AFF" />
+        <MaterialCommunityIcons name="bluetooth" size={50} color="#007AFF" />
       </View>
     </View>
   );
@@ -65,9 +78,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 160,
+    height: 160,
+    borderRadius: "100%",
     backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
