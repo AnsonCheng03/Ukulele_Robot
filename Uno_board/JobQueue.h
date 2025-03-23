@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 // Define the maximum size of the job queue
-#define MAX_QUEUE_SIZE 3
+#define MAX_QUEUE_SIZE 10
 
 // Define a type for job functions that take a parameter
 typedef void (*JobFunction)(void* context);

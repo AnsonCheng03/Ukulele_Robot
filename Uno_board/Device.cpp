@@ -1,7 +1,7 @@
 #include "Device.h"
 
-Device::Device(int startPin, int directionPin, int speedPin, int boardAddress)
-    : startPin(startPin), directionPin(directionPin), speedPin(speedPin), boardAddress(boardAddress), isMoving(false), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0), max_distance(0), fixedMoveSpeed(1000), distanceToDurationRatio(0.01) {}
+Device::Device(int startPin, int directionPin, int speedPin, int motorID)
+    : startPin(startPin), directionPin(directionPin), speedPin(speedPin), motorID(motorID), isMoving(false), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0), max_distance(0), fixedMoveSpeed(1000), distanceToDurationRatio(0.01) {}
     
 
 void Device::setup()
@@ -9,7 +9,7 @@ void Device::setup()
     pinMode(startPin, OUTPUT);
     pinMode(directionPin, OUTPUT);
     pinMode(speedPin, OUTPUT);
-    Serial.println("Device setup for pins: " + String(startPin) + ", " + String(directionPin) + ", " + String(speedPin));
+    Serial.println("Device " + String(motorID) + " setup for pins: " + String(startPin) + ", " + String(directionPin) + ", " + String(speedPin));
 }
 
 void Device::control(int direction, int speedHz, int durationTenths)
@@ -96,7 +96,7 @@ bool Device::isMovementComplete()
     return !isMoving;
 }
 
-int Device::getBoardAddress()
+int Device::getmotorID()
 {
-    return boardAddress;
+    return motorID;
 }

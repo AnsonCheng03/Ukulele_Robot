@@ -1,7 +1,7 @@
 #include "RackMotor.h"
 
-RackMotor::RackMotor(int startPin, int directionPin, int speedPin, int boardAddress)
-    : Device(startPin, directionPin, speedPin, boardAddress) {}
+RackMotor::RackMotor(int startPin, int directionPin, int speedPin, int motorID)
+    : Device(startPin, directionPin, speedPin, motorID) {}
 
 void RackMotor::setup() {
     Device::setup();
@@ -9,7 +9,7 @@ void RackMotor::setup() {
     max_distance = 0;
     fixedMoveSpeed = 1000;
     distanceToDurationRatio = 0.01;
-    setDirection(boardAddress >= 10 ? LOW : HIGH);
+    setDirection(motorID >= 10 ? LOW : HIGH);
     analogWrite(speedPin, 100);
     startMovement(5);
 }
@@ -20,12 +20,12 @@ int RackMotor::getSpeedPin() {
 
 void calibrateMotorDown(void* context) {
     RackMotor* rackMotor = static_cast<RackMotor*>(context);
-    rackMotor->moveBy(rackMotor->getBoardAddress() >= 10 ? 5 : -5);
+    rackMotor->moveBy(rackMotor->getmotorID() >= 10 ? 5 : -5);
 }
 
 void RackMotor::calibrate() {
     Serial.println("Calibrating rack motor...");
-    setDirection(boardAddress >= 10 ? LOW : HIGH);
+    setDirection(motorID >= 10 ? LOW : HIGH);
     analogWrite(speedPin, 100);
     startMovement(5);
     Serial.println("Calibration started: Moving rack motor");
@@ -46,10 +46,10 @@ void RackMotor::move(int positionMm)
 // need integrate with calibration later
 void RackMotor::up() {
     Serial.println("Rack motor moving up...");
-    moveBy(boardAddress >= 10 ? -2 : 2);
+    moveBy(motorID >= 10 ? -2 : 2);
 }
 
 void RackMotor::down() {
     Serial.println("Rack motor moving down...");
-    moveBy(boardAddress >= 10 ? 2 : -2);
+    moveBy(motorID >= 10 ? 2 : -2);
 }

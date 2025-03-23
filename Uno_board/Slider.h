@@ -5,7 +5,7 @@
 
 class Slider : public Device {
 public:
-    Slider(int startPin, int directionPin, int speedPin, int sensorPin, int boardAddress);
+    Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID);
     void setup();
     void calibrate();
     void update();

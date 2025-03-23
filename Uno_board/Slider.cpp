@@ -1,7 +1,7 @@
 #include "Slider.h"
 
-Slider::Slider(int startPin, int directionPin, int speedPin, int sensorPin, int boardAddress)
-    : Device(startPin, directionPin, speedPin, boardAddress), sensorPin(sensorPin), isCalibrating(false) {}
+Slider::Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID)
+    : Device(startPin, directionPin, speedPin, motorID), sensorPin(sensorPin), isCalibrating(false) {}
 
 void Slider::setup() {
     Device::setup();
@@ -25,7 +25,7 @@ void Slider::calibrate() {
 
         // Step 1: If the sensor is already HIGH, move backward for 5 seconds
         if (digitalRead(sensorPin) == HIGH) {
-            setDirection(boardAddress >= 10 ? LOW : HIGH);
+            setDirection(motorID >= 10 ? LOW : HIGH);
             analogWrite(speedPin, 1000);
             startMovement(movementDuration); // Move backward for 5 seconds
 
@@ -43,7 +43,7 @@ void Slider::calibrate() {
 
         // Step 3: Move slowly until it reaches the sensor, 5 seconds per loop
         while (digitalRead(sensorPin) == LOW) {
-            setDirection(boardAddress >= 10 ? HIGH : LOW);
+            setDirection(motorID >= 10 ? HIGH : LOW);
             analogWrite(speedPin, 1000);
             startMovement(movementDuration); // Move slowly for 5 seconds
 
@@ -77,7 +77,7 @@ void Slider::move(int positionMm)
         Serial.println("Device not calibrated. Cannot move.");
         return;
     }
-    moveBy(positionMm - currentPosition, boardAddress >= 10);
+    moveBy(positionMm - currentPosition, motorID >= 10);
 }
 
 void Slider::update() {

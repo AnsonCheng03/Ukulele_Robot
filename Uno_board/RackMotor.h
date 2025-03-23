@@ -6,7 +6,7 @@
 
 class RackMotor : public Device {
 public:
-    RackMotor(int startPin, int directionPin, int speedPin, int boardAddress);
+    RackMotor(int startPin, int directionPin, int speedPin, int motorID);
     int getSpeedPin();
 
     void setup();
