@@ -5,8 +5,7 @@ serial_port = serial.Serial(
     baudrate=115200,
     timeout=1
 )
-serial_port.open()
-print("UART Serial connected on /dev/serial0 at 115200 baud")
+
 
 note_mapping = {  # Address: Note: MoveDistance
     9: {'A': -1, '0': -1,
@@ -156,6 +155,13 @@ def send_motor_command(motor_id, command_type, *args):
 
         # Send over UART
         print(f"Sending command: {msg.strip()}")
+        
+        if not serial_port.is_open:
+            serial_port.open()
+            print("Serial port opened")
+        elif serial_port.is_open:
+            print("Serial port already open, sending command")
+            
         serial_port.write(msg.encode('utf-8'))
 
     except Exception as e:
