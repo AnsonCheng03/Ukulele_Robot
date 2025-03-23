@@ -63,8 +63,6 @@ void setup()
 
 }
 
-
-
 void loop() {
     updateMotorsAndSliders();
     executeNextJobIfReady();
@@ -107,12 +105,12 @@ void handleIntervalTasks() {
 String inputLine = "";
 
 void handleSerialInput() {
-    while (Serial1.available()) {
+    while (Serial1.available() > 0) {
         char incomingByte = Serial1.read();
 
         // Echo to USB serial
-        Serial.print("Received: ");
-        Serial.println(incomingByte);
+        // Serial.print("Received: ");
+        // Serial.println(incomingByte);
 
         if (incomingByte == '\n') {
             inputLine.trim();
@@ -125,8 +123,6 @@ void handleSerialInput() {
         }
     }
 }
-
-
 
 void processCommand(const String& commandStr) {
     Serial.println("Processing: " + commandStr);
@@ -169,7 +165,7 @@ void processCommand(const String& commandStr) {
             if (target == 0 || target == 2)
                 rackMotors[motorID].control(direction, speed, duration);
         }
-    } else if (cmd == "calibrate" && tokenCount == 3) {
+    } else if (cmd == "C" && tokenCount == 3) {
         int motorID = atoi(tokens[1]);
         int target = atoi(tokens[2]);
 
@@ -184,7 +180,7 @@ void processCommand(const String& commandStr) {
             if (target == 0 || target == 2)
                 rackMotors[motorID].calibrate();
         }
-    } else if (cmd == "move" && tokenCount == 4) {
+    } else if (cmd == "M" && tokenCount == 4) {
         int motorID = atoi(tokens[1]);
         int target = atoi(tokens[2]);
         int distance = atoi(tokens[3]);
@@ -205,7 +201,7 @@ void processCommand(const String& commandStr) {
             else if (target == 2)
                 rackMotors[motorID].move(distance);
         }
-    } else if (cmd == "debug" && tokenCount == 4) {
+    } else if (cmd == "D" && tokenCount == 4) {
         int motorID = atoi(tokens[1]);
         int target = atoi(tokens[2]);
         int position = atoi(tokens[3]);

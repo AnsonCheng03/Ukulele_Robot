@@ -125,12 +125,12 @@ def send_motor_command(motor_id, command_type, *args):
 
         elif command_type == 1:  # Calibrate
             calib_target = int(args[0]) if args else 0
-            msg = f"calibrate {motor_id} {calib_target}\n"
+            msg = f"C {motor_id} {calib_target}\n"
 
         elif command_type == 2:  # Move
             target = int(args[0]) if len(args) == 2 else 0
             distance = int(args[1]) if len(args) == 2 else int(args[0])
-            msg = f"move {motor_id} {target} {distance}\n"
+            msg = f"M {motor_id} {target} {distance}\n"
 
         elif command_type == 3:  # Fingering
             note = args[0].upper()
@@ -138,7 +138,7 @@ def send_motor_command(motor_id, command_type, *args):
                 print(f"Invalid note: {note}")
                 return
             distance = note_mapping[motor_id][note]
-            msg = f"move {motor_id} 0 {distance}\n"
+            msg = f"M {motor_id} 0 {distance}\n"
 
         elif command_type == 5:  # Debug
             action_type_input = args[0].lower()
@@ -147,7 +147,7 @@ def send_motor_command(motor_id, command_type, *args):
                 return
             target = int(args[1])
             position_mm = int(args[2])
-            msg = f"debug {motor_id} {target} {position_mm}\n"
+            msg = f"D {motor_id} {target} {position_mm}\n"
 
         else:
             print("Unsupported command type")
