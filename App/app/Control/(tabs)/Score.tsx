@@ -14,6 +14,7 @@ import { Device } from "react-native-ble-plx";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import DocumentPicker from "react-native-document-picker";
 import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
 
 export default function PlayTabScreen({ device }: { device: Device }) {
   const [command, setCommand] = useState<string>("");
@@ -51,7 +52,7 @@ export default function PlayTabScreen({ device }: { device: Device }) {
   return (
     <SafeAreaProvider>
       <ThemedView style={styles.container}>
-        <Text style={styles.heading}>Bluetooth Device Control</Text>
+        <ThemedText style={styles.heading}>Bluetooth Device Control</ThemedText>
         <View style={styles.card}>
           <Text style={styles.deviceName}>{device?.name || "Unknown"}</Text>
           <Text style={styles.deviceId}>ID: {device?.id}</Text>

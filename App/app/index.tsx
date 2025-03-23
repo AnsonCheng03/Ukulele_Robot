@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
   },
   deviceName: {
     fontSize: 14,
+    color: "#000",
     fontWeight: "600",
   },
   deviceId: {

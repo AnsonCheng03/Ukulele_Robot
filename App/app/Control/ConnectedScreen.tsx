@@ -16,6 +16,7 @@ import EditingTabScreen from "./(tabs)/Editing";
 import ScoreTabScreen from "./(tabs)/Score";
 import ChordTabScreen from "./(tabs)/Chord";
 import { Device } from "react-native-ble-plx";
+import DebugTabScreen from "./(tabs)/Debug";
 
 export default function ConnectedScreen({ device }: { device: Device | null }) {
   if (!device) {
@@ -26,9 +27,9 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
     );
   }
 
-  const [tab, setTab] = useState<"chord" | "play" | "editing" | "score">(
-    "play"
-  );
+  const [tab, setTab] = useState<
+    "chord" | "play" | "editing" | "score" | "debug"
+  >("play");
   const renderContent = () => {
     switch (tab) {
       case "editing":
@@ -37,6 +38,8 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
         return <ScoreTabScreen device={device} />;
       case "chord":
         return <ChordTabScreen device={device} />;
+      case "debug":
+        return <DebugTabScreen device={device} />;
       default:
       case "play":
         return <PlayTabScreen device={device} />;
@@ -101,6 +104,20 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
           />
           <Text style={tab === "score" ? styles.tabActive : styles.tab}>
             Score
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => setTab("debug")}
+          style={styles.tabButton}
+        >
+          <MaterialCommunityIcons
+            name="bug"
+            size={22}
+            color={tab === "debug" ? "#007AFF" : "#999"}
+          />
+          <Text style={tab === "debug" ? styles.tabActive : styles.tab}>
+            Debug
           </Text>
         </TouchableOpacity>
       </View>

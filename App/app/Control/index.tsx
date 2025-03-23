@@ -12,6 +12,8 @@ import { useNavigation } from "@react-navigation/native";
 import ConnectedScreen from "./ConnectedScreen";
 import BleService from "../Services/BleService";
 import { Device } from "react-native-ble-plx";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
 
 export default function ControlLayout() {
   const navigation = useNavigation();
@@ -116,14 +118,14 @@ export default function ControlLayout() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <ThemedView style={styles.container}>
+      <ThemedView style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
         <View style={styles.statusContainer}>
           {renderStatusIcon()}
-          <Text style={styles.statusText}>
+          <ThemedText style={styles.statusText}>
             {loading
               ? "Connecting..."
               : isConnected
@@ -131,30 +133,29 @@ export default function ControlLayout() {
               : currentDevice
               ? "Disconnected"
               : "No device found"}
-          </Text>
+          </ThemedText>
         </View>
-      </View>
+      </ThemedView>
 
       {loading && (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#0000ff" />
-          <Text style={{ marginTop: 10 }}>Connecting...</Text>
+          <ThemedText style={{ marginTop: 10 }}>Connecting...</ThemedText>
         </View>
       )}
       {!loading && isConnected && <ConnectedScreen device={device} />}
       {!loading && !isConnected && (
         <View style={styles.centered}>
-          <Text>Device not connected</Text>
+          <ThemedText>Device not connected</ThemedText>
         </View>
       )}
-    </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     paddingHorizontal: 20,

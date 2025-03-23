@@ -68,7 +68,7 @@ export class BleService {
     ];
 
     let attempts = 0;
-    while (attempts < 3) {
+    while (attempts < 1) {
       try {
         const response =
           await this.device.writeCharacteristicWithResponseForService(
