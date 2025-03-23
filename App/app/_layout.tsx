@@ -15,6 +15,7 @@ import RippleBluetooth from "./Component/rippleBluetooth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
+import BottomDrawer from "./Component/drawer";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -51,13 +52,15 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <ThemedView style={styles.container}>
         <ThemedText style={styles.header}>Bluetooth Pairing</ThemedText>
-
-        <RippleBluetooth />
-
-        <TouchableOpacity style={styles.bottomDrawer}>
-          <ThemedView style={styles.drawerHandle} />
-        </TouchableOpacity>
+        <ThemedView style={styles.centerContainer}>
+          <RippleBluetooth />
+        </ThemedView>
       </ThemedView>
+      <BottomDrawer>
+        <ThemedText>Device 1</ThemedText>
+        <ThemedText>Device 1</ThemedText>
+        <ThemedText>Device 1</ThemedText>
+      </BottomDrawer>
       <StatusBar style="auto" />
     </ThemeProvider>
   );
@@ -83,20 +86,5 @@ const styles = StyleSheet.create({
     margin: 30,
     fontSize: 18,
     color: "#444",
-  },
-  bottomDrawer: {
-    height: 60,
-    width: "100%",
-    backgroundColor: "#eee",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  drawerHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: "#aaa",
-    borderRadius: 2,
   },
 });

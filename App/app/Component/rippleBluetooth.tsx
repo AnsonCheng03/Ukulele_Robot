@@ -62,9 +62,9 @@ export default function rippleBluetooth() {
 
 const styles = StyleSheet.create({
   rippleCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 160,
+    height: 160,
+    borderRadius: "100%",
     borderWidth: 2,
     borderColor: "#007AFF",
     alignItems: "center",
@@ -72,8 +72,8 @@ const styles = StyleSheet.create({
   },
 
   rippleWrapper: {
-    width: 120,
-    height: 120,
+    width: 160,
+    height: 160,
     alignItems: "center",
     justifyContent: "center",
   },
