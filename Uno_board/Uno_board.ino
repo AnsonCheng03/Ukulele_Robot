@@ -158,12 +158,20 @@ void processCommand(const String& commandStr) {
         Serial.print(", Duration=");
         Serial.println(duration);
 
-
-        if (motorID < 4) {
+        if (motorID == 0) {
+            if(target == 0 || target == 1)
+                for (int i = 0; i < 4; ++i) {
+                    sliders[i].control(direction, speed, duration);
+                }
+            if(target == 0 || target == 2)
+                for (int i = 0; i < 4; ++i) {
+                    rackMotors[i].control(direction, speed, duration);
+                }
+        } else if (motorID <= 4) {
             if (target == 0 || target == 1)
-                sliders[motorID].control(direction, speed, duration);
+                sliders[motorID - 1].control(direction, speed, duration);
             if (target == 0 || target == 2)
-                rackMotors[motorID].control(direction, speed, duration);
+                rackMotors[motorID - 1].control(direction, speed, duration);
         }
     } else if (cmd == "C" && tokenCount == 3) {
         int motorID = atoi(tokens[1]);
@@ -174,11 +182,20 @@ void processCommand(const String& commandStr) {
         Serial.print(", Target=");
         Serial.print(target);
 
-        if (motorID < 4) {
+        if (motorID == 0) {
             if (target == 0 || target == 1)
-                sliders[motorID].calibrate();
+                for (int i = 0; i < 4; ++i) {
+                    sliders[i].calibrate();
+                }
             if (target == 0 || target == 2)
-                rackMotors[motorID].calibrate();
+                for (int i = 0; i < 4; ++i) {
+                    rackMotors[i].calibrate();
+                }
+        } else if (motorID <= 4) {
+            if (target == 0 || target == 1)
+                sliders[motorID - 1].calibrate();
+            if (target == 0 || target == 2)
+                rackMotors[motorID - 1].calibrate();
         }
     } else if (cmd == "M" && tokenCount == 4) {
         int motorID = atoi(tokens[1]);
@@ -192,14 +209,22 @@ void processCommand(const String& commandStr) {
         Serial.print(", Distance=");
         Serial.println(distance);
 
-
-        if (motorID < 4) {
+        if (motorID == 0) {
+            if (target == 0 || target == 1)
+                for (int i = 0; i < 4; ++i) {
+                    sliders[i].move(distance);
+                }
+            if (target == 0 || target == 2)
+                for (int i = 0; i < 4; ++i) {
+                    rackMotors[i].move(distance);
+                }
+        } else if (motorID <= 4) {
             if (target == 0)
-                moveFinger(sliders[motorID], rackMotors[motorID], distance);
+                moveFinger(sliders[motorID - 1], rackMotors[motorID - 1], distance);
             else if (target == 1)
-                sliders[motorID].move(distance);
+                sliders[motorID - 1].move(distance);
             else if (target == 2)
-                rackMotors[motorID].move(distance);
+                rackMotors[motorID - 1].move(distance);
         }
     } else if (cmd == "D" && tokenCount == 4) {
         int motorID = atoi(tokens[1]);
@@ -213,11 +238,20 @@ void processCommand(const String& commandStr) {
         Serial.print(", Position=");
         Serial.println(position);
 
-        if (motorID < 4) {
+        if (motorID == 0) {
             if (target == 0 || target == 1)
-                sliders[motorID].moveBy(position);
+                for (int i = 0; i < 4; ++i) {
+                    sliders[i].moveBy(position);
+                }
             if (target == 0 || target == 2)
-                rackMotors[motorID].moveBy(position);
+                for (int i = 0; i < 4; ++i) {
+                    rackMotors[i].moveBy(position);
+                }
+        } else if (motorID <= 4) {
+            if (target == 0 || target == 1)
+                sliders[motorID - 1].moveBy(position);
+            if (target == 0 || target == 2)
+                rackMotors[motorID - 1].moveBy(position);
         }
     } else {
         Serial.println("Unknown or invalid command.");
