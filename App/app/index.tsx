@@ -16,6 +16,7 @@ import BottomDrawer from "./Component/bottomDrawer";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { BleService } from "./Services/BleService";
+import FoundDeviceModal from "./Component/FoundDeviceModal";
 
 // Prevent splash screen from auto-hiding before setup is done
 SplashScreen.preventAutoHideAsync();
@@ -23,6 +24,8 @@ SplashScreen.preventAutoHideAsync();
 export default function BluetoothSearch() {
   const [devices, setDevices] = useState<any[]>([]);
   const [scanning, setScanning] = useState(false);
+  const [foundDevice, setFoundDevice] = useState<any | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const bleService = BleService.getInstance();
   const router = useRouter();
 
@@ -111,6 +114,15 @@ export default function BluetoothSearch() {
       } else {
         bleService.startScan((device) => {
           if (device && device.name) {
+            const normalized = device.name.toLowerCase().replace(/\s+/g, "");
+            if (
+              normalized.includes("guitarrobot") ||
+              normalized.includes("ukulelerobot")
+            ) {
+              setFoundDevice(device);
+              setShowModal(true);
+            }
+
             setDevices((prevDevices) => {
               if (!prevDevices.some((d) => d.id === device.id)) {
                 return [...prevDevices, device];
@@ -156,6 +168,19 @@ export default function BluetoothSearch() {
           </View>
         ))}
       </BottomDrawer>
+
+      <FoundDeviceModal
+        visible={showModal}
+        onClose={() => setShowModal(false)}
+        onPair={() => {
+          if (foundDevice) {
+            BleService.getInstance().setDevice(foundDevice);
+            setShowModal(false);
+            router.push("/Control");
+          }
+        }}
+        device={foundDevice}
+      />
     </>
   );
 }

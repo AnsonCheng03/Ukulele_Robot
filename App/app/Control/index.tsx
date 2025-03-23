@@ -147,6 +147,8 @@ export default function ControlLayout() {
       {!loading && !isConnected && (
         <View style={styles.centered}>
           <ThemedText>Device not connected</ThemedText>
+          <ActivityIndicator size="large" color="#0000ff" />
+          <ThemedText>Retrying connection...</ThemedText>
         </View>
       )}
     </ThemedView>
