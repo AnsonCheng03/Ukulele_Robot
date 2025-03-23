@@ -5,6 +5,7 @@
 # 1. Enable I2C and Bluetooth on Raspberry Pi
 echo "Enabling I2C and Bluetooth..."
 sudo raspi-config nonint do_i2c 0
+sudo raspi-config nonint do_serial 1
 
 # 2. Install necessary libraries
 echo "Updating package lists and installing necessary libraries..."

@@ -5,6 +5,8 @@ serial_port = serial.Serial(
     baudrate=115200,
     timeout=1
 )
+serial_port.open()
+print("UART Serial connected on /dev/serial0 at 115200 baud")
 
 note_mapping = {  # Address: Note: MoveDistance
     9: {'A': -1, '0': -1,

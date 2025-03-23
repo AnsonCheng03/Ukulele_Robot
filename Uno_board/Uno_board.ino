@@ -63,14 +63,7 @@ void setup()
 
 }
 
-void receiveEvent(int bytes)
-{
-    uint8_t buffer[10];
-    int length = readAndProcessInput(buffer, sizeof(buffer), "I2C");
-    if (length > 0) {
-        processCommand(buffer, length);
-    }
-}
+
 
 void loop() {
     updateMotorsAndSliders();
@@ -133,54 +126,7 @@ void handleSerialInput() {
     }
 }
 
-int readAndProcessInput(uint8_t* buffer, int bufferSize, const char* source)
-{
-    int index = 0;
 
-    // if (strcmp(source, "Serial") == 0) {
-    //     // Read data from Serial
-    //     unsigned long startMillis = millis();
-    //     while (index < bufferSize && millis() - startMillis < 1000) {
-    //         if (!Serial.available()) {
-    //             continue;
-    //         }
-    //         int c = Serial.read();
-    //         if (c == '\n') {
-    //             break;
-    //         }
-    //         // make c (string) to number
-    //         if(c >= '0' && c <= '9') {
-    //             c = c - '0';
-    //         } else if(c >= 'A' && c <= 'F') {
-    //             c = c - 'A' + 10;
-    //         } else if(c >= 'a' && c <= 'f') {
-    //             c = c - 'a' + 10;
-    //         } else {
-    //             continue;
-    //         }
-    //         buffer[index++] = c;
-    //     }
-    // } else if (strcmp(source, "I2C") == 0) {
-        // Read data from I2C
-        while (Wire.available() && index < bufferSize) {
-            buffer[index++] = Wire.read();
-        }
-    // }
-
-    // Print received data
-    if (index > 0) {
-        Serial.print("Received data from ");
-        Serial.print(source);
-        Serial.print(": ");
-        for (int i = 0; i < index; i++) {
-            Serial.print(buffer[i], HEX);
-            Serial.print(" ");
-        }
-        Serial.println();
-    }
-
-    return index;
-}
 
 void processCommand(const String& commandStr) {
     Serial.println("Processing: " + commandStr);
