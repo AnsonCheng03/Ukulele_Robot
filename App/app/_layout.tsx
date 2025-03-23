@@ -4,20 +4,13 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
-import {
-  View,
-  Easing,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-} from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Easing, StyleSheet, TouchableOpacity, Animated } from "react-native";
+import RippleBluetooth from "./Component/rippleBluetooth";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { ThemedView } from "@/components/ThemedView";
@@ -31,16 +24,6 @@ export default function RootLayout() {
   const rippleAnim = useRef(new Animated.Value(0)).current;
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-  });
-
-  const rippleScale = rippleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 2.5],
-  });
-
-  const rippleOpacity = rippleAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.6, 0],
   });
 
   useEffect(() => {
@@ -69,25 +52,7 @@ export default function RootLayout() {
       <ThemedView style={styles.container}>
         <ThemedText style={styles.header}>Bluetooth Pairing</ThemedText>
 
-        <View style={styles.rippleWrapper}>
-          <Animated.View
-            style={[
-              styles.rippleCircle,
-              {
-                transform: [{ scale: rippleScale }],
-                opacity: rippleOpacity,
-                position: "absolute",
-              },
-            ]}
-          />
-          <View style={styles.iconCircle}>
-            <MaterialCommunityIcons
-              name="bluetooth"
-              size={40}
-              color="#007AFF"
-            />
-          </View>
-        </View>
+        <RippleBluetooth />
 
         <TouchableOpacity style={styles.bottomDrawer}>
           <ThemedView style={styles.drawerHandle} />
@@ -113,31 +78,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flex: 1,
-  },
-  rippleCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: "#007AFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  rippleWrapper: {
-    width: 120,
-    height: 120,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1,
   },
   statusText: {
     margin: 30,
