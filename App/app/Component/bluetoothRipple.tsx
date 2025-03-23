@@ -30,7 +30,7 @@ export default function rippleBluetooth() {
       {ripples.map((rippleAnim, index) => {
         const scale = rippleAnim.interpolate({
           inputRange: [0, 1],
-          outputRange: [0, 4],
+          outputRange: [0, 2.5],
         });
 
         const opacity = rippleAnim.interpolate({

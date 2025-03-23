@@ -7,7 +7,6 @@ import {
   View,
   TouchableWithoutFeedback,
 } from "react-native";
-import { ThemedView } from "@/components/ThemedView";
 import { MaterialIcons } from "@expo/vector-icons";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;

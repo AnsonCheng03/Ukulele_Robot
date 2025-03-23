@@ -9,29 +9,21 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
-import { RouteProp } from "@react-navigation/native";
-import { RootStackParamList } from "../(tabs)";
+import { RouteProp, useRoute } from "@react-navigation/native";
 import { BleService } from "../../Services/BleService";
 import { Device } from "react-native-ble-plx";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import DocumentPicker from "react-native-document-picker";
+import RNFS from "react-native-fs"; // Add if using file system
 
-interface ControlDeviceScreenProps {
-  route: RouteProp<RootStackParamList, "Control Device">;
-}
-
-export default function ControlDeviceScreen({
-  route,
-}: ControlDeviceScreenProps) {
+export default function EditingTabScreen() {
+  const route = useRoute();
   const [command, setCommand] = useState<string>("");
   const [receivedCommands, setReceivedCommands] = useState<string[]>([]);
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  if (!route || !route.params)
-    return <ThemedText>route.params is undefined</ThemedText>;
-
-  const { device } = route.params as { device: Device };
+  const { device } = (route.params || {}) as { device: Device };
   const bleService = BleService.getInstance();
 
   const returnFilePath = (fileName: string) => {
@@ -39,8 +31,7 @@ export default function ControlDeviceScreen({
       Platform.OS === "ios"
         ? `${RNFS.DocumentDirectoryPath}`
         : `${RNFS.DownloadDirectoryPath}`;
-    const filePath = dirPath + `/${fileName}`;
-    return filePath;
+    return dirPath + `/${fileName}`;
   };
 
   const connectToDevice = () => {
@@ -60,13 +51,15 @@ export default function ControlDeviceScreen({
   };
 
   useEffect(() => {
-    connectToDevice();
+    if (device) {
+      connectToDevice();
+    }
   }, [device]);
 
   useEffect(() => {
     return () => {
-      console.log("Cleaning up ControlDeviceScreen");
-      if (isConnected) {
+      console.log("Cleaning up PlayTabScreen");
+      if (isConnected && device) {
         console.log("Disconnecting from device");
         device.cancelConnection();
       }
@@ -83,17 +76,19 @@ export default function ControlDeviceScreen({
       })
       .catch((error: Error) => {
         console.error(error.message);
-        setIsConnected(false); // Assume connection lost if sending command fails
+        setIsConnected(false);
       });
   };
 
   return (
     <SafeAreaProvider>
       <ThemedView style={styles.container}>
+        <ThemedText style={styles.title}>
+          {`Controlling Device: ${device?.name || "Unknown"}`}
+        </ThemedText>
         <ThemedText
-          style={styles.title}
-        >{`Controlling Device: ${device.name}`}</ThemedText>
-        <ThemedText style={styles.text}>{`Device ID: ${device.id}`}</ThemedText>
+          style={styles.text}
+        >{`Device ID: ${device?.id}`}</ThemedText>
         {loading ? (
           <ThemedText style={styles.loadingText}>Connecting...</ThemedText>
         ) : isConnected ? (
@@ -118,7 +113,6 @@ export default function ControlDeviceScreen({
             <Button
               title="Upload File"
               onPress={() => {
-                // retrieve file from device
                 DocumentPicker.pick({
                   type: [DocumentPicker.types.allFiles],
                   allowMultiSelection: false,
@@ -140,7 +134,7 @@ export default function ControlDeviceScreen({
                         })
                         .catch((error: Error) => {
                           console.error(error.message);
-                          setIsConnected(false); // Assume connection lost if sending command fails
+                          setIsConnected(false);
                         });
                     }
                   })
