@@ -1,13 +1,6 @@
 import serial
 
-# Dictionary of I2C slaves with motor configurations
-slaves = {
-    8: {"Name": "Right Motor 1"}, # Near Guitar
-    9: {"Name": "Right Motor 2"}, 
-    10: {"Name": "Left Second Motor"},
-    11: {"Name": "Right Second Motor"},
-    # 14: {"Name": "Control Motor"},
-}
+
 
 
 note_mapping = {  # Address: Note: MoveDistance
@@ -117,8 +110,7 @@ chord_mapping = {  # Chord: [Note, Address]
 
 def send_motor_command(motor_id, command_type, *args):
     try:
-        motor_name = slaves[motor_id]['Name']
-        print(f"Sending to {motor_name} via UART - Type {command_type}, Args: {args}")
+        print(f"Sending to {motor_id} via UART - Type {command_type}, Args: {args}")
 
         if command_type == 0:  # Control
             target = int(args[0])
