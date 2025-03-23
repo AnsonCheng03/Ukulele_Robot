@@ -1,7 +1,10 @@
 import serial
 
-
-
+serial_port = serial.Serial(
+    port='/dev/serial0',  # or '/dev/ttyAMA0'
+    baudrate=115200,
+    timeout=1
+)
 
 note_mapping = {  # Address: Note: MoveDistance
     9: {'A': -1, '0': -1,
