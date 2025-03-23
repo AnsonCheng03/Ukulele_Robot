@@ -5,6 +5,7 @@ import {
   State,
 } from "react-native-ble-plx";
 import RNFS from "react-native-fs";
+import { sha1 } from "react-native-sha256";
 
 export class BleService {
   private static instance: BleService;
@@ -41,21 +42,27 @@ export class BleService {
     device: Device,
     command: string
   ): Promise<void> {
+    const [serviceUUID, characteristicUUID] = [
+      "0000180d-0000-1000-8000-00805f9b34fb",
+      "00002a39-0000-1000-8000-00805f9b34fb",
+    ];
+
     let attempts = 0;
     try {
       while (attempts < 3) {
-        console.log(
-          "sent",
-          await device.writeCharacteristicWithResponseForService(
-            "0000180d-0000-1000-8000-00805f9b34fb",
-            "00002a39-0000-1000-8000-00805f9b34fb",
-            btoa(command)
-          )
+        const response = await device.writeCharacteristicWithResponseForService(
+          serviceUUID,
+          characteristicUUID,
+          btoa(command)
         );
+
+        const value = await response.read();
+        console.log("Received response:", value.value);
+
         return;
       }
     } catch (error) {
-      console.log(`Attempt ${attempts + 1}: Connecting to device...`);
+      console.log(`Attempt ${attempts + 1}: Connecting to device...`, error);
       await this.connectToDevice(device);
       attempts++;
       console.error("Error sending command: ", error);
@@ -75,17 +82,49 @@ export class BleService {
   }
 
   public async sendFileToDevice(device: Device, file: string): Promise<void> {
+    const [serviceUUID, characteristicUUID] = [
+      "0000180e-0000-1000-8000-00805f9b34fb",
+      "00002a3b-0000-1000-8000-00805f9b34fb",
+    ];
+
     console.log("Sending file to device", file);
     const fileContent = await RNFS.readFile(file, "base64");
     const chunks = fileContent.match(/.{1,20}/g) || [];
 
     for (let i = 0; i < chunks.length; i++) {
-      console.log("Sending chunk", i);
-      await device.writeCharacteristicWithResponseForService(
-        "0000180e-0000-1000-8000-00805f9b34fb",
-        "00002a3b-0000-1000-8000-00805f9b34fb",
-        chunks[i]
-      );
+      const chunk = chunks[i];
+      const checksum = await sha1(chunk);
+
+      try {
+        // Send the chunk and wait for the response
+        const response = await device.writeCharacteristicWithResponseForService(
+          serviceUUID,
+          characteristicUUID,
+          chunks[i]
+        );
+
+        const value = await response.read();
+
+        if (value.value) {
+          const base64Value = atob(value.value);
+          const byteArr = new Uint8Array(base64Value.length);
+          for (let j = 0; j < base64Value.length; j++) {
+            byteArr[j] = base64Value.charCodeAt(j);
+          }
+          console.log("Received response:", byteArr);
+          // console.log("Checksum response:", checksumResponse, checksum);
+          // if (checksumResponse === checksum) {
+          //   console.log("Checksums match, sending next chunk");
+          // } else {
+          //   console.error("Checksums do not match, resending chunk");
+          //   i--;
+          // }
+        } else {
+          console.error("Received null value from device");
+        }
+      } catch (error) {
+        console.error("Error sending chunk:", error);
+      }
     }
   }
 

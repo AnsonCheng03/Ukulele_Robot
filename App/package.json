@@ -10,6 +10,7 @@
     "web": "expo start --web",
     "build:ios": "eas build --platform ios --local",
     "build:android": "eas build --platform android --local",
+    "build:online": "eas build && eas submit",
     "test": "jest --watchAll",
     "lint": "expo lint",
     "postinstall": "patch-package"
@@ -47,6 +48,7 @@
     "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
+    "react-native-sha256": "^1.4.10",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5"
   },
