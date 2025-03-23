@@ -162,6 +162,7 @@ def send_motor_command(motor_id, command_type, *args):
         elif serial_port.is_open:
             print("Serial port already open, sending command")
             
+        serial_port.flushInput()
         serial_port.write(msg.encode('utf-8'))
 
     except Exception as e:
