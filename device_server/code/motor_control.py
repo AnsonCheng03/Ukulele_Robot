@@ -1,4 +1,4 @@
-import smbus
+import serial
 
 # Dictionary of I2C slaves with motor configurations
 slaves = {
@@ -119,127 +119,98 @@ chord_mapping = {  # Chord: [Note, Address]
 
 def send_motor_command(slave_address, command_type, *args):
     try:
-        print(f"Sending command to slave {slaves[slave_address]['Name']} (address {hex(slave_address)}) with type {command_type}, and args {args}")
-        control_data = []
+        motor_name = slaves[slave_address]['Name']
+        print(f"Sending to {motor_name} via UART - Type {command_type}, Args: {args}")
+
         if command_type == 0:  # Control
             target = int(args[0])
             speed = int(args[1])
             duration = int(args[2])
             direction = int(args[3])
-            control_data.extend([
-                target,
-                (speed >> 8) & 0xFF,
-                speed & 0xFF,
-                (duration >> 24) & 0xFF,
-                (duration >> 16) & 0xFF,
-                (duration >> 8) & 0xFF,
-                duration & 0xFF,
-                direction & 0xFF
-            ])
-            i2c_bus.write_i2c_block_data(slave_address, command_type, control_data)
+            msg = f"C,{command_type},{slave_address},{target},{speed},{duration},{direction}\n"
+
         elif command_type == 1:  # Calibrate
-            if len(args) > 0:
-                control_data.extend(args[0]) # Calibration target
+            if args:
+                calib_target = int(args[0])
             else:
-                control_data.extend([0]) # Calibrate all
-            i2c_bus.write_i2c_block_data(slave_address, command_type, control_data)
-            pass
+                calib_target = 0
+            msg = f"A,{command_type},{slave_address},{calib_target}\n"
+
         elif command_type == 2:  # Move
             target = int(args[0]) if len(args) == 2 else 0
             distance = int(args[1]) if len(args) == 2 else int(args[0])
-            control_data.extend([
-                target,
-                (distance >> 24) & 0xFF,
-                (distance >> 16) & 0xFF,
-                (distance >> 8) & 0xFF,
-                distance & 0xFF
-            ])
-            i2c_bus.write_i2c_block_data(slave_address, command_type, control_data)
+            msg = f"M,{command_type},{slave_address},{target},{distance}\n"
+
         elif command_type == 3:  # Fingering
             note = args[0].upper()
             if note not in note_mapping[slave_address]:
                 print(f"Invalid note: {note}")
                 return
             distance = note_mapping[slave_address][note]
-            control_data.extend([
-                0,  # Target
-                (distance >> 24) & 0xFF,
-                (distance >> 16) & 0xFF,
-                (distance >> 8) & 0xFF,
-                distance & 0xFF
-            ])
-            i2c_bus.write_i2c_block_data(slave_address, 2, control_data)
+            msg = f"F,{command_type},{slave_address},0,{distance}\n"
+
         elif command_type == 5:  # Debug
-            action_mapping = {"moveby": 0}
             action_type_input = args[0].lower()
-            if action_type_input not in action_mapping:
+            if action_type_input != "moveby":
                 print(f"Invalid debug action: {action_type_input}")
                 return
-            action = action_mapping[action_type_input]
-            control_data.extend([action])
-            if action == 0: 
-                target = int(args[1])
-                position_mm = int(args[2])
-                control_data.extend([
-                    target,
-                    (position_mm >> 24) & 0xFF,
-                    (position_mm >> 16) & 0xFF,
-                    (position_mm >> 8) & 0xFF,
-                    position_mm & 0xFF
-                ])
-            i2c_bus.write_i2c_block_data(slave_address, command_type, control_data)
-    except OSError as e:
-        print(f"Failed to communicate with slave {slaves[slave_address]['Name']} (address {hex(slave_address)}): {e}")
+            target = int(args[1])
+            position_mm = int(args[2])
+            msg = f"D,{command_type},{slave_address},{target},{position_mm}\n"
+
+        else:
+            print("Unsupported command type")
+            return
+
+        # Send over UART
+        serial_port.write(msg.encode('utf-8'))
+
     except Exception as e:
-        print(f"Failed to send command: {e}")
+        print(f"Error sending command: {e}")
+
 
 def handle_command_input(command):
     command_parts = command.split()
     if len(command_parts) < 2:
         print("Invalid command format")
         return
-    try:
-        # Simplified command mapping
-        command_mapping = {"0": 0, "control": 0, "1": 1, "calibrate": 1, "2": 2, "move": 2, "3": 3, "fingering": 3, "4": 4, "chord": 4, "debug": 5}
-        command_type_input = command_parts[0].lower()
-        
-        slave_address = command_parts[1] if len(command_parts) != 5 else command_parts[0]
 
-        if len(command_parts) < 5 or command_type_input == "debug":
-            if command_type_input in command_mapping:
-                command_type = command_mapping[command_type_input]
-                
-                if command_type == 4:
-                    chord = command_parts[1].upper()
-                    if chord not in chord_mapping:
-                        print(f"Invalid chord: {chord}")
-                        return
-                    for note, address in chord_mapping[chord]:
-                        send_motor_command(address, 3, note)
-                else:
-                    args = command_parts[2:]
-                    send_motor_command(int(slave_address), command_type, *args)
-            else:
-                print("Invalid command type")
+    try:
+        command_mapping = {
+            "0": 0, "control": 0,
+            "1": 1, "calibrate": 1,
+            "2": 2, "move": 2,
+            "3": 3, "fingering": 3,
+            "4": 4, "chord": 4,
+            "debug": 5
+        }
+
+        command_type_input = command_parts[0].lower()
+
+        if command_type_input == "chord":
+            chord = command_parts[1].upper()
+            if chord not in chord_mapping:
+                print(f"Invalid chord: {chord}")
                 return
+            for note, address in chord_mapping[chord]:
+                send_motor_command(address, 3, note)
+
+        elif command_type_input in command_mapping:
+            command_type = command_mapping[command_type_input]
+            slave_address = int(command_parts[1])
+            args = command_parts[2:]
+            send_motor_command(slave_address, command_type, *args)
+
         elif 5 <= len(command_parts) <= 6:
-            # If 4 or 5 parts, it must be a control command
-            command_type = 0  # Force command to be Control
-            command_sub = len(command_parts) - 5
-            target = int(command_parts[command_sub + 1])
-            speed = int(command_parts[command_sub + 2])
-            duration = int(command_parts[command_sub + 3]) 
-            direction = int(command_parts[command_sub + 4]) 
-            send_motor_command(slave_address, command_type, target, speed, duration, direction)
+            slave_address = int(command_parts[0])
+            target = int(command_parts[1])
+            speed = int(command_parts[2])
+            duration = int(command_parts[3])
+            direction = int(command_parts[4])
+            send_motor_command(slave_address, 0, target, speed, duration, direction)
+
         else:
-            print("Invalid command format: too many arguments")
-            return
-    except ValueError as e:
-        print(f"Invalid command format: {e}")
-    except IndexError as e:
-        print(f"Invalid command format: {e}")
-    except KeyError as e:
-        print(f"Invalid slave address: {e}")
+            print("Invalid command format: too many or too few arguments")
+
     except Exception as e:
-        print(f"Failed to handle command: {e}")
-    pass
+        print(f"Command parse error: {e}") 
