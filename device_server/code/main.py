@@ -2,7 +2,6 @@ import threading
 import serial
 from bluetooth_server import start_bluetooth_server
 from utils import manual_input_handler
-from motor_control import slaves
 
 # Setup UART Serial
 # serial_port = serial.Serial(
