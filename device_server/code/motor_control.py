@@ -115,37 +115,34 @@ chord_mapping = {  # Chord: [Note, Address]
     'GB9': [['-1', 8], ['1', 9], ['1', 10], ['1', 11]]
 } 
 
-def send_motor_command(slave_address, command_type, *args):
+def send_motor_command(motor_id, command_type, *args):
     try:
-        motor_name = slaves[slave_address]['Name']
+        motor_name = slaves[motor_id]['Name']
         print(f"Sending to {motor_name} via UART - Type {command_type}, Args: {args}")
 
         if command_type == 0:  # Control
             target = int(args[0])
             speed = int(args[1])
-            duration = int(args[2])
-            direction = int(args[3])
-            msg = f"C,{command_type},{slave_address},{target},{speed},{duration},{direction}\n"
+            direction = int(args[2])
+            duration = int(args[3])
+            msg = f"control {motor_id} {target} {speed} {direction} {duration}\n"
 
         elif command_type == 1:  # Calibrate
-            if args:
-                calib_target = int(args[0])
-            else:
-                calib_target = 0
-            msg = f"A,{command_type},{slave_address},{calib_target}\n"
+            calib_target = int(args[0]) if args else 0
+            msg = f"calibrate {motor_id} {calib_target}\n"
 
         elif command_type == 2:  # Move
             target = int(args[0]) if len(args) == 2 else 0
             distance = int(args[1]) if len(args) == 2 else int(args[0])
-            msg = f"M,{command_type},{slave_address},{target},{distance}\n"
+            msg = f"move {motor_id} {target} {distance}\n"
 
         elif command_type == 3:  # Fingering
             note = args[0].upper()
-            if note not in note_mapping[slave_address]:
+            if note not in note_mapping[motor_id]:
                 print(f"Invalid note: {note}")
                 return
-            distance = note_mapping[slave_address][note]
-            msg = f"F,{command_type},{slave_address},0,{distance}\n"
+            distance = note_mapping[motor_id][note]
+            msg = f"move {motor_id} 0 {distance}\n"
 
         elif command_type == 5:  # Debug
             action_type_input = args[0].lower()
@@ -154,7 +151,7 @@ def send_motor_command(slave_address, command_type, *args):
                 return
             target = int(args[1])
             position_mm = int(args[2])
-            msg = f"D,{command_type},{slave_address},{target},{position_mm}\n"
+            msg = f"debug {motor_id} {target} {position_mm}\n"
 
         else:
             print("Unsupported command type")
@@ -190,25 +187,17 @@ def handle_command_input(command):
             if chord not in chord_mapping:
                 print(f"Invalid chord: {chord}")
                 return
-            for note, address in chord_mapping[chord]:
-                send_motor_command(address, 3, note)
+            for note, motor_id in chord_mapping[chord]:
+                send_motor_command(motor_id, 3, note)
 
         elif command_type_input in command_mapping:
             command_type = command_mapping[command_type_input]
-            slave_address = int(command_parts[1])
+            motor_id = int(command_parts[1])
             args = command_parts[2:]
-            send_motor_command(slave_address, command_type, *args)
-
-        elif 5 <= len(command_parts) <= 6:
-            slave_address = int(command_parts[0])
-            target = int(command_parts[1])
-            speed = int(command_parts[2])
-            duration = int(command_parts[3])
-            direction = int(command_parts[4])
-            send_motor_command(slave_address, 0, target, speed, duration, direction)
+            send_motor_command(motor_id, command_type, *args)
 
         else:
-            print("Invalid command format: too many or too few arguments")
+            print("Invalid command format")
 
     except Exception as e:
-        print(f"Command parse error: {e}") 
+        print(f"Command parse error: {e}")
