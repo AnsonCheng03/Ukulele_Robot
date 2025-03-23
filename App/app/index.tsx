@@ -146,7 +146,10 @@ export default function BluetoothSearch() {
             </View>
             <TouchableOpacity
               style={styles.pairButton}
-              onPress={() => router.push("/Control")}
+              onPress={() => {
+                BleService.getInstance().setDevice(device);
+                router.push("/Control");
+              }}
             >
               <ThemedText style={styles.pairButtonText}>Pair</ThemedText>
             </TouchableOpacity>

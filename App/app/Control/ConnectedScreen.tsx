@@ -7,46 +7,44 @@ import {
   SafeAreaView,
 } from "react-native";
 import {
-  Ionicons,
   Entypo,
   FontAwesome5,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
 import PlayTabScreen from "./(tabs)/Play";
 import EditingTabScreen from "./(tabs)/Editing";
 import ScoreTabScreen from "./(tabs)/Score";
 import ChordTabScreen from "./(tabs)/Chord";
+import { Device } from "react-native-ble-plx";
 
-export default function ControlLayout() {
-  const navigation = useNavigation();
+export default function ConnectedScreen({ device }: { device: Device | null }) {
+  if (!device) {
+    return (
+      <SafeAreaView style={styles.middle}>
+        <Text style={styles.tabContent}>No device connected</Text>
+      </SafeAreaView>
+    );
+  }
+
   const [tab, setTab] = useState<"chord" | "play" | "editing" | "score">(
     "play"
   );
-
   const renderContent = () => {
     switch (tab) {
       case "editing":
-        return <EditingTabScreen />;
+        return <EditingTabScreen device={device} />;
       case "score":
-        return <ScoreTabScreen />;
+        return <ScoreTabScreen device={device} />;
       case "chord":
-        return <ChordTabScreen />;
+        return <ChordTabScreen device={device} />;
       default:
       case "play":
-        return <PlayTabScreen />;
+        return <PlayTabScreen device={device} />;
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.status}>● Connected</Text>
-      </View>
-
+    <>
       <View style={styles.middle}>{renderContent()}</View>
 
       <View style={styles.bottomTabs}>
@@ -106,28 +104,10 @@ export default function ControlLayout() {
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </>
   );
 }
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  status: {
-    fontSize: 14,
-    color: "green",
-    fontWeight: "600",
-  },
   middle: {
     flex: 1,
     justifyContent: "center",

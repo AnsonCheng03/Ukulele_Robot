@@ -1,157 +1,91 @@
 import * as React from "react";
-import { useState, useEffect } from "react";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+import { useState } from "react";
 import {
   TextInput,
-  Button,
   StyleSheet,
   ScrollView,
   Platform,
+  TouchableOpacity,
+  Text,
+  View,
 } from "react-native";
-import { RouteProp, useRoute } from "@react-navigation/native";
 import { BleService } from "../../Services/BleService";
 import { Device } from "react-native-ble-plx";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import DocumentPicker from "react-native-document-picker";
-import RNFS from "react-native-fs"; // Add if using file system
+import { ThemedView } from "@/components/ThemedView";
 
-export default function ChordTabScreen() {
-  const route = useRoute();
+export default function PlayTabScreen({ device }: { device: Device }) {
   const [command, setCommand] = useState<string>("");
   const [receivedCommands, setReceivedCommands] = useState<string[]>([]);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  const { device } = (route.params || {}) as { device: Device };
   const bleService = BleService.getInstance();
 
-  const returnFilePath = (fileName: string) => {
-    const dirPath =
-      Platform.OS === "ios"
-        ? `${RNFS.DocumentDirectoryPath}`
-        : `${RNFS.DownloadDirectoryPath}`;
-    return dirPath + `/${fileName}`;
-  };
-
-  const connectToDevice = () => {
-    setLoading(true);
-    bleService
-      .connectToDevice(device)
-      .then(() => {
-        setIsConnected(true);
-      })
-      .catch((error: Error) => {
-        console.error(error.message);
-        setIsConnected(false);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    if (device) {
-      connectToDevice();
-    }
-  }, [device]);
-
-  useEffect(() => {
-    return () => {
-      console.log("Cleaning up PlayTabScreen");
-      if (isConnected && device) {
-        console.log("Disconnecting from device");
-        device.cancelConnection();
-      }
-    };
-  }, [isConnected]);
-
   const sendCommand = () => {
-    if (!isConnected) return;
-
+    if (!command.trim()) return;
     bleService
-      .sendCommandToDevice(device, command)
+      .sendCommandToDevice(command)
       .then(() => {
-        setReceivedCommands((prevCommands) => [...prevCommands, command]);
+        setReceivedCommands((prev) => [...prev, command]);
+        setCommand("");
       })
-      .catch((error: Error) => {
-        console.error(error.message);
-        setIsConnected(false);
+      .catch((error: Error) => console.error(error.message));
+  };
+
+  const handleFileUpload = async () => {
+    try {
+      const res = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles],
+        allowMultiSelection: false,
       });
+
+      for (const file of res) {
+        if (!file.uri) continue;
+        await bleService.sendFileToDevice(file.uri);
+        setReceivedCommands((prev) => [...prev, "File sent"]);
+      }
+    } catch (err) {
+      console.log("File Selection Err:", err);
+    }
   };
 
   return (
     <SafeAreaProvider>
       <ThemedView style={styles.container}>
-        <ThemedText style={styles.title}>
-          {`Controlling Device: ${device?.name || "Unknown"}`}
-        </ThemedText>
-        <ThemedText
-          style={styles.text}
-        >{`Device ID: ${device?.id}`}</ThemedText>
-        {loading ? (
-          <ThemedText style={styles.loadingText}>Connecting...</ThemedText>
-        ) : isConnected ? (
-          <ThemedView>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Enter command"
-              value={command}
-              onChangeText={setCommand}
-            />
-            <Button title="Send Command" onPress={sendCommand} />
-            <ScrollView style={styles.commandBox}>
-              <ThemedText style={styles.commandTitle}>
-                Commands Received:
-              </ThemedText>
+        <Text style={styles.heading}>Bluetooth Device Control</Text>
+        <View style={styles.card}>
+          <Text style={styles.deviceName}>{device?.name || "Unknown"}</Text>
+          <Text style={styles.deviceId}>ID: {device?.id}</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Enter command"
+            value={command}
+            onChangeText={setCommand}
+            placeholderTextColor="#888"
+          />
+
+          <TouchableOpacity style={styles.button} onPress={sendCommand}>
+            <Text style={styles.buttonText}>Send Command</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.buttonSecondary}
+            onPress={handleFileUpload}
+          >
+            <Text style={styles.buttonText}>Upload File</Text>
+          </TouchableOpacity>
+
+          <View style={styles.commandLog}>
+            <Text style={styles.logTitle}>Command History:</Text>
+            <ScrollView>
               {receivedCommands.map((cmd, index) => (
-                <ThemedText key={index} style={styles.commandText}>
+                <Text key={index} style={styles.logItem}>
                   {cmd}
-                </ThemedText>
+                </Text>
               ))}
             </ScrollView>
-            <Button
-              title="Upload File"
-              onPress={() => {
-                DocumentPicker.pick({
-                  type: [DocumentPicker.types.allFiles],
-                  allowMultiSelection: false,
-                })
-                  .then(async (res) => {
-                    for (const file of res) {
-                      if (!file.uri) {
-                        console.log("No file uri found");
-                        continue;
-                      }
-
-                      bleService
-                        .sendFileToDevice(device, file.uri)
-                        .then(() => {
-                          setReceivedCommands((prevCommands) => [
-                            ...prevCommands,
-                            "File sent",
-                          ]);
-                        })
-                        .catch((error: Error) => {
-                          console.error(error.message);
-                          setIsConnected(false);
-                        });
-                    }
-                  })
-                  .catch((err: any) => {
-                    console.log("File Selection Err:", err);
-                  });
-              }}
-            />
-          </ThemedView>
-        ) : (
-          <ThemedView>
-            <ThemedText style={styles.errorText}>
-              Failed to connect to device
-            </ThemedText>
-            <Button title="Retry" onPress={connectToDevice} />
-          </ThemedView>
-        )}
+          </View>
+        </View>
       </ThemedView>
     </SafeAreaProvider>
   );
@@ -160,47 +94,77 @@ export default function ChordTabScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingVertical: 20,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
-  title: {
+  heading: {
     fontSize: 24,
     fontWeight: "bold",
-    margin: 20,
+    marginBottom: 20,
   },
-  text: {
-    margin: 5,
+  card: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 16,
+    minWidth: "90%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  textInput: {
-    height: 40,
-    borderColor: "gray",
+  deviceName: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 5,
+  },
+  deviceId: {
+    fontSize: 14,
+    color: "#888",
+    marginBottom: 15,
+  },
+  input: {
+    height: 45,
+    borderColor: "#ccc",
     borderWidth: 1,
-    margin: 20,
-    width: "80%",
-    paddingHorizontal: 10,
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 15,
   },
-  commandBox: {
-    marginTop: 20,
-    width: "80%",
-    maxHeight: 200,
-    borderColor: "gray",
-    borderWidth: 1,
-    padding: 10,
+  button: {
+    backgroundColor: "#007aff",
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 10,
+    alignItems: "center",
   },
-  commandTitle: {
-    fontWeight: "bold",
-    margin: 10,
+  buttonSecondary: {
+    backgroundColor: "#5856d6",
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 15,
+    alignItems: "center",
   },
-  commandText: {
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 16,
-    margin: 5,
   },
-  loadingText: {
-    fontSize: 18,
-    margin: 20,
+  commandLog: {
+    maxHeight: 200,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    paddingTop: 10,
   },
-  errorText: {
-    fontSize: 18,
-    color: "gray",
+  logTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 5,
+  },
+  logItem: {
+    fontSize: 14,
+    marginVertical: 2,
+    color: "#333",
   },
 });
