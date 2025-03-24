@@ -137,20 +137,20 @@ export default function PlayTabScreen({ device }: { device: Device }) {
               </TouchableOpacity>
             </>
           )}
+
+          <View style={styles.separator} />
+
+          <View style={styles.commandLog}>
+            <ThemedText style={styles.logTitle}>Command History:</ThemedText>
+            <ScrollView>
+              {receivedCommands.map((cmd, index) => (
+                <ThemedText key={index} style={styles.logItem}>
+                  {cmd}
+                </ThemedText>
+              ))}
+            </ScrollView>
+          </View>
         </ScrollView>
-
-        <View style={styles.separator} />
-
-        <View style={styles.commandLog}>
-          <Text style={styles.logTitle}>Command History:</Text>
-          <ScrollView>
-            {receivedCommands.map((cmd, index) => (
-              <Text key={index} style={styles.logItem}>
-                {cmd}
-              </Text>
-            ))}
-          </ScrollView>
-        </View>
       </ThemedView>
     </SafeAreaProvider>
   );

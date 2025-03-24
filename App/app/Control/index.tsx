@@ -12,7 +12,7 @@ import { useNavigation } from "@react-navigation/native";
 import ConnectedScreen from "./ConnectedScreen";
 import BleService from "../Services/BleService";
 import { Device } from "react-native-ble-plx";
-import { ThemedView } from "@/components/ThemedView";
+import { ThemedSafeAreaView, ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 
 export default function ControlLayout() {
@@ -118,7 +118,7 @@ export default function ControlLayout() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedSafeAreaView style={styles.container}>
       <ThemedView style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="black" />
@@ -137,21 +137,15 @@ export default function ControlLayout() {
         </View>
       </ThemedView>
 
-      {loading && (
+      {loading || !isConnected ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#0000ff" />
           <ThemedText style={{ marginTop: 10 }}>Connecting...</ThemedText>
         </View>
+      ) : (
+        <ConnectedScreen device={device} />
       )}
-      {!loading && isConnected && <ConnectedScreen device={device} />}
-      {!loading && !isConnected && (
-        <View style={styles.centered}>
-          <ThemedText>Device not connected</ThemedText>
-          <ActivityIndicator size="large" color="#0000ff" />
-          <ThemedText>Retrying connection...</ThemedText>
-        </View>
-      )}
-    </ThemedView>
+    </ThemedSafeAreaView>
   );
 }
 
@@ -180,5 +174,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    gap: 10,
   },
 });
