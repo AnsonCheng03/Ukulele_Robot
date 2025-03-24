@@ -19,7 +19,7 @@ class FileTransferService(Service):
         self.add_characteristic(FileReadChrc(bus, 0, self))
         self.add_characteristic(FileWriteChrc(bus, 1, self))
         self.file_data = {}  # Dictionary to store file data from different clients
-        logging.info("FileTransferService initialized")
+        print("FileTransferService initialized")
 
 
 class FileReadChrc(Characteristic):
@@ -31,12 +31,12 @@ class FileReadChrc(Characteristic):
                 self.FILE_READ_UUID,
                 ['read'],
                 service)
-        logging.info("FileReadChrc initialized")
+        print("FileReadChrc initialized")
 
     def ReadValue(self, options):
         client_address = options.get('client_address', 'default')
         file_data = self.service.file_data.get(client_address, b'')
-        logging.info(f"Read request from {client_address}, data: {file_data}")
+        print(f"Read request from {client_address}, data: {file_data}")
         return list(file_data)
 
 
@@ -59,19 +59,20 @@ class FileWriteChrc(Characteristic):
         if client_address not in self.open_files:
             filename = f"received_file_from_{client_address.replace(':', '_')}.bin"
             self.open_files[client_address] = open(filename, 'wb')
-            logging.info(f"Started receiving file from {client_address}, saving to {filename}")
+            print(f"Started receiving file from {client_address}, saving to {filename}")
 
         # Check for EOF signal
         if byte_value == b'EOF':
             self.open_files[client_address].close()
             del self.open_files[client_address]
-            logging.info(f"Completed file transfer from {client_address}")
+            print(f"Completed file transfer from {client_address}")
             self.last_checksum = dbus.Array([], signature=dbus.Signature('y'))
             return
 
         # Write chunk to file
         try:
             self.open_files[client_address].write(byte_value)
+            print(f"Wrote {len(byte_value)} bytes to file for {client_address}")
             self.open_files[client_address].flush()
 
             # Calculate checksum of the chunk
