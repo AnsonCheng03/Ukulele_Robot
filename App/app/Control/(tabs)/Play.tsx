@@ -1,90 +1,199 @@
 import * as React from "react";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  TextInput,
   StyleSheet,
   ScrollView,
   Platform,
   TouchableOpacity,
   Text,
   View,
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import { BleService } from "../../Services/BleService";
 import { Device } from "react-native-ble-plx";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import DocumentPicker from "react-native-document-picker";
 import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
+
+const ITEM_WIDTH = 70;
+
+const noteAliases: Record<string, string> = {
+  C: "C",
+  "C#": "C#/Db",
+  D: "D",
+  "D#": "D#/Eb",
+  E: "E",
+  F: "F",
+  "F#": "F#/Gb",
+  G: "G",
+  "G#": "G#/Ab",
+  A: "A",
+  "A#": "A#/Bb",
+  B: "B",
+};
 
 export default function PlayTabScreen({ device }: { device: Device }) {
-  const [command, setCommand] = useState<string>("");
-  const [receivedCommands, setReceivedCommands] = useState<string[]>([]);
   const bleService = BleService.getInstance();
+  const { width: screenWidth } = useWindowDimensions();
+  const flatListRef = useRef<FlatList>(null);
 
-  const sendCommand = () => {
+  const baseNotes = Object.keys(noteAliases);
+
+  const ukuleleRange = { min: 3 * 12, max: 6 * 12 + 11 }; // C3 to B6
+  const data = Array.from(
+    { length: ukuleleRange.max - ukuleleRange.min + 1 },
+    (_, i) => ukuleleRange.min + i
+  );
+
+  const centerDataIndex = Math.floor(data.length / 2);
+
+  const [selectedNoteIndex, setSelectedNoteIndex] = useState(centerDataIndex);
+  const selectedAbsoluteIndex = data[selectedNoteIndex];
+  const selectedNote = baseNotes[selectedAbsoluteIndex % 12];
+  const selectedOctave = Math.floor(selectedAbsoluteIndex / 12);
+
+  useEffect(() => {
+    const visibleCenter = Math.floor(screenWidth / ITEM_WIDTH / 2);
+    flatListRef.current?.scrollToOffset({
+      offset: (selectedNoteIndex - visibleCenter) * ITEM_WIDTH,
+      animated: false,
+    });
+  }, [screenWidth]);
+
+  const chordTypes = [
+    "Maj",
+    "Min",
+    "Maj7",
+    "Min7",
+    "7",
+    "Sus2",
+    "Sus4",
+    "Dim",
+    "Aug",
+    "Add9",
+  ];
+
+  const getNoteWithOctave = (index: number) => {
+    const note = baseNotes[index % 12];
+    const octave = Math.floor(index / 12);
+    return { note, octave };
+  };
+
+  const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const centerIndex = Math.round(offsetX / ITEM_WIDTH);
+
+    if (centerIndex >= 0 && centerIndex < data.length) {
+      setSelectedNoteIndex(centerIndex);
+      flatListRef.current?.scrollToOffset({
+        offset: centerIndex * ITEM_WIDTH,
+        animated: true,
+      });
+    } else if (centerIndex >= data.length) {
+      setSelectedNoteIndex(data.length - 1);
+      flatListRef.current?.scrollToOffset({
+        offset: (data.length - 1) * ITEM_WIDTH,
+        animated: true,
+      });
+    } else {
+      setSelectedNoteIndex(0);
+      flatListRef.current?.scrollToOffset({
+        offset: 0,
+        animated: true,
+      });
+    }
+  };
+
+  const renderNoteItem = useCallback(
+    ({ item, index }: { item: number; index: number }) => {
+      const { note } = getNoteWithOctave(item);
+      const isSelected = index === selectedNoteIndex;
+
+      return (
+        <TouchableOpacity
+          style={styles.noteColumn}
+          onPress={() => {
+            setSelectedNoteIndex(index);
+            flatListRef.current?.scrollToOffset({
+              offset: index * ITEM_WIDTH,
+              animated: true,
+            });
+          }}
+        >
+          <Text
+            style={[
+              styles.noteLabel,
+              isSelected ? styles.noteLabelSelected : styles.noteLabelDim,
+            ]}
+          >
+            {note}
+          </Text>
+          <View
+            style={[styles.noteLine, isSelected && styles.noteLineSelected]}
+          />
+        </TouchableOpacity>
+      );
+    },
+    [selectedNoteIndex]
+  );
+
+  const sendCommand = (command: string) => {
     if (!command.trim()) return;
     bleService
       .sendCommandToDevice(command)
       .then(() => {
-        setReceivedCommands((prev) => [...prev, command]);
-        setCommand("");
+        console.log("Command sent:", command);
       })
       .catch((error: Error) => console.error(error.message));
   };
 
-  const handleFileUpload = async () => {
-    try {
-      const res = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
-        allowMultiSelection: false,
-      });
-
-      for (const file of res) {
-        if (!file.uri) continue;
-        await bleService.sendFileToDevice(file.uri);
-        setReceivedCommands((prev) => [...prev, "File sent"]);
-      }
-    } catch (err) {
-      console.log("File Selection Err:", err);
-    }
-  };
-
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.heading}>Bluetooth Device Control</ThemedText>
-      <View style={styles.card}>
-        <Text style={styles.deviceName}>{device?.name || "Unknown"}</Text>
-        <Text style={styles.deviceId}>ID: {device?.id}</Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Enter command"
-          value={command}
-          onChangeText={setCommand}
-          placeholderTextColor="#888"
+      <View style={styles.topSection}>
+        <FlatList
+          ref={flatListRef}
+          data={data}
+          horizontal
+          onMomentumScrollEnd={handleScrollEnd}
+          snapToInterval={ITEM_WIDTH}
+          decelerationRate="fast"
+          showsHorizontalScrollIndicator={false}
+          getItemLayout={(_, index) => ({
+            length: ITEM_WIDTH,
+            offset: ITEM_WIDTH * index,
+            index,
+          })}
+          initialNumToRender={12}
+          maxToRenderPerBatch={12}
+          windowSize={5}
+          contentContainerStyle={{
+            paddingHorizontal: screenWidth / 2 - ITEM_WIDTH / 2,
+            alignItems: "flex-start",
+          }}
+          keyExtractor={(item) => item.toString()}
+          renderItem={renderNoteItem}
         />
-
-        <TouchableOpacity style={styles.button} onPress={sendCommand}>
-          <Text style={styles.buttonText}>Send Command</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.buttonSecondary}
-          onPress={handleFileUpload}
-        >
-          <Text style={styles.buttonText}>Upload File</Text>
-        </TouchableOpacity>
-
-        <View style={styles.commandLog}>
-          <Text style={styles.logTitle}>Command History:</Text>
-          <ScrollView>
-            {receivedCommands.map((cmd, index) => (
-              <Text key={index} style={styles.logItem}>
-                {cmd}
-              </Text>
-            ))}
-          </ScrollView>
-        </View>
+      </View>
+      <View style={styles.middleSection}>
+        <Text style={styles.largeNote}>{noteAliases[selectedNote]}</Text>
+        <Text style={styles.largeOctave}>Octave {selectedOctave}</Text>
+      </View>
+      <View style={styles.bottomSection}>
+        <ScrollView contentContainerStyle={styles.grid}>
+          {chordTypes.map((type, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={styles.chordButton}
+              onPress={() =>
+                sendCommand(`chord ${selectedNote} ${selectedOctave} ${type}`)
+              }
+            >
+              <Text style={styles.chordButtonText}>{type}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
     </ThemedView>
   );
@@ -93,77 +202,75 @@ export default function PlayTabScreen({ device }: { device: Device }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingVertical: 20,
-    alignItems: "center",
-    justifyContent: "flex-start",
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  card: {
-    backgroundColor: "#fff",
     padding: 20,
-    borderRadius: 16,
-    minWidth: "90%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
   },
-  deviceName: {
+  topSection: {
+    paddingVertical: 10,
+    flex: 7,
+    justifyContent: "flex-end",
+  },
+  middleSection: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  bottomSection: {
+    flex: 2,
+    paddingHorizontal: 10,
+  },
+  noteColumn: {
+    alignItems: "center",
+    width: 70,
+    paddingTop: 100,
+  },
+  noteLabel: {
+    marginBottom: 5,
+  },
+  noteLabelSelected: {
     fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 5,
+    fontWeight: "bold",
+    color: "#000",
   },
-  deviceId: {
+  noteLabelDim: {
     fontSize: 14,
-    color: "#888",
-    marginBottom: 15,
+    color: "#aaa",
   },
-  input: {
-    height: 45,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    marginBottom: 15,
+  noteLine: {
+    height: "100%",
+    width: 2,
+    backgroundColor: "#ccc",
   },
-  button: {
+  noteLineSelected: {
+    width: 5,
     backgroundColor: "#007aff",
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginBottom: 10,
+  },
+  largeNote: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  largeOctave: {
+    fontSize: 24,
+    color: "#666",
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 10,
+    paddingBottom: 20,
+  },
+  chordButton: {
+    backgroundColor: "#ddd",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    margin: 5,
+    minWidth: 80,
     alignItems: "center",
   },
-  buttonSecondary: {
-    backgroundColor: "#5856d6",
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginBottom: 15,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  commandLog: {
-    maxHeight: 200,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    paddingTop: 10,
-  },
-  logTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 5,
-  },
-  logItem: {
+  chordButtonText: {
     fontSize: 14,
-    marginVertical: 2,
-    color: "#333",
+    fontWeight: "500",
   },
 });

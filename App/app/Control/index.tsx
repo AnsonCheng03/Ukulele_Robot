@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -19,82 +17,58 @@ export default function ControlLayout() {
   const navigation = useNavigation();
   const bleService = BleService.getInstance();
   const device = bleService.getDevice();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [currentDevice, setCurrentDevice] = useState<Device | null>(device);
-  const loadingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const checkConnectionStatus = async () => {
-    if (!device) return false;
-    try {
-      return await device.isConnected();
-    } catch {
-      return false;
-    }
-  };
+  const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const [showConnectedUI, setShowConnectedUI] = useState(false);
 
-  const connectToDevice = () => {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const connectToDevice = async () => {
     if (!device) {
-      console.error("Device is not defined");
       setLoading(false);
       return;
     }
+    try {
+      setLoading(true);
+      await bleService.connectToDevice();
+      setIsConnected(true);
+    } catch (e) {
+      console.error("Connection failed", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const startTime = Date.now();
-    setLoading(true);
-    console.log("Connecting to device:", device);
-    bleService
-      .connectToDevice()
-      .then((connectedDevice: Device | void) => {
-        if (!connectedDevice) {
-          console.error("No device connected");
-          setLoading(false);
-          return;
-        }
-
-        setCurrentDevice(connectedDevice);
-        setIsConnected(true);
-      })
-      .catch((error: Error) => {
-        console.error(error.message);
-        setIsConnected(false);
-      })
-      .finally(() => {
-        const elapsed = Date.now() - startTime;
-        const delay = Math.max(1000 - elapsed, 0);
-        if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
-        loadingTimerRef.current = setTimeout(() => {
-          setLoading(false);
-        }, delay);
-      });
+  const checkConnectionStatus = async () => {
+    if (!device) return;
+    try {
+      const connected = await device.isConnected();
+      setIsConnected(connected);
+    } catch {
+      setIsConnected(false);
+    }
   };
 
   useEffect(() => {
-    if (device) {
-      connectToDevice();
-    }
-    return () => {
-      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
-    };
-  }, [device]);
+    connectToDevice();
+    return () => timeoutRef.current && clearTimeout(timeoutRef.current);
+  }, []);
 
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const connected = await checkConnectionStatus();
-      setIsConnected(connected);
-    }, 3000);
+    const interval = setInterval(checkConnectionStatus, 3000);
     return () => clearInterval(interval);
   }, [device]);
 
+  useEffect(() => {
+    if (isConnected) {
+      timeoutRef.current = setTimeout(() => setShowConnectedUI(true), 1000);
+    } else {
+      setShowConnectedUI(false);
+    }
+  }, [isConnected]);
+
   const renderStatusIcon = () => {
-    if (isConnected && !loading)
-      return (
-        <MaterialCommunityIcons
-          name="bluetooth-connect"
-          size={20}
-          color="green"
-        />
-      );
     if (loading)
       return (
         <MaterialCommunityIcons
@@ -103,7 +77,15 @@ export default function ControlLayout() {
           color="blue"
         />
       );
-    if (!currentDevice) {
+    if (isConnected)
+      return (
+        <MaterialCommunityIcons
+          name="bluetooth-connect"
+          size={20}
+          color="green"
+        />
+      );
+    if (!device)
       return (
         <MaterialCommunityIcons
           name="alert-circle-outline"
@@ -111,7 +93,6 @@ export default function ControlLayout() {
           color="gray"
         />
       );
-    }
     return (
       <MaterialCommunityIcons name="bluetooth-off" size={20} color="red" />
     );
@@ -130,14 +111,14 @@ export default function ControlLayout() {
               ? "Connecting..."
               : isConnected
               ? "Connected"
-              : currentDevice
+              : device
               ? "Disconnected"
-              : "No device found"}
+              : "No device"}
           </ThemedText>
         </View>
       </ThemedView>
 
-      {loading || !isConnected ? (
+      {loading || !showConnectedUI ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#0000ff" />
           <ThemedText style={{ marginTop: 10 }}>Connecting...</ThemedText>

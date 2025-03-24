@@ -14,7 +14,6 @@ import {
 import PlayTabScreen from "./(tabs)/Play";
 import EditingTabScreen from "./(tabs)/Editing";
 import ScoreTabScreen from "./(tabs)/Score";
-import ChordTabScreen from "./(tabs)/Chord";
 import { Device } from "react-native-ble-plx";
 import DebugTabScreen from "./(tabs)/Debug";
 
@@ -27,17 +26,16 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
     );
   }
 
-  const [tab, setTab] = useState<
-    "chord" | "play" | "editing" | "score" | "debug"
-  >("play");
+  const [tab, setTab] = useState<"play" | "editing" | "score" | "debug">(
+    "play"
+  );
   const renderContent = () => {
     switch (tab) {
       case "editing":
         return <EditingTabScreen device={device} />;
       case "score":
         return <ScoreTabScreen device={device} />;
-      case "chord":
-        return <ChordTabScreen device={device} />;
+
       case "debug":
         return <DebugTabScreen device={device} />;
       default:
@@ -65,21 +63,7 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => setTab("chord")}
-          style={styles.tabButton}
-        >
-          <MaterialCommunityIcons
-            name="guitar-electric"
-            size={22}
-            color={tab === "chord" ? "#007AFF" : "#999"}
-          />
-          <Text style={tab === "chord" ? styles.tabActive : styles.tab}>
-            Chord
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => setTab("editing")}
           style={styles.tabButton}
         >
@@ -91,7 +75,7 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
           <Text style={tab === "editing" ? styles.tabActive : styles.tab}>
             Editing
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity
           onPress={() => setTab("score")}

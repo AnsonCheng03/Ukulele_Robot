@@ -50,45 +50,43 @@ export default function PlayTabScreen({ device }: { device: Device }) {
   };
 
   return (
-    <SafeAreaProvider>
-      <ThemedView style={styles.container}>
-        <ThemedText style={styles.heading}>Bluetooth Device Control</ThemedText>
-        <View style={styles.card}>
-          <Text style={styles.deviceName}>{device?.name || "Unknown"}</Text>
-          <Text style={styles.deviceId}>ID: {device?.id}</Text>
+    <ThemedView style={styles.container}>
+      <ThemedText style={styles.heading}>Bluetooth Device Control</ThemedText>
+      <View style={styles.card}>
+        <Text style={styles.deviceName}>{device?.name || "Unknown"}</Text>
+        <Text style={styles.deviceId}>ID: {device?.id}</Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Enter command"
-            value={command}
-            onChangeText={setCommand}
-            placeholderTextColor="#888"
-          />
+        <TextInput
+          style={styles.input}
+          placeholder="Enter command"
+          value={command}
+          onChangeText={setCommand}
+          placeholderTextColor="#888"
+        />
 
-          <TouchableOpacity style={styles.button} onPress={sendCommand}>
-            <Text style={styles.buttonText}>Send Command</Text>
-          </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={sendCommand}>
+          <Text style={styles.buttonText}>Send Command</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.buttonSecondary}
-            onPress={handleFileUpload}
-          >
-            <Text style={styles.buttonText}>Upload File</Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.buttonSecondary}
+          onPress={handleFileUpload}
+        >
+          <Text style={styles.buttonText}>Upload File</Text>
+        </TouchableOpacity>
 
-          <View style={styles.commandLog}>
-            <Text style={styles.logTitle}>Command History:</Text>
-            <ScrollView>
-              {receivedCommands.map((cmd, index) => (
-                <Text key={index} style={styles.logItem}>
-                  {cmd}
-                </Text>
-              ))}
-            </ScrollView>
-          </View>
+        <View style={styles.commandLog}>
+          <Text style={styles.logTitle}>Command History:</Text>
+          <ScrollView>
+            {receivedCommands.map((cmd, index) => (
+              <Text key={index} style={styles.logItem}>
+                {cmd}
+              </Text>
+            ))}
+          </ScrollView>
         </View>
-      </ThemedView>
-    </SafeAreaProvider>
+      </View>
+    </ThemedView>
   );
 }
 
