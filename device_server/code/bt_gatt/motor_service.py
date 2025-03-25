@@ -12,25 +12,9 @@ class MotorService(Service):
 
     def __init__(self, bus, index):
         Service.__init__(self, bus, index, self.MOTOR_UUID, True)
-        self.add_characteristic(MotorReadChrc(bus, 0, self))
-        self.add_characteristic(MotorWriteChrc(bus, 1, self))
+        self.add_characteristic(MotorWriteChrc(bus, 0, self))
         self.motor_status = 0
         self.data_buffers = {}  # Buffer to accumulate data from different clients
-
-
-class MotorReadChrc(Characteristic):
-    MOTOR_READ_UUID = '00002a37-0000-1000-8000-00805f9b34fb'
-
-    def __init__(self, bus, index, service):
-        Characteristic.__init__(
-                self, bus, index,
-                self.MOTOR_READ_UUID,
-                ['read'],
-                service)
-
-    def ReadValue(self, options):
-        # Return current motor status.
-        return [self.service.motor_status]
 
 
 class MotorWriteChrc(Characteristic):
