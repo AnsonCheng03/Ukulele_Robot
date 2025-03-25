@@ -44,10 +44,10 @@ class ListFilesChrc(Characteristic):
                     mod_time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(mod_time))
                     files_info.append(f"{f}::{mod_time_str}")
             joined = "\n".join(files_info)
-            logging.info(f"Listing files: {joined}")
+            print(f"Listing files: {joined}")
             return list(joined.encode('utf-8'))
         except Exception as e:
-            logging.error(f"Error listing files: {e}")
+            print(f"Error listing files: {e}")
             return list(f"Error: {e}".encode('utf-8'))
 
 
@@ -71,13 +71,26 @@ class PlayAudioChrc(Characteristic):
             if not os.path.exists(filepath):
                 raise FileNotFoundError(f"File {filename} not found")
 
-            logging.info(f"Playing '{filename}' from {start_time}s")
+            print(f"Playing '{filename}' from {start_time}s")
             self.service.scheduler = scheduler  # store it for pause/resume access
             scheduler.play(filepath, offset=start_time)
 
         except Exception as e:
-            logging.error(f"Error in play request: {e}")
+            print(f"Error in play request: {e}")
             raise
+        
+class PauseAudioChrc(Characteristic):
+    PAUSE_AUDIO_UUID = '00002a3f-0000-1000-8000-00805f9b34fb'
+
+    def __init__(self, bus, index, service):
+        super().__init__(bus, index, self.PAUSE_AUDIO_UUID, ['write'], service)
+
+    def WriteValue(self, value, options):
+        try:
+            self.service.scheduler.pause()
+            print("DEBUG: Playback paused")
+        except Exception as e:
+            print(f"Error pausing audio: {e}")
 
 
 class DeleteFileChrc(Characteristic):
@@ -92,23 +105,11 @@ class DeleteFileChrc(Characteristic):
             filepath = os.path.join(self.service.storage_dir, filename)
             if os.path.exists(filepath):
                 os.remove(filepath)
-                logging.info(f"Deleted file: {filename}")
+                print(f"Deleted file: {filename}")
                 print(f"File '{filename}' deleted.")
             else:
-                logging.warning(f"File not found for deletion: {filename}")
+                print(f"File not found for deletion: {filename}")
         except Exception as e:
-            logging.error(f"Error deleting file: {e}")
+            print(f"Error deleting file: {e}")
             raise
 
-class PauseAudioChrc(Characteristic):
-    PAUSE_AUDIO_UUID = '00002a3f-0000-1000-8000-00805f9b34fb'
-
-    def __init__(self, bus, index, service):
-        super().__init__(bus, index, self.PAUSE_AUDIO_UUID, ['write'], service)
-
-    def WriteValue(self, value, options):
-        try:
-            self.service.scheduler.pause()
-            print("DEBUG: Playback paused")
-        except Exception as e:
-            logging.error(f"Error pausing audio: {e}")
