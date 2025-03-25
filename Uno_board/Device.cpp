@@ -1,7 +1,7 @@
 #include "Device.h"
 
 Device::Device(int startPin, int directionPin, int speedPin, int motorID)
-    : startPin(startPin), directionPin(directionPin), speedPin(speedPin), motorID(motorID), isMoving(false), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0), max_distance(0), fixedMoveSpeed(1000), distanceToDurationRatio(0.01) {}
+    : startPin(startPin), directionPin(directionPin), speedPin(speedPin), motorID(motorID), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0), max_distance(0), fixedMoveSpeed(1000), distanceToDurationRatio(0.01), currentState(IDLE), trueState(IDLE) {}
     
 
 void Device::setup()
@@ -51,27 +51,36 @@ void Device::moveBy(int distanceMm, bool reverse)
 
 void Device::update()
 {
-    if (isMoving && millis() - moveStartMillis >= moveDuration)
+    if (currentState == MOVING && millis() - moveStartMillis >= moveDuration)
     {
         stopMovement();
     }
 }
 
+
 void Device::startMovement(unsigned long durationTenths)
 {
     start();
-    isMoving = true;
     moveStartMillis = millis();
     moveDuration = durationTenths * 100;
-    Serial.println("Movement started for duration: " + String(durationTenths * 0.1) + "s");
+    currentState = MOVING;
+    Serial.println("FSM: Transition to MOVING state.");
 }
+
 
 void Device::stopMovement()
 {
     stop();
-    isMoving = false;
-    Serial.println("Device stopped at pin: " + String(startPin));
+    // Don't reset to IDLE blindly — let subclass decide if still CALIBRATING
+    if (trueState != CALIBRATING) {
+        currentState = IDLE;
+    } else {
+        currentState = CALIBRATING;
+    }
+    Serial.println("FSM: Stopping movement, state = " + String(currentState));
 }
+
+
 
 void Device::start()
 {
@@ -93,7 +102,7 @@ void Device::setDirection(int direction)
 
 bool Device::isMovementComplete()
 {
-    return !isMoving;
+    return currentState == IDLE;
 }
 
 int Device::getmotorID()

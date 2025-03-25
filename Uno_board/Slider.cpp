@@ -1,7 +1,7 @@
 #include "Slider.h"
 
 Slider::Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID)
-    : Device(startPin, directionPin, speedPin, motorID), sensorPin(sensorPin), isCalibrating(false) {}
+    : Device(startPin, directionPin, speedPin, motorID), sensorPin(sensorPin) {}
 
 void Slider::setup() {
     Device::setup();
@@ -13,54 +13,11 @@ void Slider::setup() {
 }
 
 void Slider::calibrate() {
-    Serial.println("Calibrating slider...");
-    isCalibrating = true;
-    if(sensorPin > 0) {
-        Serial.println("slider sensor pin: " + String(sensorPin) + ", sensor value: " + String(getSensorValue()));
-
-        unsigned long waitDuration = 10; // Combined duration for movement and waiting (in milliseconds)
-        unsigned long movementDuration = waitDuration / 100; // Start movement parameter derived from wait duration
-
-        unsigned long startWaitTime = millis();
-
-        // Step 1: If the sensor is already HIGH, move backward for 5 seconds
-        if (getSensorValue() < 900) {
-            setDirection(motorID <= 10 ? LOW : HIGH);
-            analogWrite(speedPin, 1000);
-            startMovement(movementDuration); // Move backward for 5 seconds
-
-            unsigned long loopWaitTime = millis();
-            while (millis() - loopWaitTime < waitDuration) {
-                // Waiting for 5 seconds
-            }
-        }
-
-        // Step 2: Wait for 5 seconds after movement to avoid command override
-        startWaitTime = millis();
-        while (millis() - startWaitTime < waitDuration) {
-            // Waiting for 5 seconds
-        }
-
-        // Step 3: Move slowly until it reaches the sensor, 5 seconds per loop
-        while (getSensorValue() > 900) {
-                  Serial.println("slider sensor pin: " + String(sensorPin) + ", sensor value: " + String(getSensorValue()));
-
-            setDirection(motorID <= 10 ? HIGH : LOW);
-            analogWrite(speedPin, 1000);
-            startMovement(movementDuration); // Move slowly for 5 seconds
-        }
-
-        isCalibrated = true;
-        Serial.println("Slider calibration complete.");
-    } else {
-        isCalibrated = true;
-        currentPosition = 0;
-        Serial.println("Slider calibration complete.");
-    }
-    isCalibrating = false;
+    Serial.println("Starting FSM-based calibration...");
+    trueState = CALIBRATING;
+    currentState = CALIBRATING;
+    calibrationPhase = CALIBRATION_INIT;
 }
-
-
 
 int Slider::getSensorValue() {
     return analogRead(sensorPin);
@@ -77,12 +34,48 @@ void Slider::move(int positionMm)
 }
 
 void Slider::update() {
-    Device::update();
-    if (isCalibrating && !isMoving) {
-        isCalibrating = false;
-        isCalibrated = true;
-        currentPosition = 0;
-        stop();
-        Serial.println("Slider calibration complete.");
+    Device::update(); // Handles MOVING → IDLE transition
+
+
+    if (trueState == CALIBRATING && currentState != MOVING) {
+        switch (calibrationPhase) {
+            case CALIBRATION_INIT:
+                if (getSensorValue() < 900) {
+                    Serial.println("Sensor already active. Backing off...");
+                    setDirection(motorID <= 10 ? LOW : HIGH);
+                    analogWrite(speedPin, 1000);
+                    startMovement(1); // ~100ms
+                }
+                calibrationPhase = CALIBRATION_WAIT_1;
+                calibrationPhaseStart = millis();
+                break;
+
+            case CALIBRATION_WAIT_1:
+                if (millis() - calibrationPhaseStart >= 10) {
+                    calibrationPhase = CALIBRATION_SEEK_SENSOR;
+                    calibrationPhaseStart = millis();
+                }
+                break;
+
+            case CALIBRATION_SEEK_SENSOR:
+                Serial.println("Seeking sensor..." + String(motorID) + " " + String(getSensorValue()));
+                if (getSensorValue() > 900) {
+                    setDirection(motorID <= 10 ? HIGH : LOW);
+                    analogWrite(speedPin, 1000);
+                    startMovement(1); // pulse to keep checking
+                } else {
+                    calibrationPhase = CALIBRATION_DONE;
+                }
+                break;
+
+            case CALIBRATION_DONE:
+                stop();
+                trueState = IDLE;
+                currentState = IDLE;
+                isCalibrated = true;
+                currentPosition = 0;
+                Serial.println("Slider calibration complete (FSM).");
+                break;
+        }
     }
 }

@@ -3,6 +3,14 @@
 
 #include "Device.h"
 
+enum CalibrationPhase {
+    CALIBRATION_INIT,
+    CALIBRATION_BACK_OFF,
+    CALIBRATION_WAIT_1,
+    CALIBRATION_SEEK_SENSOR,
+    CALIBRATION_DONE
+};
+
 class Slider : public Device {
 public:
     Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID);
@@ -14,7 +22,8 @@ public:
 
 private:
     int sensorPin;
-    bool isCalibrating;
+    CalibrationPhase calibrationPhase;
+    unsigned long calibrationPhaseStart;
 };
 
 #endif // SLIDER_H

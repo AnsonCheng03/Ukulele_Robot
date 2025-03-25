@@ -4,6 +4,13 @@
 #include <Arduino.h>
 #include <Servo.h>
 
+enum DeviceState {
+    IDLE,
+    MOVING,
+    CALIBRATING,
+    ERROR
+};
+
 class Device {
 public:
     Device(int startPin, int directionPin, int speedPin, int motorID);
@@ -16,7 +23,6 @@ public:
     
 protected:
     int startPin, directionPin, speedPin, motorID;
-    bool isMoving;
     bool isCalibrated;
     int currentPosition;
     int max_distance;
@@ -24,6 +30,8 @@ protected:
     unsigned long moveStartMillis;
     unsigned long moveDuration;
     double distanceToDurationRatio;
+    DeviceState currentState;
+    DeviceState trueState;
 
     void startMovement(unsigned long durationTenths);
     void stopMovement();
