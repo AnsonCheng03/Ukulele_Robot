@@ -6,7 +6,7 @@ import bt_gatt.exceptions as exceptions
 import logging
 import hashlib
 
-logging.basicConfig(filename='file_transfer.log', level=print, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='file_transfer.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class FileTransferService(Service):
     """
