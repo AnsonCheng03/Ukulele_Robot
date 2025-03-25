@@ -21,6 +21,16 @@ def run_setup_command(command):
     if result.returncode != 0:
         print(f"Error running command {' '.join(command)}: {result.stderr}")
         exit(1)
+        
+def unpair_all_devices():
+  result = subprocess.run(["/usr/bin/btmgmt", "find"], stdout=subprocess.PIPE, text=True)
+  for line in result.stdout.splitlines():
+      if "dev" in line and "rpa" in line:  # or just check for MAC-like pattern
+          parts = line.split()
+          for part in parts:
+              if ":" in part:  # likely a MAC address
+                  run_setup_command(["/usr/bin/btmgmt", "unpair", part])
+
 
 def start_bluetooth_server():
   run_setup_command(["/usr/bin/btmgmt", "power", "on"])
@@ -32,6 +42,7 @@ def start_bluetooth_server():
   run_setup_command(["/usr/bin/btmgmt", "bredr", "off"])
   run_setup_command(["/usr/bin/btmgmt", "advertising", "on"])
   run_setup_command(["/usr/bin/btmgmt", "name", "Guitar Robot"])
+  unpair_all_devices()
   print("Setup commands completed successfully")
 
 
