@@ -69,6 +69,7 @@ class MidiScheduler:
         self.parse_pretty_midi(pmidi)
 
     async def schedule_notes(self, offset=0):
+        prinyt(f"Scheduling notes with offset: {offset}")
         try:
             self.start_time = time.time() - offset
             for i, group_time in enumerate(self.start_times):
@@ -87,10 +88,13 @@ class MidiScheduler:
             print(f"Error during playback: {e}")
 
     def play(self, path, offset=0):
-        print(f"Playing {path} from {offset}s")
-        self.parse_file(path)
-        self.paused = False
-        self.current_task = asyncio.create_task(self.schedule_notes(offset))
+        try:
+            print(f"Playing {path} from {offset}s")
+            self.parse_file(path)
+            self.paused = False
+            self.current_task = asyncio.create_task(self.schedule_notes(offset))
+        except Exception as e:
+            print(f"Error in play request: {e}")
 
     def pause(self):
         self.paused = True
