@@ -5,7 +5,7 @@ import os
 import traceback
 import tempfile
 import time
-from main import global_asyncio_loop
+from loop_manager import global_asyncio_loop
 from collections import defaultdict
 import pretty_midi
 from music21 import converter
@@ -101,7 +101,7 @@ class MidiScheduler:
             print("Scheduling coroutine now...")
             self.current_task = asyncio.run_coroutine_threadsafe(
                 self.schedule_notes(offset),
-                global_asyncio_loop  # use the background loop
+                global_asyncio_loop
             )
         except Exception as e:
             print(f"Error in play request: {e}")
