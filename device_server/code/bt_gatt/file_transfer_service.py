@@ -63,14 +63,14 @@ class FileWriteChrc(Characteristic):
             filename = filename_raw.replace(" ", "_")
             filepath = os.path.join(self.storage_dir, filename)
             self.open_files[client_address] = open(filepath, 'wb')
-            logging.info(f"Receiving file {filename_raw} from {client_address}, saved to {filepath}")
+            print(f"Receiving file {filename_raw} from {client_address}, saved to {filepath}")
             return
 
         if byte_value == b'EOF':
             if client_address in self.open_files:
                 self.open_files[client_address].close()
                 del self.open_files[client_address]
-            logging.info(f"Completed file transfer from {client_address}")
+            print(f"Completed file transfer from {client_address}")
             self.last_checksum = dbus.Array([], signature=dbus.Signature('y'))
             return
 
