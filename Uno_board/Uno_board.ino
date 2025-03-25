@@ -28,7 +28,7 @@
 const uint8_t SLIDER_START_PINS[] = {49, 53, 23, 27};
 const uint8_t SLIDER_DIR_PINS[] = {47, 51, 25, 29};
 const uint8_t SLIDER_SPEED_PINS[] = {5, 3, 7, 9};
-#define SLIDER_SENSOR_PIN A0
+const uint8_t SLIDER_SENSOR_PIN[] = {A0, A1, A2, A3};
 
 const uint8_t RACK_START_PINS[] = {48, 52, 22, 26};
 const uint8_t RACK_DIR_PINS[] = {46, 50, 24, 28};
@@ -40,16 +40,16 @@ const uint8_t FINGER_SPEED_PINS[] = {10, 11, 12, 13};
 
 
 Slider sliders[4] = {
-    Slider(SLIDER_START_PINS[0], SLIDER_DIR_PINS[0], SLIDER_SPEED_PINS[0], SLIDER_SENSOR_PIN, 8),
-    Slider(SLIDER_START_PINS[1], SLIDER_DIR_PINS[1], SLIDER_SPEED_PINS[1], SLIDER_SENSOR_PIN, 9),
-    Slider(SLIDER_START_PINS[2], SLIDER_DIR_PINS[2], SLIDER_SPEED_PINS[2], SLIDER_SENSOR_PIN, 10),
-    Slider(SLIDER_START_PINS[3], SLIDER_DIR_PINS[3], SLIDER_SPEED_PINS[3], SLIDER_SENSOR_PIN, 11)
+    Slider(SLIDER_START_PINS[0], SLIDER_DIR_PINS[0], SLIDER_SPEED_PINS[0], SLIDER_SENSOR_PIN[0], 8),
+    Slider(SLIDER_START_PINS[1], SLIDER_DIR_PINS[1], SLIDER_SPEED_PINS[1], SLIDER_SENSOR_PIN[1], 8),
+    Slider(SLIDER_START_PINS[2], SLIDER_DIR_PINS[2], SLIDER_SPEED_PINS[2], SLIDER_SENSOR_PIN[2], 11),
+    Slider(SLIDER_START_PINS[3], SLIDER_DIR_PINS[3], SLIDER_SPEED_PINS[3], SLIDER_SENSOR_PIN[3], 11)
 };
 
 RackMotor rackMotors[4] = {
     RackMotor(RACK_START_PINS[0], RACK_DIR_PINS[0], RACK_SPEED_PINS[0], 8),
-    RackMotor(RACK_START_PINS[1], RACK_DIR_PINS[1], RACK_SPEED_PINS[1], 9),
-    RackMotor(RACK_START_PINS[2], RACK_DIR_PINS[2], RACK_SPEED_PINS[2], 10),
+    RackMotor(RACK_START_PINS[1], RACK_DIR_PINS[1], RACK_SPEED_PINS[1], 8),
+    RackMotor(RACK_START_PINS[2], RACK_DIR_PINS[2], RACK_SPEED_PINS[2], 11),
     RackMotor(RACK_START_PINS[3], RACK_DIR_PINS[3], RACK_SPEED_PINS[3], 11)
 };
 
@@ -75,7 +75,7 @@ void setup()
         sliders[i].setup();
         rackMotors[i].setup();
         fingeringMotors[i].setup();
-        // sliders[i].calibrate();
+        sliders[i].calibrate();
         rackMotors[i].calibrate();
         fingeringMotors[i].calibrate();
     }

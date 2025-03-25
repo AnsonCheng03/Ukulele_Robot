@@ -16,16 +16,16 @@ void Slider::calibrate() {
     Serial.println("Calibrating slider...");
     isCalibrating = true;
     if(sensorPin > 0) {
-        Serial.println("slider sensor pin: " + String(sensorPin) + ", sensor value: " + String(digitalRead(sensorPin)));
+        Serial.println("slider sensor pin: " + String(sensorPin) + ", sensor value: " + String(getSensorValue()));
 
-        unsigned long waitDuration = 100; // Combined duration for movement and waiting (in milliseconds)
+        unsigned long waitDuration = 10; // Combined duration for movement and waiting (in milliseconds)
         unsigned long movementDuration = waitDuration / 100; // Start movement parameter derived from wait duration
 
         unsigned long startWaitTime = millis();
 
         // Step 1: If the sensor is already HIGH, move backward for 5 seconds
-        if (digitalRead(sensorPin) == HIGH) {
-            setDirection(motorID >= 10 ? LOW : HIGH);
+        if (getSensorValue() < 900) {
+            setDirection(motorID <= 10 ? LOW : HIGH);
             analogWrite(speedPin, 1000);
             startMovement(movementDuration); // Move backward for 5 seconds
 
@@ -42,16 +42,12 @@ void Slider::calibrate() {
         }
 
         // Step 3: Move slowly until it reaches the sensor, 5 seconds per loop
-        while (digitalRead(sensorPin) == LOW) {
-            setDirection(motorID >= 10 ? HIGH : LOW);
+        while (getSensorValue() > 900) {
+                  Serial.println("slider sensor pin: " + String(sensorPin) + ", sensor value: " + String(getSensorValue()));
+
+            setDirection(motorID <= 10 ? HIGH : LOW);
             analogWrite(speedPin, 1000);
             startMovement(movementDuration); // Move slowly for 5 seconds
-
-            // Wait for 5 seconds before starting the next movement
-            unsigned long loopWaitTime = millis();
-            while (millis() - loopWaitTime < waitDuration) {
-                // Waiting for 5 seconds
-            }
         }
 
         isCalibrated = true;
@@ -67,7 +63,7 @@ void Slider::calibrate() {
 
 
 int Slider::getSensorValue() {
-    return digitalRead(sensorPin);
+    return analogRead(sensorPin);
 }
 
 void Slider::move(int positionMm)
