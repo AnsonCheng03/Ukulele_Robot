@@ -4,6 +4,7 @@ import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
+import re
 
 import array
 try:
