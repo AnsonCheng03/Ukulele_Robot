@@ -90,8 +90,11 @@ class MidiScheduler:
     def play(self, path, offset=0):
         try:
             print(f"Playing {path} from {offset}s")
+            self.last_file = path
             self.parse_file(path)
             self.paused = False
+            if self.current_task:
+                self.current_task.cancel()
             self.current_task = asyncio.create_task(self.schedule_notes(offset))
         except Exception as e:
             print(f"Error in play request: {e}")
