@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import traceback
 import tempfile
 import time
 from collections import defaultdict
@@ -98,6 +99,7 @@ class MidiScheduler:
             self.current_task = asyncio.create_task(self.schedule_notes(offset))
         except Exception as e:
             print(f"Error in play request: {e}")
+            traceback.print_exc()
 
     def pause(self):
         self.paused = True
