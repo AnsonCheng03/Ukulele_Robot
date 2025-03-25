@@ -1,72 +1,95 @@
 import os
 import time
 from bt_gatt.service import Service, Characteristic
+import dbus
+from bt_gatt.constants import GATT_CHRC_IFACE
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(filename='audio_service.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class PlayAudioService(Service):
-    PLAY_AUDIO_UUID = '0000181a-0000-1000-8000-00805f9b34fb'
+    AUDIO_SERVICE_UUID = '0000180f-0000-1000-8000-00805f9b34fb'
 
-    def __init__(self, bus, index):
-        super().__init__(bus, index, self.PLAY_AUDIO_UUID, True)
-        self.storage_dir = "RobotUserFiles"
-        os.makedirs(self.storage_dir, exist_ok=True)
-
+    def __init__(self, bus, index, storage_dir="RobotUserFiles"):
+        super().__init__(bus, index, self.AUDIO_SERVICE_UUID, True)
+        self.storage_dir = storage_dir
         self.add_characteristic(ListFilesChrc(bus, 0, self))
-        self.add_characteristic(PlayFileChrc(bus, 1, self))
+        self.add_characteristic(PlayAudioChrc(bus, 1, self))
         self.add_characteristic(DeleteFileChrc(bus, 2, self))
 
-        logging.info("PlayAudioService initialized")
+        if not os.path.exists(self.storage_dir):
+            os.makedirs(self.storage_dir)
+
+        print("PlayAudioService initialized")
+
 
 class ListFilesChrc(Characteristic):
-    LIST_FILES_UUID = '00002a50-0000-1000-8000-00805f9b34fb'
+    LIST_FILES_UUID = '00002a3c-0000-1000-8000-00805f9b34fb'
 
     def __init__(self, bus, index, service):
         super().__init__(bus, index, self.LIST_FILES_UUID, ['read'], service)
 
     def ReadValue(self, options):
-        logging.debug("Listing all files...")
-        entries = []
-        for filename in os.listdir(self.service.storage_dir):
-            filepath = os.path.join(self.service.storage_dir, filename)
-            if os.path.isfile(filepath):
-                mtime = os.path.getmtime(filepath)
-                entries.append(f"{filename}|{time.ctime(mtime)}")
+        files_info = []
+        try:
+            for f in os.listdir(self.service.storage_dir):
+                full_path = os.path.join(self.service.storage_dir, f)
+                if os.path.isfile(full_path):
+                    mod_time = os.path.getmtime(full_path)
+                    mod_time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(mod_time))
+                    files_info.append(f"{f}::{mod_time_str}")
+            joined = "\n".join(files_info)
+            logging.info(f"Listing files: {joined}")
+            return list(joined.encode('utf-8'))
+        except Exception as e:
+            logging.error(f"Error listing files: {e}")
+            return list(f"Error: {e}".encode('utf-8'))
 
-        output = "\n".join(entries).encode('utf-8')
-        return list(output)
 
-class PlayFileChrc(Characteristic):
-    PLAY_FILE_UUID = '00002a51-0000-1000-8000-00805f9b34fb'
+class PlayAudioChrc(Characteristic):
+    PLAY_AUDIO_UUID = '00002a3d-0000-1000-8000-00805f9b34fb'
 
     def __init__(self, bus, index, service):
-        super().__init__(bus, index, self.PLAY_FILE_UUID, ['write'], service)
+        super().__init__(bus, index, self.PLAY_AUDIO_UUID, ['write'], service)
 
     def WriteValue(self, value, options):
-        filename = bytes(value).decode('utf-8').strip()
-        filepath = os.path.join(self.service.storage_dir, filename)
+        try:
+            cmd = bytes(value).decode('utf-8')  # Expected format: "filename.mp3:30" (play from 30s)
+            if ":" in cmd:
+                filename, start_time = cmd.split(":")
+                start_time = int(start_time)
+            else:
+                filename = cmd
+                start_time = 0
 
-        if not os.path.isfile(filepath):
-            logging.warning(f"File {filename} not found.")
-            return
+            filepath = os.path.join(self.service.storage_dir, filename)
+            if not os.path.exists(filepath):
+                raise FileNotFoundError(f"File {filename} not found")
 
-        # This is the placeholder for actual playback logic
-        logging.info(f"Playing audio file: {filename}")
-        print(f"DEBUG: [Play] {filename}")  # Debug message
+            logging.info(f"Playing '{filename}' from {start_time}s")
+            print(f"DEBUG: Playing '{filename}' from {start_time}s... (not implemented)")
+
+        except Exception as e:
+            logging.error(f"Error in play request: {e}")
+            raise
+
 
 class DeleteFileChrc(Characteristic):
-    DELETE_FILE_UUID = '00002a52-0000-1000-8000-00805f9b34fb'
+    DELETE_FILE_UUID = '00002a3e-0000-1000-8000-00805f9b34fb'
 
     def __init__(self, bus, index, service):
         super().__init__(bus, index, self.DELETE_FILE_UUID, ['write'], service)
 
     def WriteValue(self, value, options):
-        filename = bytes(value).decode('utf-8').strip()
-        filepath = os.path.join(self.service.storage_dir, filename)
-
-        if os.path.isfile(filepath):
-            os.remove(filepath)
-            logging.info(f"Deleted file: {filename}")
-        else:
-            logging.warning(f"Tried to delete non-existent file: {filename}")
+        try:
+            filename = bytes(value).decode('utf-8').strip()
+            filepath = os.path.join(self.service.storage_dir, filename)
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                logging.info(f"Deleted file: {filename}")
+                print(f"File '{filename}' deleted.")
+            else:
+                logging.warning(f"File not found for deletion: {filename}")
+        except Exception as e:
+            logging.error(f"Error deleting file: {e}")
+            raise
