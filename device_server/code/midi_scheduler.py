@@ -69,7 +69,7 @@ class MidiScheduler:
         self.parse_pretty_midi(pmidi)
 
     async def schedule_notes(self, offset=0):
-        prinyt(f"Scheduling notes with offset: {offset}")
+        print(f"Scheduling notes with offset: {offset}")
         try:
             self.start_time = time.time() - offset
             for i, group_time in enumerate(self.start_times):
