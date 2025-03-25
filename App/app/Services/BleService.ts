@@ -6,7 +6,9 @@ import {
   State,
 } from "react-native-ble-plx";
 import RNFS from "react-native-fs";
+import { basename } from "path-browserify";
 import { sha1 } from "react-native-sha256";
+import { Buffer } from "buffer";
 
 export class BleService {
   private static instance: BleService;
@@ -89,22 +91,43 @@ export class BleService {
     throw new Error("Failed to connect and send command after 3 attempts");
   }
 
-  public async sendFileToDevice(file: string): Promise<void> {
+  public async sendFileToDevice(
+    file: string,
+    onProgress?: (current: number, total: number) => void
+  ): Promise<void> {
     if (!this.device) throw new Error("No device connected");
+
+    if (
+      !file.endsWith(".mid") &&
+      !file.endsWith(".mxl") &&
+      !file.endsWith(".musicxml")
+    ) {
+      throw new Error("Only .mid/.mxl/.musicxml files are supported");
+    }
 
     const [serviceUUID, characteristicUUID] = [
       "0000180e-0000-1000-8000-00805f9b34fb",
       "00002a3b-0000-1000-8000-00805f9b34fb",
     ];
 
-    console.log("Sending file to device", file);
+    const fileName = basename(file);
     const fileContent = await RNFS.readFile(file, "base64");
     const chunks = fileContent.match(/.{1,20}/g) || [];
 
-    for (let chunk of chunks) {
-      const checksum = await sha1(chunk);
+    // Send file name
+    const fileNameChunk = Buffer.from("FILENAME:" + fileName).toString(
+      "base64"
+    );
+    await this.device.writeCharacteristicWithResponseForService(
+      serviceUUID,
+      characteristicUUID,
+      fileNameChunk
+    );
 
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
       try {
+        const checksum = await sha1(chunk);
         const response =
           await this.device.writeCharacteristicWithResponseForService(
             serviceUUID,
@@ -113,20 +136,97 @@ export class BleService {
           );
 
         const value = await response.read();
-
-        if (value.value) {
-          const base64Value = atob(value.value);
-          const byteArr = new Uint8Array(base64Value.length);
-          for (let j = 0; j < base64Value.length; j++) {
-            byteArr[j] = base64Value.charCodeAt(j);
-          }
-          console.log("Received response:", byteArr);
+        if (value?.value) {
+          const serverChecksum = Buffer.from(value.value, "base64").toString(
+            "hex"
+          );
+          // Uncomment for checksum validation if needed
+          // if (serverChecksum !== checksum) {
+          //   throw new Error("Checksum mismatch");
+          // }
         } else {
-          console.error("Received null value from device");
+          throw new Error("No checksum response received.");
+        }
+
+        // Call progress callback
+        if (onProgress) {
+          onProgress(i + 1, chunks.length);
         }
       } catch (error) {
-        console.error("Error sending chunk:", error);
+        console.error(`Error sending chunk: ${chunk}`, error);
+        throw error;
       }
+    }
+
+    // Send EOF
+    const eof = Buffer.from("EOF").toString("base64");
+    await this.device.writeCharacteristicWithResponseForService(
+      serviceUUID,
+      characteristicUUID,
+      eof
+    );
+  }
+
+  public async getAudioFileList(): Promise<
+    { name: string; modified: string }[]
+  > {
+    if (!this.device) throw new Error("No device connected");
+
+    const characteristic = await this.device.readCharacteristicForService(
+      "0000180f-0000-1000-8000-00805f9b34fb",
+      "00002a3c-0000-1000-8000-00805f9b34fb"
+    );
+
+    if (!characteristic.value) {
+      throw new Error("No value received from characteristic");
+    }
+
+    const decoded = atob(characteristic.value ?? "");
+    const lines = decoded.split("\n");
+
+    return lines
+      .map((line) => {
+        const [name, modified] = line.split("::");
+        return { name, modified };
+      })
+      .filter((entry) => !!entry.name);
+  }
+
+  public async playAudioFile(
+    filename: string,
+    startTime: number = 0
+  ): Promise<void> {
+    if (!this.device) throw new Error("No device connected");
+
+    const command = `${filename}:${startTime}`;
+    await this.device.writeCharacteristicWithResponseForService(
+      "0000180f-0000-1000-8000-00805f9b34fb",
+      "00002a3d-0000-1000-8000-00805f9b34fb",
+      btoa(command)
+    );
+  }
+
+  private readonly PAUSE_AUDIO_UUID = "00002a3f-0000-1000-8000-00805f9b34fb";
+
+  public async pauseAudioFile(): Promise<void> {
+    if (!this.device) throw new Error("No device connected");
+
+    await this.device.writeCharacteristicWithResponseForService(
+      "0000180f-0000-1000-8000-00805f9b34fb",
+      "00002a3f-0000-1000-8000-00805f9b34fb",
+      btoa("PAUSE")
+    );
+  }
+
+  public async deleteAudioFiles(filenames: string[]): Promise<void> {
+    if (!this.device) throw new Error("No device connected");
+
+    for (const filename of filenames) {
+      await this.device.writeCharacteristicWithResponseForService(
+        "0000180f-0000-1000-8000-00805f9b34fb",
+        "00002a3e-0000-1000-8000-00805f9b34fb",
+        btoa(filename)
+      );
     }
   }
 

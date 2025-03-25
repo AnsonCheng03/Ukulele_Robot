@@ -16,6 +16,7 @@ import {
 import { BleService } from "../../Services/BleService";
 import { Device } from "react-native-ble-plx";
 import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
 
 const ITEM_WIDTH = 70;
 
@@ -122,14 +123,14 @@ export default function PlayTabScreen({ device }: { device: Device }) {
             });
           }}
         >
-          <Text
+          <ThemedText
             style={[
               styles.noteLabel,
               isSelected ? styles.noteLabelSelected : styles.noteLabelDim,
             ]}
           >
             {note}
-          </Text>
+          </ThemedText>
           <View
             style={[styles.noteLine, isSelected && styles.noteLineSelected]}
           />
@@ -177,7 +178,9 @@ export default function PlayTabScreen({ device }: { device: Device }) {
         />
       </View>
       <View style={styles.middleSection}>
-        <Text style={styles.largeNote}>{noteAliases[selectedNote]}</Text>
+        <ThemedText style={styles.largeNote}>
+          {noteAliases[selectedNote]}
+        </ThemedText>
         <Text style={styles.largeOctave}>Octave {selectedOctave}</Text>
       </View>
       <View style={styles.bottomSection}>
@@ -229,7 +232,6 @@ const styles = StyleSheet.create({
   noteLabelSelected: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#000",
   },
   noteLabelDim: {
     fontSize: 14,
@@ -246,8 +248,8 @@ const styles = StyleSheet.create({
   },
   largeNote: {
     fontSize: 36,
+    lineHeight: 40,
     fontWeight: "bold",
-    color: "#000",
   },
   largeOctave: {
     fontSize: 24,

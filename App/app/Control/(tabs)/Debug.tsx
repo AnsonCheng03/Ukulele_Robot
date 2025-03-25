@@ -64,6 +64,7 @@ export default function PlayTabScreen({ device }: { device: Device }) {
     value: number,
     setValue: (v: number) => void,
     step = 1,
+    min = 0,
     max = 999
   ) => (
     <View style={styles.stepperContainer}>
@@ -109,14 +110,14 @@ export default function PlayTabScreen({ device }: { device: Device }) {
         <View style={styles.separator} />
 
         <ScrollView contentContainerStyle={styles.formContainer}>
-          {renderStepper("Motor ID", motorID, setMotorID, 1, 5)}
-          {renderStepper("Target", target, setTarget, 1, 3)}
+          {renderStepper("Motor ID", motorID, setMotorID, 1, 0, 5)}
+          {renderStepper("Target", target, setTarget, 1, 0, 3)}
 
           {mode === "control" && (
             <>
-              {renderStepper("Speed", speed, setSpeed, 10, 500)}
-              {renderStepper("Direction", direction, setDirection, 1, 1)}
-              {renderStepper("Duration", duration, setDuration, 1, 999)}
+              {renderStepper("Speed", speed, setSpeed, 10, 0, 500)}
+              {renderStepper("Direction", direction, setDirection, 1, 0, 1)}
+              {renderStepper("Duration", duration, setDuration, 1, 0, 999)}
               <TouchableOpacity
                 style={styles.button}
                 onPress={sendControlCommand}
@@ -128,7 +129,7 @@ export default function PlayTabScreen({ device }: { device: Device }) {
 
           {mode === "move" && (
             <>
-              {renderStepper("Distance", distance, setDistance, 10, 999)}
+              {renderStepper("Distance", distance, setDistance, 10, -999, 999)}
               <TouchableOpacity
                 style={styles.buttonSecondary}
                 onPress={sendMoveCommand}
