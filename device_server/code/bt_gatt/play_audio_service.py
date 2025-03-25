@@ -4,6 +4,9 @@ from bt_gatt.service import Service, Characteristic
 import dbus
 from bt_gatt.constants import GATT_CHRC_IFACE
 import logging
+from midi_scheduler import MidiScheduler
+
+scheduler = MidiScheduler()
 
 logging.basicConfig(filename='audio_service.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -17,6 +20,7 @@ class PlayAudioService(Service):
         self.add_characteristic(PlayAudioChrc(bus, 1, self))
         self.add_characteristic(DeleteFileChrc(bus, 2, self))
         self.add_characteristic(PauseAudioChrc(bus, 3, self))
+        
 
         if not os.path.exists(self.storage_dir):
             os.makedirs(self.storage_dir)
@@ -68,7 +72,8 @@ class PlayAudioChrc(Characteristic):
                 raise FileNotFoundError(f"File {filename} not found")
 
             logging.info(f"Playing '{filename}' from {start_time}s")
-            print(f"DEBUG: Playing '{filename}' from {start_time}s... (not implemented)")
+            self.service.scheduler = scheduler  # store it for pause/resume access
+            scheduler.play(filepath, offset=start_time)
 
         except Exception as e:
             logging.error(f"Error in play request: {e}")
@@ -103,7 +108,7 @@ class PauseAudioChrc(Characteristic):
 
     def WriteValue(self, value, options):
         try:
-            print("DEBUG: Pause command received (not implemented)")
-            # You may store playback state, stop playback loop, etc.
+            self.service.scheduler.pause()
+            print("DEBUG: Playback paused")
         except Exception as e:
             logging.error(f"Error pausing audio: {e}")
