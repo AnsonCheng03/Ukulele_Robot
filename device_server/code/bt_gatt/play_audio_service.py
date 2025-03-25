@@ -16,6 +16,7 @@ class PlayAudioService(Service):
         self.add_characteristic(ListFilesChrc(bus, 0, self))
         self.add_characteristic(PlayAudioChrc(bus, 1, self))
         self.add_characteristic(DeleteFileChrc(bus, 2, self))
+        self.add_characteristic(PauseAudioChrc(bus, 3, self))
 
         if not os.path.exists(self.storage_dir):
             os.makedirs(self.storage_dir)
@@ -93,3 +94,16 @@ class DeleteFileChrc(Characteristic):
         except Exception as e:
             logging.error(f"Error deleting file: {e}")
             raise
+
+class PauseAudioChrc(Characteristic):
+    PAUSE_AUDIO_UUID = '00002a3f-0000-1000-8000-00805f9b34fb'
+
+    def __init__(self, bus, index, service):
+        super().__init__(bus, index, self.PAUSE_AUDIO_UUID, ['write'], service)
+
+    def WriteValue(self, value, options):
+        try:
+            print("DEBUG: Pause command received (not implemented)")
+            # You may store playback state, stop playback loop, etc.
+        except Exception as e:
+            logging.error(f"Error pausing audio: {e}")
