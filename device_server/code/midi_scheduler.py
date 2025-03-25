@@ -90,25 +90,21 @@ class MidiScheduler:
 
     def play(self, path, offset=0):
         try:
-            print(f"Playing {path} from {offset}s!")
+            print(f"Playing {path} from {offset}s")
             self.last_file = path
             self.parse_file(path)
             self.paused = False
             if self.current_task:
                 self.current_task.cancel()
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                print("No running loop — created a new one")
 
+            loop = asyncio.get_event_loop()
             print("Scheduling coroutine now...")
-            self.current_task = asyncio.ensure_future(self.schedule_notes(offset))
-
+            self.current_task = asyncio.run_coroutine_threadsafe(
+                self.schedule_notes(offset), loop
+            )
         except Exception as e:
             print(f"Error in play request: {e}")
-            traceback.print_exc()
+
 
     def pause(self):
         self.paused = True
