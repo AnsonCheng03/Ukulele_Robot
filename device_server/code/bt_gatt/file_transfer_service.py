@@ -6,7 +6,7 @@ import bt_gatt.exceptions as exceptions
 import logging
 import hashlib
 
-logging.basicConfig(filename='file_transfer.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='file_transfer.log', level=print, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class FileTransferService(Service):
     """
@@ -77,13 +77,13 @@ class FileWriteChrc(Characteristic):
         try:
             self.open_files[client_address].write(byte_value)
             self.open_files[client_address].flush()
-            logging.debug(f"Wrote {len(byte_value)} bytes for {client_address}")
+            print(f"Wrote {len(byte_value)} bytes for {client_address}")
 
             checksum = hashlib.sha1(byte_value).digest()
             self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
 
         except Exception as e:
-            logging.error(f"Error writing chunk from {client_address}: {e}")
+            print(f"Error writing chunk from {client_address}: {e}")
             raise exceptions.InvalidValueError(f"Write error: {e}")
 
     def ReadValue(self, options):

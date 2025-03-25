@@ -49,7 +49,7 @@ def start_bluetooth_server():
   run_setup_command(["/usr/bin/btmgmt", "bredr", "off"])
   run_setup_command(["/usr/bin/btmgmt", "advertising", "on"])
   run_setup_command(["/usr/bin/btmgmt", "name", "Guitar Robot"])
-  unpair_and_forget_all_devices()
+  # unpair_and_forget_all_devices()
   print("Setup commands completed successfully")
 
 
