@@ -96,7 +96,11 @@ class MidiScheduler:
             self.paused = False
             if self.current_task:
                 self.current_task.cancel()
-            self.current_task = asyncio.create_task(self.schedule_notes(offset))
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
         except Exception as e:
             print(f"Error in play request: {e}")
             traceback.print_exc()
