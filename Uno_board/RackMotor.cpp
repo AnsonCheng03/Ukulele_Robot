@@ -1,10 +1,10 @@
 #include "RackMotor.h"
 
 RackMotor::RackMotor(int startPin, int directionPin, int speedPin, int motorID)
-    : Device(startPin, directionPin, speedPin, motorID) {}
+    : UpperMotor(startPin, directionPin, speedPin, motorID) {}
 
 void RackMotor::setup() {
-    Device::setup();
+    UpperMotor::setup();
     Serial.println("Rack motor setup for pins: " + String(startPin) + ", " + String(directionPin) + ", " + String(speedPin));
     max_distance = 0;
     fixedMoveSpeed = 1000;
@@ -20,7 +20,7 @@ int RackMotor::getSpeedPin() {
 
 void calibrateMotorDown(void* context) {
     RackMotor* rackMotor = static_cast<RackMotor*>(context);
-    rackMotor->moveBy(rackMotor->getmotorID() >= 10 ? 5 : -5);
+    rackMotor->moveBy(rackMotor->getMotorID() >= 10 ? 5 : -5);
 }
 
 void RackMotor::calibrate() {

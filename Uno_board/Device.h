@@ -2,7 +2,6 @@
 #define DEVICE_H
 
 #include <Arduino.h>
-#include <Servo.h>
 
 enum DeviceState {
     IDLE,
@@ -13,31 +12,13 @@ enum DeviceState {
 
 class Device {
 public:
-    Device(int startPin, int directionPin, int speedPin, int motorID);
-    void setup();
-    void control(int direction, int speedHz, int durationTenths);
-    void moveBy(int positionMm, bool reverse = false);
-    void update();
-    bool isMovementComplete();
-    int getmotorID();
-    
-protected:
-    int startPin, directionPin, speedPin, motorID;
-    bool isCalibrated;
-    int currentPosition;
-    int max_distance;
-    int fixedMoveSpeed;
-    unsigned long moveStartMillis;
-    unsigned long moveDuration;
-    double distanceToDurationRatio;
-    DeviceState currentState;
-    DeviceState trueState;
-
-    void startMovement(unsigned long durationTenths);
-    void stopMovement();
-    void start();
-    void stop();
-    void setDirection(int direction);
+    virtual void setup() = 0;
+    virtual void control(int direction, int speedHz, int durationTenths) = 0;
+    virtual void calibrate() = 0;
+    virtual void moveBy(int positionMm, bool reverse = false) = 0;
+    virtual void update() = 0;
+    virtual bool isMovementComplete() = 0;
+    virtual int getMotorID() = 0;
 };
 
 #endif // DEVICE_H

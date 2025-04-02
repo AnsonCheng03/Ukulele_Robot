@@ -1,17 +1,17 @@
 #ifndef RACKMOTOR_H
 #define RACKMOTOR_H
 
-#include "Device.h"
+#include "UpperMotor.h"
 #include "JobQueue.h"
 
-class RackMotor : public Device {
+class RackMotor : public UpperMotor {
 public:
     RackMotor(int startPin, int directionPin, int speedPin, int motorID);
     int getSpeedPin();
 
     void setup();
     void calibrate();
-    void move(int positionMm);
+    void move(int positionMm) override;
     void up();
     void down();
 };

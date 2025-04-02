@@ -1,7 +1,7 @@
 #ifndef SLIDER_H
 #define SLIDER_H
 
-#include "Device.h"
+#include "UpperMotor.h"
 
 enum CalibrationPhase {
     CALIBRATION_INIT,
@@ -11,13 +11,13 @@ enum CalibrationPhase {
     CALIBRATION_DONE
 };
 
-class Slider : public Device {
+class Slider : public UpperMotor {
 public:
     Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID);
     void setup();
     void calibrate();
     void update();
-    void move(int positionMm);
+    void move(int positionMm) override;
     int getSensorValue();
 
 private:

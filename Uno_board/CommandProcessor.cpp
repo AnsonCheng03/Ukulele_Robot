@@ -86,7 +86,7 @@ void processCommand(const String& commandStr,
                     rackMotors[i].move(distance);
             if (target == 0 || target == 3)
                 for (int i = 0; i < 4; ++i)
-                    fingeringMotors[i].move(distance);
+                    fingeringMotors[i].move();
         } else if (motorID <= 4) {
             if (target == 0)
                 moveFinger(sliders[motorID - 1], rackMotors[motorID - 1], distance);
@@ -95,7 +95,7 @@ void processCommand(const String& commandStr,
             else if (target == 2)
                 rackMotors[motorID - 1].move(distance);
             else if (target == 3)
-                fingeringMotors[motorID - 1].move(distance);
+                fingeringMotors[motorID - 1].move();
         }
 
     } else if (cmd == "D" && tokenCount == 4) {

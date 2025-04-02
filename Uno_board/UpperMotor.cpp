@@ -1,27 +1,26 @@
-#include "Device.h"
+#include "UpperMotor.h"
 
-Device::Device(int startPin, int directionPin, int speedPin, int motorID)
+UpperMotor::UpperMotor(int startPin, int directionPin, int speedPin, int motorID)
     : startPin(startPin), directionPin(directionPin), speedPin(speedPin), motorID(motorID), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0), max_distance(0), fixedMoveSpeed(1000), distanceToDurationRatio(0.01), currentState(IDLE), trueState(IDLE) {}
-    
 
-void Device::setup()
+void UpperMotor::setup()
 {
     pinMode(startPin, OUTPUT);
     pinMode(directionPin, OUTPUT);
     pinMode(speedPin, OUTPUT);
-    Serial.println("Device " + String(motorID) + " setup for pins: " + String(startPin) + ", " + String(directionPin) + ", " + String(speedPin));
+    Serial.println("UpperMotor " + String(motorID) + " setup for pins: " + String(startPin) + ", " + String(directionPin) + ", " + String(speedPin));
 }
 
-void Device::control(int direction, int speedHz, int durationTenths)
+void UpperMotor::control(int direction, int speedHz, int durationTenths)
 {
-    Serial.println("Control device - Direction: " + String(direction) + ", Speed: " + String(speedHz) + ", Duration: " + String(durationTenths * 0.1) + "s");
-    isCalibrated = false; // Control operation makes the device uncalibrated
+    Serial.println("Control upper motor - Direction: " + String(direction) + ", Speed: " + String(speedHz) + ", Duration: " + String(durationTenths * 0.1) + "s");
+    isCalibrated = false;
     analogWrite(speedPin, speedHz);
-    setDirection(direction);
+    setDirection(motorID >= 10 ? direction : !direction);
     startMovement(durationTenths);
 }
 
-void Device::moveBy(int distanceMm, bool reverse)
+void UpperMotor::moveBy(int distanceMm, bool reverse)
 {
     if (distanceMm == 0)
     {
@@ -31,7 +30,7 @@ void Device::moveBy(int distanceMm, bool reverse)
     if (max_distance != 0 &&
         (currentPosition + distanceMm < 0 || currentPosition + distanceMm > max_distance))
     {
-        Serial.println("Requested distance exceeds minimum allowed distance. Cannot move.");
+        Serial.println("Requested distance exceeds allowed range. Cannot move.");
         return;
     }
     int direction = distanceMm >= 0 ? HIGH : LOW;
@@ -42,14 +41,14 @@ void Device::moveBy(int distanceMm, bool reverse)
         Serial.println("Requested distance is too small. Cannot move.");
         return;
     }
-    Serial.println("Move device - Distance: " + String(distanceMm) + "mm, Direction: " + String(direction) + ", Duration: " + String(durationTenths * 0.1) + "s");
+    Serial.println("Move upper motor - Distance: " + String(distanceMm) + "mm, Direction: " + String(direction) + ", Duration: " + String(durationTenths * 0.1) + "s");
     setDirection(reverse ? !direction : direction);
-    analogWrite(speedPin, fixedMoveSpeed); // Fixed speed for movement
+    analogWrite(speedPin, fixedMoveSpeed);
     startMovement(durationTenths);
     currentPosition += distanceMm;
 }
 
-void Device::update()
+void UpperMotor::update()
 {
     if (currentState == MOVING && millis() - moveStartMillis >= moveDuration)
     {
@@ -57,55 +56,45 @@ void Device::update()
     }
 }
 
-
-void Device::startMovement(unsigned long durationTenths)
+void UpperMotor::startMovement(unsigned long durationTenths)
 {
     start();
     moveStartMillis = millis();
     moveDuration = durationTenths * 100;
     currentState = MOVING;
-    // Serial.println("FSM: Transition to MOVING state.");
 }
 
-
-void Device::stopMovement()
+void UpperMotor::stopMovement()
 {
     stop();
-    // Don't reset to IDLE blindly — let subclass decide if still CALIBRATING
     if (trueState != CALIBRATING) {
         currentState = IDLE;
     } else {
         currentState = CALIBRATING;
     }
-    // Serial.println("FSM: Stopping movement, state = " + String(currentState));
 }
 
-
-
-void Device::start()
+void UpperMotor::start()
 {
     digitalWrite(startPin, LOW);
-    // Serial.println("Start pin " + String(startPin) + " set to LOW");
 }
 
-void Device::stop()
+void UpperMotor::stop()
 {
     digitalWrite(startPin, HIGH);
-    // Serial.println("Start pin " + String(startPin) + " set to HIGH");
 }
 
-void Device::setDirection(int direction)
+void UpperMotor::setDirection(int direction)
 {
     digitalWrite(directionPin, direction);
-    // Serial.println("Direction pin " + String(directionPin) + " set to " + String(direction));
 }
 
-bool Device::isMovementComplete()
+bool UpperMotor::isMovementComplete()
 {
     return currentState == IDLE;
 }
 
-int Device::getmotorID()
+int UpperMotor::getMotorID()
 {
     return motorID;
 }

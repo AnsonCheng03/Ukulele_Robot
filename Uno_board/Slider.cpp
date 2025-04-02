@@ -1,10 +1,10 @@
 #include "Slider.h"
 
 Slider::Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID)
-    : Device(startPin, directionPin, speedPin, motorID), sensorPin(sensorPin) {}
+    : UpperMotor(startPin, directionPin, speedPin, motorID), sensorPin(sensorPin) {}
 
 void Slider::setup() {
-    Device::setup();
+    UpperMotor::setup();
     pinMode(sensorPin, INPUT);
     Serial.println("Slider setup for sensor pin: " + String(sensorPin));
     max_distance = 100;
@@ -34,7 +34,7 @@ void Slider::move(int positionMm)
 }
 
 void Slider::update() {
-    Device::update(); // Handles MOVING → IDLE transition
+    UpperMotor::update(); // Handles MOVING → IDLE transition
 
 
     if (trueState == CALIBRATING && currentState != MOVING) {
