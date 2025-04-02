@@ -74,7 +74,7 @@ void setup()
         sliders[i].setup();
         rackMotors[i].setup();
         fingeringMotors[i].setup();
-        // sliders[i].calibrate();
+        sliders[i].calibrate();
         rackMotors[i].calibrate();
         fingeringMotors[i].calibrate();
     }

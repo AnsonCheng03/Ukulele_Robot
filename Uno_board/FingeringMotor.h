@@ -13,7 +13,7 @@ public:
     void control(int direction, int speedHz, int durationTenths) override;
     void calibrate() override;
     void move();
-    void moveBy(int positionMm, bool reverse = false) override;
+    void moveBy(int durationMs, bool reverse = false) override; // durationMs instead of positionMm
     void update() override;
     bool isMovementComplete() override;
 
@@ -23,9 +23,14 @@ public:
     void down();
 
 private:
+    void moveFor(unsigned long durationMs);
+
     int startPin, motorID;
     bool isRunning;
     DeviceState currentState;
+
+    unsigned long movementStartTime;
+    unsigned long movementDuration;
 };
 
 #endif // FINGERINGMOTOR_H
