@@ -64,7 +64,7 @@ void Device::startMovement(unsigned long durationTenths)
     moveStartMillis = millis();
     moveDuration = durationTenths * 100;
     currentState = MOVING;
-    Serial.println("FSM: Transition to MOVING state.");
+    // Serial.println("FSM: Transition to MOVING state.");
 }
 
 
@@ -77,7 +77,7 @@ void Device::stopMovement()
     } else {
         currentState = CALIBRATING;
     }
-    Serial.println("FSM: Stopping movement, state = " + String(currentState));
+    // Serial.println("FSM: Stopping movement, state = " + String(currentState));
 }
 
 
@@ -85,19 +85,19 @@ void Device::stopMovement()
 void Device::start()
 {
     digitalWrite(startPin, LOW);
-    Serial.println("Start pin " + String(startPin) + " set to LOW");
+    // Serial.println("Start pin " + String(startPin) + " set to LOW");
 }
 
 void Device::stop()
 {
     digitalWrite(startPin, HIGH);
-    Serial.println("Start pin " + String(startPin) + " set to HIGH");
+    // Serial.println("Start pin " + String(startPin) + " set to HIGH");
 }
 
 void Device::setDirection(int direction)
 {
     digitalWrite(directionPin, direction);
-    Serial.println("Direction pin " + String(directionPin) + " set to " + String(direction));
+    // Serial.println("Direction pin " + String(directionPin) + " set to " + String(direction));
 }
 
 bool Device::isMovementComplete()

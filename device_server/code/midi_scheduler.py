@@ -9,6 +9,7 @@ from loop_manager import global_asyncio_loop
 from collections import defaultdict
 import pretty_midi
 from music21 import converter
+from motor_control import send_motor_command, note_mapping
 
 class MidiScheduler:
     def __init__(self):
@@ -19,6 +20,14 @@ class MidiScheduler:
         self.pause_time = 0
         self.start_time = 0
         self.resume_offset = 0
+        
+    def get_motor_for_note(self, note, octave):
+        # Try to find a motor that supports this note
+        for motor_id, note_map in note_mapping.items():
+            if note in note_map:
+                return motor_id
+        return None  # or some default motor
+
 
     def note_number_to_components(self, note_number):
         name_with_octave = pretty_midi.note_number_to_name(note_number)
@@ -86,6 +95,13 @@ class MidiScheduler:
                     return
                 for note in self.grouped_notes[i]:
                     print(f"NOTE @ {round(group_time, 2)}s: {note['note']}{note['octave']}")
+                    motor_id = self.get_motor_for_note(note['note'], note['octave'])
+                    if motor_id is not None:
+                        print(f"Sending command to motor {motor_id} for note {note['note']}{note['octave']}")
+                        send_motor_command(motor_id, 3, note['note'])  # Fingering command type
+                    else:
+                        print(f"⚠️ No motor mapped for {note['note']}{note['octave']}")
+
         except Exception as e:  
             print(f"Error during playback: {e}")
 

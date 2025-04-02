@@ -42,9 +42,9 @@ const uint8_t FINGER_SPEED_PINS[] = {10, 11, 12, 13};
 
 Slider sliders[4] = {
     Slider(SLIDER_START_PINS[0], SLIDER_DIR_PINS[0], SLIDER_SPEED_PINS[0], SLIDER_SENSOR_PIN[0], 8),
-    Slider(SLIDER_START_PINS[1], SLIDER_DIR_PINS[1], SLIDER_SPEED_PINS[1], SLIDER_SENSOR_PIN[1], 9),
-    Slider(SLIDER_START_PINS[2], SLIDER_DIR_PINS[2], SLIDER_SPEED_PINS[2], SLIDER_SENSOR_PIN[2], 11),
-    Slider(SLIDER_START_PINS[3], SLIDER_DIR_PINS[3], SLIDER_SPEED_PINS[3], SLIDER_SENSOR_PIN[3], 12)
+    Slider(SLIDER_START_PINS[1], SLIDER_DIR_PINS[1], SLIDER_SPEED_PINS[1], SLIDER_SENSOR_PIN[1], 11),
+    Slider(SLIDER_START_PINS[2], SLIDER_DIR_PINS[2], SLIDER_SPEED_PINS[2], SLIDER_SENSOR_PIN[2], 9),
+    Slider(SLIDER_START_PINS[3], SLIDER_DIR_PINS[3], SLIDER_SPEED_PINS[3], SLIDER_SENSOR_PIN[3], 7)
 };
 
 RackMotor rackMotors[4] = {
@@ -126,6 +126,7 @@ void handleIntervalTasks() {
 String inputLine = "";
 
 void handleSerialInput() {
+    
     while (Serial1.available() > 0) {
         char incomingByte = Serial1.read();
 
