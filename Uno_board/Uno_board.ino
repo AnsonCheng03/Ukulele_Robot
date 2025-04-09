@@ -34,7 +34,7 @@ const uint8_t SLIDER_SENSOR_PIN[] = {A0, A2, A4, A6};
 const uint8_t RACK_START_PINS[] = {48, 52, 22, 26};
 const uint8_t RACK_DIR_PINS[] = {46, 50, 24, 28};
 const uint8_t RACK_SPEED_PINS[] = {4, 2, 6, 8};
-const uint8_t RACK_SENSOR_PIN[] = {A0, A2, A4, A6};
+const uint8_t RACK_SENSOR_PIN[] = {A1, A3, A5, A7};
 
 const uint8_t FINGER_START_PINS[] = {36, 37, 38, 39};
 
@@ -47,10 +47,10 @@ Slider sliders[4] = {
 };
 
 RackMotor rackMotors[4] = {
-    RackMotor(RACK_START_PINS[0], RACK_DIR_PINS[0], RACK_SPEED_PINS[0], 8),
-    RackMotor(RACK_START_PINS[1], RACK_DIR_PINS[1], RACK_SPEED_PINS[1], 9),
-    RackMotor(RACK_START_PINS[2], RACK_DIR_PINS[2], RACK_SPEED_PINS[2], 11),
-    RackMotor(RACK_START_PINS[3], RACK_DIR_PINS[3], RACK_SPEED_PINS[3], 12)
+    RackMotor(RACK_START_PINS[0], RACK_DIR_PINS[0], RACK_SPEED_PINS[0], RACK_SENSOR_PIN[0], 8),
+    RackMotor(RACK_START_PINS[1], RACK_DIR_PINS[1], RACK_SPEED_PINS[1], RACK_SENSOR_PIN[1], 11),
+    RackMotor(RACK_START_PINS[2], RACK_DIR_PINS[2], RACK_SPEED_PINS[2], RACK_SENSOR_PIN[2], 9),
+    RackMotor(RACK_START_PINS[3], RACK_DIR_PINS[3], RACK_SPEED_PINS[3], RACK_SENSOR_PIN[3], 12)
 };
 
 FingeringMotor fingeringMotors[4] = {

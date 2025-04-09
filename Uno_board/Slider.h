@@ -2,14 +2,7 @@
 #define SLIDER_H
 
 #include "UpperMotor.h"
-
-enum CalibrationPhase {
-    CALIBRATION_INIT,
-    CALIBRATION_BACK_OFF,
-    CALIBRATION_WAIT_1,
-    CALIBRATION_SEEK_SENSOR,
-    CALIBRATION_DONE
-};
+#include "CalibrationPhase.h"
 
 class Slider : public UpperMotor {
 public:

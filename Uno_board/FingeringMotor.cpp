@@ -21,7 +21,7 @@ void FingeringMotor::control(int direction, int speedHz, int durationTenths) {
 }
 
 void FingeringMotor::calibrate() {
-    Serial.println("Calibrating rack motor...");
+    Serial.println("Calibrating fingering motor...");
 }
 
 void FingeringMotor::move() {
