@@ -13,6 +13,14 @@ void RackMotor::setup() {
 }
 
 void RackMotor::update() {
+    if (currentState == MOVING && getSensorValue() < 1000) {
+        Serial.println("Rack sensor triggered. Stopping and recalibrating.");
+        stopMovement();
+        currentPosition = 0;
+        isCalibrated = true;
+    }
+
+
     UpperMotor::update(); // Handles MOVING → IDLE transitions
 
     if (trueState == CALIBRATING && currentState != MOVING) {
@@ -39,7 +47,7 @@ void RackMotor::update() {
                 if (getSensorValue() > 1000) {
                     setDirection(motorID >= 10 ? LOW : HIGH); // Keep pulsing up
                     analogWrite(speedPin, 10);
-                    startMovement(1);
+                    startMovement(10000);
                 } else {
                     calibrationPhase = CALIBRATION_DONE;
                 }
@@ -71,6 +79,12 @@ void RackMotor::calibrate() {
 void RackMotor::move(int positionMm)
 {
     if(positionMm > 0) {
+        if(getSensorValue() < 1000) {
+            Serial.println("Sensor hit detected. Stopping.");
+            stopMovement();
+            return;
+        }
+
         up();
     } else {
         down();

@@ -33,10 +33,24 @@ void Slider::move(int positionMm)
         Serial.println("Device not calibrated. Cannot move.");
         return;
     }
+
+    if (getSensorValue() < 1000 && positionMm < 0)
+    {
+        Serial.println("Sensor hit detected. Cannot move forward.");
+        return;
+    }
+
     moveBy(positionMm - currentPosition, motorID >= 10);
 }
 
 void Slider::update() {
+    if (currentState == MOVING && getSensorValue() < 1000) {
+        Serial.println("Slider sensor triggered. Stopping and recalibrating.");
+        stopMovement();
+        currentPosition = 0;
+        isCalibrated = true;
+    }
+
     UpperMotor::update(); // Handles MOVING → IDLE transitions
 
     if (trueState == CALIBRATING && currentState != MOVING) {
@@ -70,7 +84,7 @@ void Slider::update() {
                     Serial.println("Seeking sensor... " + String(motorID) + " " + String(getSensorValue()));
                     setDirection(motorID <= 10 ? HIGH : LOW);
                     analogWrite(speedPin, 10);
-                    startMovement(1);
+                    startMovement(10000);
                 } else {
                     Serial.println("Sensor triggered. Calibration done.");
                     calibrationPhase = CALIBRATION_DONE;
