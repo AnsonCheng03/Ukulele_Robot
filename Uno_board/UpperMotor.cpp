@@ -27,12 +27,12 @@ void UpperMotor::moveBy(int distanceMm, bool reverse)
         Serial.println("Requested distance is zero. No movement needed.");
         return;
     }
-    if (max_distance != 0 &&
-        (currentPosition + distanceMm < 0 || currentPosition + distanceMm > max_distance))
-    {
-        Serial.println("Requested distance exceeds allowed range. Cannot move.");
-        return;
-    }
+    // if (max_distance != 0 &&
+    //     (currentPosition + distanceMm < 0 || currentPosition + distanceMm > max_distance))
+    // {
+    //     Serial.println("Requested distance exceeds allowed range. Cannot move.");
+    //     return;
+    // }
     int direction = distanceMm >= 0 ? HIGH : LOW;
     int distanceAbs = abs(distanceMm);
     unsigned long durationTenths = distanceAbs * distanceToDurationRatio * 100;

@@ -40,7 +40,7 @@ void Slider::move(int positionMm)
         return;
     }
 
-    moveBy(positionMm - currentPosition, motorID >= 10);
+    moveBy(positionMm - currentPosition, motorID < 10);
 }
 
 void Slider::update() {

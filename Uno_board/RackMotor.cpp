@@ -101,12 +101,12 @@ void RackMotor::move(int positionMm)
 // need integrate with calibration later
 void RackMotor::up() {
     Serial.println("Rack motor moving up...");
-    moveBy(motorID >= 10 ? -2 : 2);
+    moveBy(motorID < 10 ? -2 : 2);
 }
 
 void RackMotor::down() {
     Serial.println("Rack motor moving down...");
-    moveBy(motorID >= 10 ? 2 : -2);
+    moveBy(motorID < 10 ? 2 : -2);
 }
 
 int RackMotor::getSensorValue() {
