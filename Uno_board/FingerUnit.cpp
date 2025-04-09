@@ -11,7 +11,7 @@ void FingerUnit::setup() {
 
 void FingerUnit::calibrate() {
     slider->calibrate();
-    rackMotor->calibrate();
+    // rackMotor->calibrate();
     fingeringMotor->calibrate();
 }
 

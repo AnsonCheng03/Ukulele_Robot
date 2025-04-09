@@ -67,13 +67,13 @@ void Slider::update() {
             case CALIBRATION_BACK_OFF:
                 setDirection(motorID <= 10 ? LOW : HIGH);
                 analogWrite(speedPin, 1000);
-                startMovement(50);  // Back off for a short distance
+                startMovement(30);  // Back off for a short distance
                 calibrationPhase = CALIBRATION_WAIT_1;
                 calibrationPhaseStart = millis();
                 break;
 
             case CALIBRATION_WAIT_1:
-                if (millis() - calibrationPhaseStart >= 10) {
+                if (millis() - calibrationPhaseStart >= 1000) {
                     calibrationPhase = CALIBRATION_SEEK_SENSOR;
                     calibrationPhaseStart = millis();
                 }

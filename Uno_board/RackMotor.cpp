@@ -42,6 +42,13 @@ void RackMotor::update() {
                 calibrationPhaseStart = millis();
                 break;
 
+            case CALIBRATION_WAIT_1:
+                if (millis() - calibrationPhaseStart >= 1000) {
+                    calibrationPhase = CALIBRATION_SEEK_SENSOR;
+                    calibrationPhaseStart = millis();
+                }
+                break;
+
             case CALIBRATION_SEEK_SENSOR:
                 Serial.println("Seeking sensor..." + String(motorID) + " " + String(getSensorValue()));
                 if (getSensorValue() > 1000) {
