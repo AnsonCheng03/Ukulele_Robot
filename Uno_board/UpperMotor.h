@@ -25,6 +25,7 @@ protected:
     double distanceToDurationRatio;
     DeviceState currentState;
     DeviceState trueState;
+    unsigned long moveIgnoreSensorUntil = 0;
 
     void startMovement(unsigned long durationTenths);
     void stopMovement();

@@ -45,6 +45,7 @@ void UpperMotor::moveBy(int distanceMm, bool reverse)
     setDirection(reverse ? !direction : direction);
     analogWrite(speedPin, fixedMoveSpeed);
     startMovement(durationTenths);
+    moveIgnoreSensorUntil = millis() + 300;
     currentPosition += distanceMm;
 }
 

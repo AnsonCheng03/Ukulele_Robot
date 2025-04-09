@@ -34,17 +34,11 @@ void Slider::move(int positionMm)
         return;
     }
 
-    if (getSensorValue() < 1000 && positionMm < 0)
-    {
-        Serial.println("Sensor hit detected. Cannot move forward.");
-        return;
-    }
-
     moveBy(positionMm - currentPosition, motorID < 10);
 }
 
 void Slider::update() {
-    if (currentState == MOVING && getSensorValue() < 1000) {
+    if (currentState == MOVING && getSensorValue() < 1000 && millis() > moveIgnoreSensorUntil) {
         Serial.println("Slider sensor triggered. Stopping and recalibrating.");
         stopMovement();
         currentPosition = 0;
