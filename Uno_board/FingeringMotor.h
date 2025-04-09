@@ -2,7 +2,6 @@
 #define FINGERINGMOTOR_H
 
 #include "Device.h"
-#include "JobQueue.h"
 
 class FingeringMotor : public Device {
 public:

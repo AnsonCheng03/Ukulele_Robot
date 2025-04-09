@@ -5,6 +5,14 @@
 #include "RackMotor.h"
 #include "FingeringMotor.h"
 
+enum FingerMoveState {
+    FINGER_IDLE,
+    FINGER_UP,
+    FINGER_SLIDE,
+    FINGER_DOWN,
+    FINGER_PRESS
+};
+
 class FingerUnit {
 public:
     FingerUnit(Slider* slider, RackMotor* rackMotor, FingeringMotor* fingeringMotor);
@@ -26,6 +34,9 @@ private:
     Slider* slider;
     RackMotor* rackMotor;
     FingeringMotor* fingeringMotor;
+
+    FingerMoveState moveState = FINGER_IDLE;
+    int pendingDistance = 0;
 };
 
 #endif // FINGER_UNIT_H

@@ -2,7 +2,6 @@
 #define RACKMOTOR_H
 
 #include "UpperMotor.h"
-#include "JobQueue.h"
 #include "CalibrationPhase.h"
 
 class RackMotor : public UpperMotor {

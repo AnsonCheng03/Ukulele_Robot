@@ -1,5 +1,4 @@
 #include "FingerUnit.h"
-#include "JobQueue.h"
 
 FingerUnit::FingerUnit(Slider* slider, RackMotor* rackMotor, FingeringMotor* fingeringMotor)
     : slider(slider), rackMotor(rackMotor), fingeringMotor(fingeringMotor) {}
@@ -20,7 +19,40 @@ void FingerUnit::update() {
     slider->update();
     rackMotor->update();
     fingeringMotor->update();
+
+    switch (moveState) {
+        case FINGER_UP:
+            if (rackMotor->isMovementComplete()) {
+                slider->move(pendingDistance);
+                moveState = FINGER_SLIDE;
+            }
+            break;
+
+        case FINGER_SLIDE:
+            if (slider->isMovementComplete()) {
+                rackMotor->down();
+                moveState = FINGER_DOWN;
+            }
+            break;
+
+        case FINGER_DOWN:
+            if (rackMotor->isMovementComplete()) {
+                fingeringMotor->move();
+                moveState = FINGER_PRESS;
+            }
+            break;
+
+        case FINGER_PRESS:
+            if (fingeringMotor->isMovementComplete()) {
+                moveState = FINGER_IDLE;
+            }
+            break;
+
+        default:
+            break;
+    }
 }
+
 
 bool FingerUnit::isMovementComplete() {
     return slider->isMovementComplete() && 
@@ -29,12 +61,10 @@ bool FingerUnit::isMovementComplete() {
 }
 
 void FingerUnit::moveFinger(int distanceMm) {
-    rackMotor->up();
-    if (distanceMm >= 0) {
-        slider->move(distanceMm);
-        enqueueJob([](void* ctx) {
-            static_cast<RackMotor*>(ctx)->down();
-        }, rackMotor);
+    if (moveState == FINGER_IDLE) {
+        pendingDistance = distanceMm;
+        rackMotor->up();
+        moveState = FINGER_UP;
     }
 }
 

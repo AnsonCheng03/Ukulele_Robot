@@ -61,11 +61,6 @@ int RackMotor::getSpeedPin() {
     return speedPin;
 }
 
-void calibrateMotorDown(void* context) {
-    RackMotor* rackMotor = static_cast<RackMotor*>(context);
-    rackMotor->moveBy(rackMotor->getMotorID() >= 10 ? 5 : -5);
-}
-
 void RackMotor::calibrate() {
     Serial.println("Starting rack motor calibration...");
     trueState = CALIBRATING;

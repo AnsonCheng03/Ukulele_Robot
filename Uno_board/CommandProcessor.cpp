@@ -1,5 +1,4 @@
 #include "CommandProcessor.h"
-#include "JobQueue.h"
 
 void processCommand(const String& commandStr, FingerUnit* fingers[]) {
     Serial.println("Processing: " + commandStr);

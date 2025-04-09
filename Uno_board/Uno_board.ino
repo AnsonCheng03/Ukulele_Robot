@@ -3,7 +3,6 @@
 #include "Slider.h"
 #include "RackMotor.h"
 #include "FingeringMotor.h"
-#include "JobQueue.h"
 #include "CommandProcessor.h"
 
 #define CMD_CONTROL 0
@@ -83,7 +82,6 @@ void setup()
 
 void loop() {
     updateMotorsAndSliders();
-    executeNextJobIfReady();
     handleIntervalTasks(); 
     handleSerialInput(); // New function for Serial1 TX/RX
 }
@@ -91,23 +89,6 @@ void loop() {
 void updateMotorsAndSliders() {
     for (int i = 0; i < 4; ++i) {
         fingers[i]->update();
-    }
-}
-
-void executeNextJobIfReady() {
-    bool allComplete = true;
-    for (int i = 0; i < 4; ++i) {
-        if (!fingers[i]->isMovementComplete()) {
-            allComplete = false;
-            break;
-        }
-    }
-
-    if (allComplete && !isJobQueueEmpty()) {
-        Job nextJob = dequeueJob();
-        if (nextJob.function != nullptr) {
-            nextJob.function(nextJob.context);
-        }
     }
 }
 
