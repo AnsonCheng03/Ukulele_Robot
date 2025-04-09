@@ -4,7 +4,6 @@
 #include "RackMotor.h"
 #include "FingeringMotor.h"
 #include "JobQueue.h"
-#include "Fingering.h"
 #include "CommandProcessor.h"
 
 #define CMD_CONTROL 0
