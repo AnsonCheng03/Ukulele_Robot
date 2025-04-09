@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "*.embeddedhtml": "html",
+    "ostream": "cpp",
+    "print": "cpp"
+  },
+  "C_Cpp.errorSquiggles": "enabled"
+}
