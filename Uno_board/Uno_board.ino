@@ -1,4 +1,5 @@
 #include <Wire.h>
+#include "FingerUnit.h"
 #include "Slider.h"
 #include "RackMotor.h"
 #include "FingeringMotor.h"
@@ -60,6 +61,8 @@ FingeringMotor fingeringMotors[4] = {
     FingeringMotor(FINGER_START_PINS[3], 12)
 };
 
+FingerUnit* fingers[4];
+
 unsigned long previousMillis = 0;
 const long interval = 50;
 static uint8_t serialBuffer[64];
@@ -72,12 +75,9 @@ void setup()
 
     Serial1.begin(115200); // TX/RX communication
     for (int i = 0; i < 4; ++i) {
-        sliders[i].setup();
-        rackMotors[i].setup();
-        fingeringMotors[i].setup();
-        sliders[i].calibrate();
-        rackMotors[i].calibrate();
-        fingeringMotors[i].calibrate();
+        fingers[i] = new FingerUnit(&sliders[i], &rackMotors[i], &fingeringMotors[i]);
+        fingers[i]->setup();
+        fingers[i]->calibrate();
     }
 
 }
@@ -91,16 +91,14 @@ void loop() {
 
 void updateMotorsAndSliders() {
     for (int i = 0; i < 4; ++i) {
-        sliders[i].update();
-        rackMotors[i].update();
-        fingeringMotors[i].update();
+        fingers[i]->update();
     }
 }
 
 void executeNextJobIfReady() {
     bool allComplete = true;
     for (int i = 0; i < 4; ++i) {
-        if (!sliders[i].isMovementComplete() || !rackMotors[i].isMovementComplete() || !fingeringMotors[i].isMovementComplete()) {
+        if (!fingers[i]->isMovementComplete()) {
             allComplete = false;
             break;
         }
@@ -132,7 +130,7 @@ void handleSerialInput() {
         if (incomingByte == '\n') {
             inputLine.trim();
             if (inputLine.length() > 0) {
-                processCommand(inputLine, sliders, rackMotors, fingeringMotors);
+                processCommand(inputLine, fingers);
             }
             inputLine = "";
         } else {
