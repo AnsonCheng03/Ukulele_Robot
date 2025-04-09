@@ -6,10 +6,9 @@ from motor_control import handle_command_input
 
 # Define autocomplete words (can be dynamic too)
 command_words = [
-    'control', '
-    '0', '1', '2', '3',
-    'forward', 'backward',
-    '100', '50', '200', '1', '0', '5', '10'
+    'control', 'calibrate', 'move', 'fingering', 'chord', 'debug',
+    'C', 'M', 'F', 'D',
+    '100', '50', '200',
 ]
 
 completer = WordCompleter(command_words, ignore_case=True)
