@@ -22,7 +22,7 @@ cd ..
 
 # Install Bluedot and PyBluez
 echo "Installing Bluedot and PyBluez..."
-sudo pip3 install pretty_midi music21 mido bluedot git+https://github.com/pybluez/pybluez.git#egg=pybluez --break-system-packages
+sudo pip3 install pretty_midi music21 mido bluedot prompt_toolkit git+https://github.com/pybluez/pybluez.git#egg=pybluez --break-system-packages
 
 # 4. Install Raspberry Pi Bluetooth Manager
 echo "Cloning and installing Raspberry Pi Bluetooth Manager..."
