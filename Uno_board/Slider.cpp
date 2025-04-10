@@ -36,7 +36,7 @@ void Slider::move(int positionMm)
 
 void Slider::update() {
     if (currentState == MOVING && getSensorValue() < 1000 && millis() > moveIgnoreSensorUntil) {
-        Serial.println("Slider sensor triggered. Stopping and recalibrating.");
+        Serial.println("Slider sensor triggered. Stopping and recalibrating. ID: " + String(motorID));
         stopMovement();
         currentPosition = 0;
         isCalibrated = true;
@@ -71,12 +71,11 @@ void Slider::update() {
                 break;
 
             case CALIBRATION_SEEK_SENSOR:
-                if (getSensorValue() > 1000) {
-                    Serial.println("Seeking sensor... " + String(motorID) + " " + String(getSensorValue()));
-                    setDirection(reverseDirection ? HIGH : LOW);
-                    analogWrite(speedPin, 10);
-                    startMovement(10000);
-                } else {
+                Serial.println("Seeking sensor... " + String(motorID) + " " + String(getSensorValue()));
+                setDirection(reverseDirection ? HIGH : LOW);
+                analogWrite(speedPin, 10);
+                startMovement(10000);
+                if (getSensorValue() <= 1000) {
                     Serial.println("Sensor triggered. Calibration done.");
                     calibrationPhase = CALIBRATION_DONE;
                 }
