@@ -10,7 +10,10 @@ enum FingerMoveState {
     FINGER_UP,
     FINGER_SLIDE,
     FINGER_DOWN,
-    FINGER_PRESS
+    FINGER_PRESS,
+    CALIBRATING_SLIDER,
+    CALIBRATING_RACK,
+    CALIBRATING_FINGERING
 };
 
 class FingerUnit {

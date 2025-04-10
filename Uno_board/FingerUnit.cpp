@@ -12,9 +12,8 @@ void FingerUnit::setup() {
 }
 
 void FingerUnit::calibrate() {
+    moveState = CALIBRATING_SLIDER;
     slider->calibrate();
-    rackMotor->calibrate();
-    fingeringMotor->calibrate();
 }
 
 void FingerUnit::update() {
@@ -23,6 +22,30 @@ void FingerUnit::update() {
     fingeringMotor->update();
 
     switch (moveState) {
+        case CALIBRATING_SLIDER:
+            slider->update();
+            if (slider->isMovementComplete()) {
+                moveState = CALIBRATING_RACK;
+                rackMotor->calibrate();
+            }
+            break;
+
+        case CALIBRATING_RACK:
+            rackMotor->update();
+            if (rackMotor->isMovementComplete()) {
+                moveState = CALIBRATING_FINGERING;
+                fingeringMotor->calibrate();
+            }
+            break;
+
+        case CALIBRATING_FINGERING:
+            fingeringMotor->update();
+            if (fingeringMotor->isMovementComplete()) {
+                moveState = FINGER_IDLE; // Calibration complete
+                Serial.println("All motors calibrated.");
+            }
+            break;
+
         case FINGER_UP:
             if (rackMotor->isMovementComplete()) {
                 slider->move(pendingDistance);
