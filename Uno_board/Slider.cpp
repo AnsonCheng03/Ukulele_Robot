@@ -1,16 +1,13 @@
 #include "Slider.h"
 
-Slider::Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID)
-    : UpperMotor(startPin, directionPin, speedPin, motorID), sensorPin(sensorPin) {}
+Slider::Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID, const UpperMotorConfig& config)
+    : UpperMotor(startPin, directionPin, speedPin, motorID, config), sensorPin(sensorPin) {}
 
 void Slider::setup()
 {
     UpperMotor::setup();
     pinMode(sensorPin, INPUT);
     Serial.println("Slider setup for sensor pin: " + String(sensorPin));
-    max_distance = 100;
-    fixedMoveSpeed = 1000;
-    distanceToDurationRatio = 0.01;
 }
 
 void Slider::calibrate()
@@ -34,7 +31,7 @@ void Slider::move(int positionMm)
         return;
     }
 
-    moveBy(positionMm - currentPosition, motorID < 10);
+    moveBy(positionMm - currentPosition, reverseDirection);
 }
 
 void Slider::update() {
@@ -50,7 +47,7 @@ void Slider::update() {
     if (trueState == CALIBRATING && currentState != MOVING) {
         switch (calibrationPhase) {
             case CALIBRATION_INIT:
-                setDirection(motorID <= 10 ? LOW : HIGH);
+                setDirection(reverseDirection ? LOW : HIGH);
                 analogWrite(speedPin, 2000);
                 if (getSensorValue() < 1000) 
                     calibrationPhase = CALIBRATION_BACK_OFF;
@@ -59,7 +56,7 @@ void Slider::update() {
                 break;
 
             case CALIBRATION_BACK_OFF:
-                setDirection(motorID <= 10 ? LOW : HIGH);
+                setDirection(reverseDirection ? LOW : HIGH);
                 analogWrite(speedPin, 1000);
                 startMovement(30);  // Back off for a short distance
                 calibrationPhase = CALIBRATION_WAIT_1;
@@ -76,7 +73,7 @@ void Slider::update() {
             case CALIBRATION_SEEK_SENSOR:
                 if (getSensorValue() > 1000) {
                     Serial.println("Seeking sensor... " + String(motorID) + " " + String(getSensorValue()));
-                    setDirection(motorID <= 10 ? HIGH : LOW);
+                    setDirection(reverseDirection ? HIGH : LOW);
                     analogWrite(speedPin, 10);
                     startMovement(10000);
                 } else {

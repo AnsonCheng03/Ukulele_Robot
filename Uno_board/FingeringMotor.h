@@ -2,11 +2,11 @@
 #define FINGERINGMOTOR_H
 
 #include "Device.h"
+#include "MotorConfig.h"
 
 class FingeringMotor : public Device {
 public:
-    FingeringMotor(int startPin, int motorID);
-    int getMotorID() override;
+    FingeringMotor(int startPin, int motorID, const FingeringMotorConfig& config);
 
     void setup() override;
     void control(int direction, int speedHz, int durationTenths) override;
@@ -27,6 +27,8 @@ private:
     int startPin, motorID;
     bool isRunning;
     DeviceState currentState;
+    int defaultDurationMs;
+    // bool reverseDirection;
 
     unsigned long movementStartTime;
     unsigned long movementDuration;

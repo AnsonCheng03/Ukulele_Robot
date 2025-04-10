@@ -3,10 +3,11 @@
 
 #include "UpperMotor.h"
 #include "CalibrationPhase.h"
+#include "MotorConfig.h"
 
 class RackMotor : public UpperMotor {
 public:
-    RackMotor(int startPin, int directionPin, int speedPin, int sensorPin, int motorID);
+    RackMotor(int startPin, int directionPin, int speedPin, int sensorPin, int motorID, const UpperMotorConfig& config);
     int getSpeedPin();
 
     void setup();

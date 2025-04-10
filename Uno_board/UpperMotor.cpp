@@ -1,7 +1,11 @@
 #include "UpperMotor.h"
 
-UpperMotor::UpperMotor(int startPin, int directionPin, int speedPin, int motorID)
-    : startPin(startPin), directionPin(directionPin), speedPin(speedPin), motorID(motorID), moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0), max_distance(0), fixedMoveSpeed(1000), distanceToDurationRatio(0.01), currentState(IDLE), trueState(IDLE) {}
+UpperMotor::UpperMotor(int startPin, int directionPin, int speedPin, int motorID, const UpperMotorConfig& config)
+    : startPin(startPin), directionPin(directionPin), speedPin(speedPin), motorID(motorID),
+      max_distance(config.maxDistance), fixedMoveSpeed(config.fixedMoveSpeed),
+      distanceToDurationRatio(config.distanceToDurationRatio), reverseDirection(config.reverseDirection),
+      moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0),
+      currentState(IDLE), trueState(IDLE), moveIgnoreSensorUntil(0) {}
 
 void UpperMotor::setup()
 {
@@ -16,7 +20,7 @@ void UpperMotor::control(int direction, int speedHz, int durationTenths)
     Serial.println("Control upper motor - Direction: " + String(direction) + ", Speed: " + String(speedHz) + ", Duration: " + String(durationTenths * 0.1) + "s");
     isCalibrated = false;
     analogWrite(speedPin, speedHz);
-    setDirection(motorID >= 10 ? direction : !direction);
+    setDirection(reverseDirection ? !direction : direction);
     startMovement(durationTenths);
 }
 
@@ -95,7 +99,3 @@ bool UpperMotor::isMovementComplete()
     return currentState == IDLE;
 }
 
-int UpperMotor::getMotorID()
-{
-    return motorID;
-}

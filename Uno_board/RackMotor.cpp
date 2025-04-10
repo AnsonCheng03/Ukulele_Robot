@@ -1,15 +1,12 @@
 #include "RackMotor.h"
 
-RackMotor::RackMotor(int startPin, int directionPin, int speedPin, int sensorPin, int motorID)
-    : UpperMotor(startPin, directionPin, speedPin, motorID), sensorPin(sensorPin) {}
+RackMotor::RackMotor(int startPin, int directionPin, int speedPin, int sensorPin, int motorID, const UpperMotorConfig& config)
+    : UpperMotor(startPin, directionPin, speedPin, motorID, config), sensorPin(sensorPin) {}
 
 void RackMotor::setup() {
     UpperMotor::setup();
     pinMode(sensorPin, INPUT);
     Serial.println("Rack motor setup for sensor pin: " + String(sensorPin));
-    max_distance = 100;
-    fixedMoveSpeed = 1000;
-    distanceToDurationRatio = 0.01;
 }
 
 void RackMotor::update() {
@@ -26,7 +23,7 @@ void RackMotor::update() {
     if (trueState == CALIBRATING && currentState != MOVING) {
         switch (calibrationPhase) {
             case CALIBRATION_INIT:
-                setDirection(motorID >= 10 ? LOW : HIGH); // Go upward
+                setDirection(reverseDirection ? LOW : HIGH);
                 analogWrite(speedPin, 2000);
                 if (getSensorValue() < 1000) 
                     calibrationPhase = CALIBRATION_BACK_OFF;
@@ -35,7 +32,7 @@ void RackMotor::update() {
                 break;
 
             case CALIBRATION_BACK_OFF:
-                setDirection(motorID >= 10 ? HIGH : LOW);
+                setDirection(reverseDirection ? HIGH : LOW);
                 analogWrite(speedPin, 30);
                 startMovement(3); 
                 calibrationPhase = CALIBRATION_WAIT_1;
@@ -52,7 +49,7 @@ void RackMotor::update() {
             case CALIBRATION_SEEK_SENSOR:
                 Serial.println("Seeking sensor..." + String(motorID) + " " + String(getSensorValue()));
                 if (getSensorValue() > 1000) {
-                    setDirection(motorID >= 10 ? LOW : HIGH); // Keep pulsing up
+                    setDirection(reverseDirection ? LOW : HIGH); // Keep pulsing up
                     analogWrite(speedPin, 10);
                     startMovement(10000);
                 } else {
@@ -95,12 +92,12 @@ void RackMotor::move(int positionMm)
 // need integrate with calibration later
 void RackMotor::up() {
     Serial.println("Rack motor moving up...");
-    moveBy(motorID < 10 ? -2 : 2);
+    moveBy(reverseDirection ? -2 : 2);
 }
 
 void RackMotor::down() {
     Serial.println("Rack motor moving down...");
-    moveBy(motorID < 10 ? 2 : -2);
+    moveBy(reverseDirection ? 2 : -2);
 }
 
 int RackMotor::getSensorValue() {

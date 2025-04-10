@@ -1,17 +1,15 @@
 #include "FingeringMotor.h"
 
-FingeringMotor::FingeringMotor(int startPin, int motorID)
+FingeringMotor::FingeringMotor(int startPin, int motorID, const FingeringMotorConfig& config)
     : startPin(startPin), motorID(motorID), isRunning(false), currentState(IDLE),
-      movementStartTime(0), movementDuration(0) {}
+      movementStartTime(0), movementDuration(0),
+    //   , reverseDirection(config.reverseDirection) 
+      defaultDurationMs(config.defaultDurationMs) {}
 
 void FingeringMotor::setup() {
     pinMode(startPin, OUTPUT);
     stop();
     Serial.println("Fingering motor setup for pin: " + String(startPin));
-}
-
-int FingeringMotor::getMotorID() {
-    return motorID;
 }
 
 void FingeringMotor::control(int direction, int speedHz, int durationTenths) {
@@ -26,7 +24,7 @@ void FingeringMotor::calibrate() {
 
 void FingeringMotor::move() {
     Serial.println("Fingering motor move called (1s)");
-    moveFor(1000);  // 1 second
+    moveFor(defaultDurationMs);
 }
 
 void FingeringMotor::moveBy(int durationMs, bool reverse) {

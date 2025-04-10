@@ -3,10 +3,11 @@
 
 #include "UpperMotor.h"
 #include "CalibrationPhase.h"
+#include "MotorConfig.h"
 
 class Slider : public UpperMotor {
 public:
-    Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID);
+    Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID, const UpperMotorConfig& config);
     void setup();
     void calibrate();
     void update();

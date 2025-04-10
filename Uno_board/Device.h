@@ -18,7 +18,6 @@ public:
     virtual void moveBy(int positionMm, bool reverse = false) = 0;
     virtual void update() = 0;
     virtual bool isMovementComplete() = 0;
-    virtual int getMotorID() = 0;
 };
 
 #endif // DEVICE_H
