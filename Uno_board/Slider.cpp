@@ -76,7 +76,7 @@ void Slider::update() {
                 analogWrite(speedPin, 10);
                 startMovement(10000);
                 if (getSensorValue() <= 1000) {
-                    Serial.println("Sensor triggered. Calibration done.");
+                    Serial.println("Sensor triggered. Calibration done for motor ID: " + String(motorID));
                     calibrationPhase = CALIBRATION_DONE;
                 }
                 break;

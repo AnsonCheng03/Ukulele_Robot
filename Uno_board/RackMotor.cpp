@@ -1,7 +1,7 @@
 #include "RackMotor.h"
 
 RackMotor::RackMotor(int startPin, int directionPin, int speedPin, int sensorPin, int motorID, const UpperMotorConfig& config)
-    : UpperMotor(startPin, directionPin, speedPin, motorID, config), slider(nullptr), config(config) {}
+    : UpperMotor(startPin, directionPin, speedPin, motorID, config), sensorPin(sensorPin), slider(nullptr), config(config) {}
 
 void RackMotor::setup() {
     UpperMotor::setup();
@@ -56,6 +56,7 @@ void RackMotor::update() {
                 analogWrite(speedPin, 10);
                 startMovement(10000);
                 if (getSensorValue() <= 1000) {
+                    Serial.println("Sensor triggered. Calibration done for motor ID: " + String(motorID));
                     calibrationPhase = CALIBRATION_DONE;
                 }
                 break;
@@ -130,5 +131,6 @@ void RackMotor::setSlider(Slider* slider) {
 }
 
 int RackMotor::getSensorValue() {
+    Serial.println("Sensor Pin: " + String(sensorPin));
     return analogRead(sensorPin);
 }
