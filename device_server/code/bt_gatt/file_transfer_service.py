@@ -61,6 +61,7 @@ class FileWriteChrc(Characteristic):
             print(f"Wrote {len(byte_value)} bytes for {client_address}")
 
             checksum = hashlib.sha1(byte_value).digest()
+            print(f"Checksum for {client_address}: {checksum.hex()}")
             self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
 
         except Exception as e:
