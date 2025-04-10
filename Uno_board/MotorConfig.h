@@ -6,7 +6,12 @@ struct UpperMotorConfig {
     int fixedMoveSpeed;
     double distanceToDurationRatio;
     bool reverseDirection;
+
+    int normalDownDistance;       
+    int extendedDownDistance;    
+    int measurementThreshold;   
 };
+
 
 struct FingeringMotorConfig {
     int defaultDurationMs;

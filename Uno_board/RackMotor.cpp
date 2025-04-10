@@ -1,7 +1,7 @@
 #include "RackMotor.h"
 
 RackMotor::RackMotor(int startPin, int directionPin, int speedPin, int sensorPin, int motorID, const UpperMotorConfig& config)
-    : UpperMotor(startPin, directionPin, speedPin, motorID, config), sensorPin(sensorPin) {}
+    : UpperMotor(startPin, directionPin, speedPin, motorID, config), slider(nullptr), config(config) {}
 
 void RackMotor::setup() {
     UpperMotor::setup();
@@ -96,8 +96,33 @@ void RackMotor::up() {
 }
 
 void RackMotor::down() {
+    // Check if slider is set
+    if (slider == nullptr) {
+        Serial.println("Error: No slider assigned to RackMotor.");
+        return;  // Exit the method if slider is not assigned
+    }
+
     Serial.println("Rack motor moving down...");
-    moveBy(reverseDirection ? 2 : -2);
+
+    // Get the slider's current position using the slider reference
+    int sliderPosition = slider->getCurrentPosition();
+
+    // Calculate the down distance using linear interpolation (slope)
+    int downDistance = config.normalDownDistance + 
+                       (sliderPosition - config.measurementThreshold) * 
+                       (config.extendedDownDistance - config.normalDownDistance) / 
+                       (config.maxDistance - config.measurementThreshold);
+
+    // Log the calculated down distance for debugging
+    Serial.println("Slider position: " + String(sliderPosition) + "mm, Calculated down distance: " + String(downDistance) + "mm");
+
+    // Move by the calculated down distance
+    moveBy(downDistance, reverseDirection);
+}
+
+
+void RackMotor::setSlider(Slider* slider) {
+    this->slider = slider;
 }
 
 int RackMotor::getSensorValue() {

@@ -13,6 +13,7 @@ public:
     void update();
     void move(int positionMm) override;
     int getSensorValue();
+    int getCurrentPosition();
 
 private:
     int sensorPin;

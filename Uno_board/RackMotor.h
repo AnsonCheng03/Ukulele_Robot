@@ -4,6 +4,7 @@
 #include "UpperMotor.h"
 #include "CalibrationPhase.h"
 #include "MotorConfig.h"
+#include "Slider.h"
 
 class RackMotor : public UpperMotor {
 public:
@@ -13,6 +14,7 @@ public:
     void setup();
     void calibrate() override;
     void update() override;
+    void setSlider(Slider* slider);
     void move(int positionMm) override;
     void up();
     void down();
@@ -22,6 +24,8 @@ private:
     CalibrationPhase calibrationPhase;
     unsigned long calibrationPhaseStart;
     int getSensorValue();
+    Slider* slider;
+    UpperMotorConfig config;
 };
 
 #endif // RACKMOTOR_H

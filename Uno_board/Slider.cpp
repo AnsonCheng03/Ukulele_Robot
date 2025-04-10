@@ -94,3 +94,6 @@ void Slider::update() {
     }
 }
 
+int Slider::getCurrentPosition() {
+    return currentPosition;  // Assuming currentPosition holds the slider's position in mm
+}

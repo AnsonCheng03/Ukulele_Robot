@@ -40,24 +40,24 @@ const uint8_t FINGER_START_PINS[] = {36, 37, 38, 39};
 
 
 Slider sliders[4] = {
-    Slider(SLIDER_START_PINS[0], SLIDER_DIR_PINS[0], SLIDER_SPEED_PINS[0], SLIDER_SENSOR_PIN[0], 8, sliderConfigs[0]),
-    Slider(SLIDER_START_PINS[1], SLIDER_DIR_PINS[1], SLIDER_SPEED_PINS[1], SLIDER_SENSOR_PIN[1], 11, sliderConfigs[1]),
-    Slider(SLIDER_START_PINS[2], SLIDER_DIR_PINS[2], SLIDER_SPEED_PINS[2], SLIDER_SENSOR_PIN[2], 9, sliderConfigs[2]),
-    Slider(SLIDER_START_PINS[3], SLIDER_DIR_PINS[3], SLIDER_SPEED_PINS[3], SLIDER_SENSOR_PIN[3], 7, sliderConfigs[3])
+    Slider(SLIDER_START_PINS[0], SLIDER_DIR_PINS[0], SLIDER_SPEED_PINS[0], SLIDER_SENSOR_PIN[0], 1, sliderConfigs[0]),
+    Slider(SLIDER_START_PINS[1], SLIDER_DIR_PINS[1], SLIDER_SPEED_PINS[1], SLIDER_SENSOR_PIN[1], 2, sliderConfigs[1]),
+    Slider(SLIDER_START_PINS[2], SLIDER_DIR_PINS[2], SLIDER_SPEED_PINS[2], SLIDER_SENSOR_PIN[2], 3, sliderConfigs[2]),
+    Slider(SLIDER_START_PINS[3], SLIDER_DIR_PINS[3], SLIDER_SPEED_PINS[3], SLIDER_SENSOR_PIN[3], 4, sliderConfigs[3])
 };
 
 RackMotor rackMotors[4] = {
-    RackMotor(RACK_START_PINS[0], RACK_DIR_PINS[0], RACK_SPEED_PINS[0], RACK_SENSOR_PIN[0], 8, rackConfigs[0]),
-    RackMotor(RACK_START_PINS[1], RACK_DIR_PINS[1], RACK_SPEED_PINS[1], RACK_SENSOR_PIN[1], 7, rackConfigs[1]),
-    RackMotor(RACK_START_PINS[2], RACK_DIR_PINS[2], RACK_SPEED_PINS[2], RACK_SENSOR_PIN[2], 9, rackConfigs[2]),
-    RackMotor(RACK_START_PINS[3], RACK_DIR_PINS[3], RACK_SPEED_PINS[3], RACK_SENSOR_PIN[3], 12, rackConfigs[3])
+    RackMotor(RACK_START_PINS[0], RACK_DIR_PINS[0], RACK_SPEED_PINS[0], RACK_SENSOR_PIN[0], 5, rackConfigs[0]),
+    RackMotor(RACK_START_PINS[1], RACK_DIR_PINS[1], RACK_SPEED_PINS[1], RACK_SENSOR_PIN[1], 6, rackConfigs[1]),
+    RackMotor(RACK_START_PINS[2], RACK_DIR_PINS[2], RACK_SPEED_PINS[2], RACK_SENSOR_PIN[2], 7, rackConfigs[2]),
+    RackMotor(RACK_START_PINS[3], RACK_DIR_PINS[3], RACK_SPEED_PINS[3], RACK_SENSOR_PIN[3], 8, rackConfigs[3])
 };
 
 FingeringMotor fingeringMotors[4] = {
-    FingeringMotor(FINGER_START_PINS[0], 8, fingeringConfigs[0]),
-    FingeringMotor(FINGER_START_PINS[1], 9, fingeringConfigs[1]),
-    FingeringMotor(FINGER_START_PINS[2], 10, fingeringConfigs[2]),
-    FingeringMotor(FINGER_START_PINS[3], 11, fingeringConfigs[3])
+    FingeringMotor(FINGER_START_PINS[0], 9, fingeringConfigs[0]),
+    FingeringMotor(FINGER_START_PINS[1], 10, fingeringConfigs[1]),
+    FingeringMotor(FINGER_START_PINS[2], 11, fingeringConfigs[2]),
+    FingeringMotor(FINGER_START_PINS[3], 12, fingeringConfigs[3])
 };
 
 FingerUnit* fingers[4];

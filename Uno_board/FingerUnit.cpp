@@ -7,6 +7,8 @@ void FingerUnit::setup() {
     slider->setup();
     rackMotor->setup();
     fingeringMotor->setup();
+
+    rackMotor->setSlider(slider);
 }
 
 void FingerUnit::calibrate() {
