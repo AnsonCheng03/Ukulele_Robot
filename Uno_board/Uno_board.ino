@@ -29,12 +29,12 @@
 const uint8_t SLIDER_START_PINS[] = {49, 53, 23, 27};
 const uint8_t SLIDER_DIR_PINS[] = {47, 51, 25, 29};
 const uint8_t SLIDER_SPEED_PINS[] = {5, 3, 7, 9};
-const uint8_t SLIDER_SENSOR_PIN[] = {A7, A5, A3, A1};
+const uint8_t SLIDER_SENSOR_PIN[] = {A4, A5, A3, A1};
 
 const uint8_t RACK_START_PINS[] = {48, 52, 22, 26};
 const uint8_t RACK_DIR_PINS[] = {46, 50, 24, 28};
 const uint8_t RACK_SPEED_PINS[] = {4, 2, 6, 8};
-const uint8_t RACK_SENSOR_PIN[] = {A6, A4, A2, A0};
+const uint8_t RACK_SENSOR_PIN[] = {A6, A7, A2, A0};
 
 const uint8_t FINGER_START_PINS[] = {36, 37, 38, 39};
 
