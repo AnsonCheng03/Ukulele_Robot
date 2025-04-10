@@ -131,6 +131,5 @@ void RackMotor::setSlider(Slider* slider) {
 }
 
 int RackMotor::getSensorValue() {
-    Serial.println("Sensor Pin: " + String(sensorPin));
     return analogRead(sensorPin);
 }
