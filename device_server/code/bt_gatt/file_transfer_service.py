@@ -63,8 +63,8 @@ class FileWriteChrc(Characteristic):
                     # Calculate file checksum (SHA-1)
                     with open(filepath, 'rb') as f:
                         file_data = f.read()
-                        print(f"[DEBUG] Pi file hash input: {binascii.hexlify(file_data[:64])}... total {len(file_data)} bytes")
-                    sha1sum = hashlib.sha1(file_data).digest()
+                        base64_str = base64.b64encode(file_data).decode()
+                        sha1sum = hashlib.sha1(base64_str.encode()).digest()
                     self.last_checksum = dbus.Array(sha1sum, signature=dbus.Signature('y'))
 
                     print(f"[INFO] File {filepath} received and checksum computed")
