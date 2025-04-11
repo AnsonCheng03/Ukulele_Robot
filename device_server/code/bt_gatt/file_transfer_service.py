@@ -7,6 +7,7 @@ import logging
 import hashlib
 import base64
 import binascii
+import traceback
 
 logging.basicConfig(filename='file_transfer.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -39,58 +40,63 @@ class FileWriteChrc(Characteristic):
         os.makedirs(self.storage_dir, exist_ok=True)  # Ensure folder exists
 
     def WriteValue(self, value, options):
-        client_address = options.get('client_address', 'default')
-        byte_value = bytes(value)
+        try: 
+            client_address = options.get('client_address', 'default')
+            byte_value = bytes(value)
 
-        if byte_value.startswith(b'FILENAME:'):
-            filename_raw = byte_value[len(b'FILENAME:'):].decode('utf-8')
-            filename = filename_raw.replace(" ", "_")
-            filepath = os.path.join(self.storage_dir, filename)
-            self.open_files[client_address] = open(filepath, 'wb')
-            self.transfer_states[client_address] = 0  # initialize expected index
-            print(f"Receiving file {filename_raw} from {client_address}, saved to {filepath}")
-            return
-
-        if byte_value == b'EOF':
-            if client_address in self.open_files:
-                self.open_files[client_address].close()
-                filepath = self.open_files[client_address].name
-                del self.open_files[client_address]
-                self.transfer_states.pop(client_address, None)
-
-                # Calculate file checksum (SHA-1)
-                with open(filepath, 'rb') as f:
-                    print(f"[DEBUG] Pi file hash input: {binascii.hexlify(file_data[:64])}... total {len(file_data)} bytes")
-                    file_data = f.read()
-                sha1sum = hashlib.sha1(file_data).digest()
-                self.last_checksum = dbus.Array(sha1sum, signature=dbus.Signature('y'))
-
-                print(f"[INFO] File {filepath} received and checksum computed")
+            if byte_value.startswith(b'FILENAME:'):
+                filename_raw = byte_value[len(b'FILENAME:'):].decode('utf-8')
+                filename = filename_raw.replace(" ", "_")
+                filepath = os.path.join(self.storage_dir, filename)
+                self.open_files[client_address] = open(filepath, 'wb')
+                self.transfer_states[client_address] = 0  # initialize expected index
+                print(f"Receiving file {filename_raw} from {client_address}, saved to {filepath}")
                 return
 
+            if byte_value == b'EOF':
+                if client_address in self.open_files:
+                    self.open_files[client_address].close()
+                    filepath = self.open_files[client_address].name
+                    del self.open_files[client_address]
+                    self.transfer_states.pop(client_address, None)
 
-        # Chunk processing with sequence checking
-        try:
-            if len(byte_value) < 2:
-                raise ValueError("Chunk too short to contain index")
-            chunk_index = int.from_bytes(byte_value[:2], byteorder='big')
-            chunk_data = byte_value[2:]
+                    # Calculate file checksum (SHA-1)
+                    with open(filepath, 'rb') as f:
+                        print(f"[DEBUG] Pi file hash input: {binascii.hexlify(file_data[:64])}... total {len(file_data)} bytes")
+                        file_data = f.read()
+                    sha1sum = hashlib.sha1(file_data).digest()
+                    self.last_checksum = dbus.Array(sha1sum, signature=dbus.Signature('y'))
 
-            expected_index = self.transfer_states.get(client_address, 0)
-            if chunk_index != expected_index:
-                print(f"[ERROR] Out-of-order chunk from {client_address}: expected {expected_index}, got {chunk_index}")
-                raise exceptions.InvalidValueError("Chunk sequence mismatch")
+                    print(f"[INFO] File {filepath} received and checksum computed")
+                    return
 
-            self.open_files[client_address].write(chunk_data)
-            self.open_files[client_address].flush()
-            self.transfer_states[client_address] += 1
 
-            base64_str = base64.b64encode(chunk_data).decode()
-            checksum = hashlib.sha1(base64_str.encode()).digest()
-            self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
+            # Chunk processing with sequence checking
+            try:
+                if len(byte_value) < 2:
+                    raise ValueError("Chunk too short to contain index")
+                chunk_index = int.from_bytes(byte_value[:2], byteorder='big')
+                chunk_data = byte_value[2:]
 
+                expected_index = self.transfer_states.get(client_address, 0)
+                if chunk_index != expected_index:
+                    print(f"[ERROR] Out-of-order chunk from {client_address}: expected {expected_index}, got {chunk_index}")
+                    raise exceptions.InvalidValueError("Chunk sequence mismatch")
+
+                self.open_files[client_address].write(chunk_data)
+                self.open_files[client_address].flush()
+                self.transfer_states[client_address] += 1
+
+                base64_str = base64.b64encode(chunk_data).decode()
+                checksum = hashlib.sha1(base64_str.encode()).digest()
+                self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
+
+            except Exception as e:
+                print(f"Error writing chunk from {client_address}: {e}")
+                raise exceptions.InvalidValueError(f"Write error: {e}")
         except Exception as e:
-            print(f"Error writing chunk from {client_address}: {e}")
+            print(f"[EXCEPTION] Error writing chunk from {client_address}: {e}")
+            traceback.print_exc()  # Prints full stack trace to console/log
             raise exceptions.InvalidValueError(f"Write error: {e}")
 
     def ReadValue(self, options):
