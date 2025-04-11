@@ -126,15 +126,19 @@ export class BleService {
 
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
+      const chunkBuffer = Buffer.from(chunk, "base64");
+      const indexBuffer = Buffer.alloc(2); // 2 bytes = up to 65535 chunks
+      indexBuffer.writeUInt16BE(i, 0);
+      const combinedBuffer = Buffer.concat([indexBuffer, chunkBuffer]);
+      const base64Payload = combinedBuffer.toString("base64");
+
       try {
-        const rawBuffer = Buffer.from(chunk, "base64");
-        const base64Str = rawBuffer.toString("base64");
-        const checksum = await sha1(base64Str);
+        const checksum = await sha1(chunk);
         const response =
           await this.device.writeCharacteristicWithResponseForService(
             serviceUUID,
             characteristicUUID,
-            chunk
+            base64Payload
           );
 
         const value = await response.read();
