@@ -54,20 +54,26 @@ class FileWriteChrc(Characteristic):
         if byte_value == b'EOF':
             if client_address in self.open_files:
                 self.open_files[client_address].close()
+                filepath = self.open_files[client_address].name
                 del self.open_files[client_address]
                 self.transfer_states.pop(client_address, None)
-            print(f"Completed file transfer from {client_address}")
-            self.last_checksum = dbus.Array([], signature=dbus.Signature('y'))
-            return
+
+                # Calculate file checksum (SHA-1)
+                with open(filepath, 'rb') as f:
+                    file_data = f.read()
+                sha1sum = hashlib.sha1(file_data).digest()
+                self.last_checksum = dbus.Array(sha1sum, signature=dbus.Signature('y'))
+
+                print(f"[INFO] File {filepath} received and checksum computed")
+                return
+
 
         # Chunk processing with sequence checking
         try:
-            print(f"Received chunk from {client_address}: {byte_value}")
             if len(byte_value) < 2:
                 raise ValueError("Chunk too short to contain index")
             chunk_index = int.from_bytes(byte_value[:2], byteorder='big')
             chunk_data = byte_value[2:]
-            print(f"Chunk index: {chunk_index}, data length: {len(chunk_data)}")
 
             expected_index = self.transfer_states.get(client_address, 0)
             print(f"Expected index: {expected_index}")
@@ -75,7 +81,6 @@ class FileWriteChrc(Characteristic):
                 print(f"[ERROR] Out-of-order chunk from {client_address}: expected {expected_index}, got {chunk_index}")
                 raise exceptions.InvalidValueError("Chunk sequence mismatch")
 
-            print(f"Writing chunk to file for {client_address}")
             self.open_files[client_address].write(chunk_data)
             self.open_files[client_address].flush()
             self.transfer_states[client_address] += 1
