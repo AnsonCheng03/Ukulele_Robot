@@ -91,7 +91,7 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => setTab("debug")}
           style={styles.tabButton}
         >
@@ -103,7 +103,7 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
           <Text style={tab === "debug" ? styles.tabActive : styles.tab}>
             Debug
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </>
   );

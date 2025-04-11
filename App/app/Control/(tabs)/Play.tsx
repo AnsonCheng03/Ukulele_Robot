@@ -18,6 +18,7 @@ import { Device } from "react-native-ble-plx";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import Toast from "react-native-toast-message";
+import { useFocusEffect } from "expo-router";
 
 const ITEM_WIDTH = 70;
 
@@ -56,13 +57,23 @@ export default function PlayTabScreen({ device }: { device: Device }) {
   const selectedNote = baseNotes[selectedAbsoluteIndex % 12];
   const selectedOctave = Math.floor(selectedAbsoluteIndex / 12);
 
-  useEffect(() => {
+  const moveToMiddle = () => {
     const visibleCenter = Math.floor(screenWidth / ITEM_WIDTH / 2);
     flatListRef.current?.scrollToOffset({
       offset: (selectedNoteIndex - visibleCenter) * ITEM_WIDTH,
       animated: false,
     });
+  };
+
+  useEffect(() => {
+    moveToMiddle();
   }, [screenWidth]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      moveToMiddle();
+    }, [])
+  );
 
   const chordTypes = [
     "Maj",

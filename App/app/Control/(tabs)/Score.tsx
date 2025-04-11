@@ -16,6 +16,7 @@ import DocumentPicker from "react-native-document-picker";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import Slider from "@react-native-community/slider";
+import { useFocusEffect } from "expo-router";
 
 export default function PlayTabScreen({ device }: { device: Device }) {
   const bleService = BleService.getInstance();
@@ -48,6 +49,15 @@ export default function PlayTabScreen({ device }: { device: Device }) {
     }
     return () => clearInterval(interval);
   }, [isPlaying, duration]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        bleService.pauseAudioFile();
+        setIsPlaying(false);
+      };
+    }, [])
+  );
 
   const formatTime = (secs: number): string => {
     const min = Math.floor(secs / 60);
