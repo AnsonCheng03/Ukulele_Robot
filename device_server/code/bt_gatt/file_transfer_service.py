@@ -59,6 +59,7 @@ class FileWriteChrc(Characteristic):
             self.open_files[client_address].write(byte_value)
             self.open_files[client_address].flush()
             print(f"Wrote {len(byte_value)} bytes for {client_address}")
+            print(f"Data: {byte_value}")
 
             checksum = hashlib.sha1(byte_value).digest()
             print(f"Checksum for {client_address}: {checksum.hex()}")
