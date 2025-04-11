@@ -6,7 +6,6 @@ import bt_gatt.exceptions as exceptions
 import logging
 import hashlib
 import base64
-import binascii
 import traceback
 
 logging.basicConfig(filename='file_transfer.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
