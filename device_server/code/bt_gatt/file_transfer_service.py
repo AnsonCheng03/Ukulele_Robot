@@ -5,6 +5,7 @@ from bt_gatt.constants import GATT_CHRC_IFACE
 import bt_gatt.exceptions as exceptions
 import logging
 import hashlib
+import binascii
 
 logging.basicConfig(filename='file_transfer.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -62,7 +63,14 @@ class FileWriteChrc(Characteristic):
             print(f"Data: {byte_value}")
 
             checksum = hashlib.sha1(byte_value).digest()
-            print(f"Checksum for {client_address}: {checksum.hex()}")
+            # Hexadecimal string (same format as JS `sha1()`)
+            print("🔐 SHA1 (hex):", binascii.hexlify(checksum).decode())
+
+            # Base64 string (for BLE transmission)
+            print("🔐 SHA1 (base64):", base64.b64encode(checksum).decode())
+
+            # Optional: show raw bytes
+            print("🔐 SHA1 (raw bytes):", list(checksum))
             self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
 
         except Exception as e:
