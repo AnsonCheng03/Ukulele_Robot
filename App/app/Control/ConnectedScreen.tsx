@@ -14,8 +14,8 @@ import {
 import PlayTabScreen from "./(tabs)/Play";
 import EditingTabScreen from "./(tabs)/Editing";
 import ScoreTabScreen from "./(tabs)/Score";
+import FingeringTabScreen from "./(tabs)/Fingering";
 import { Device } from "react-native-ble-plx";
-import DebugTabScreen from "./(tabs)/Debug";
 
 export default function ConnectedScreen({ device }: { device: Device | null }) {
   if (!device) {
@@ -26,7 +26,7 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
     );
   }
 
-  const [tab, setTab] = useState<"play" | "editing" | "score" | "debug">(
+  const [tab, setTab] = useState<"play" | "editing" | "score" | "fingering">(
     "play"
   );
   const renderContent = () => {
@@ -36,8 +36,8 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
       case "score":
         return <ScoreTabScreen device={device} />;
 
-      case "debug":
-        return <DebugTabScreen device={device} />;
+      case "fingering":
+        return <FingeringTabScreen device={device} />;
       default:
       case "play":
         return <PlayTabScreen device={device} />;
@@ -76,6 +76,19 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
             Editing
           </Text>
         </TouchableOpacity> */}
+        <TouchableOpacity
+          onPress={() => setTab("fingering")}
+          style={styles.tabButton}
+        >
+          <MaterialCommunityIcons
+            name="gesture-tap-hold"
+            size={22}
+            color={tab === "fingering" ? "#007AFF" : "#999"}
+          />
+          <Text style={tab === "fingering" ? styles.tabActive : styles.tab}>
+            Fingering
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => setTab("score")}
@@ -90,20 +103,6 @@ export default function ConnectedScreen({ device }: { device: Device | null }) {
             Score
           </Text>
         </TouchableOpacity>
-
-        {/* <TouchableOpacity
-          onPress={() => setTab("debug")}
-          style={styles.tabButton}
-        >
-          <MaterialCommunityIcons
-            name="bug"
-            size={22}
-            color={tab === "debug" ? "#007AFF" : "#999"}
-          />
-          <Text style={tab === "debug" ? styles.tabActive : styles.tab}>
-            Debug
-          </Text>
-        </TouchableOpacity> */}
       </View>
     </>
   );
