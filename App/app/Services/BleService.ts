@@ -177,7 +177,6 @@ export class BleService {
       }
     }
 
-
     // Send EOF
     const eof = Buffer.from("EOF").toString("base64");
     await this.device.writeCharacteristicWithResponseForService(
@@ -211,6 +210,12 @@ export class BleService {
     }
 
     console.log("✅ File sent and verified successfully");
+    const confirmChunk = Buffer.from("CONFIRM:" + fileName).toString("base64");
+    await this.device.writeCharacteristicWithResponseForService(
+      serviceUUID,
+      characteristicUUID,
+      confirmChunk
+    );
   }
 
   public async getAudioFileList(): Promise<
