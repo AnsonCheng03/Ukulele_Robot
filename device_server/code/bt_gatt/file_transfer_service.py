@@ -109,7 +109,7 @@ class FileWriteChrc(Characteristic):
                     checksum = hashlib.sha1(base64_str.encode()).digest()
                     self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
                     
-                if chunk_index == 0:
+                elif chunk_index == 0:
                     print(f"[INFO] {client_address} is resending file from beginning")
 
                     if client_address in self.open_files:
