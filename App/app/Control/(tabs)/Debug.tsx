@@ -13,6 +13,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { BleService } from "../../Services/BleService";
+import Toast from "react-native-toast-message";
 
 export default function PlayTabScreen({ device }: { device: Device }) {
   const bleService = BleService.getInstance();
@@ -48,7 +49,17 @@ export default function PlayTabScreen({ device }: { device: Device }) {
     bleService
       .sendCommandToDevice(cmd)
       .then(() => setReceivedCommands((prev) => [...prev, cmd]))
-      .catch((err) => console.error(err));
+      .catch((err) =>
+        Toast.show({
+          type: "error",
+          text1: "Command Error",
+          text2: err.message,
+          position: "top",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        })
+      );
   };
 
   const sendMoveCommand = () => {
@@ -56,7 +67,17 @@ export default function PlayTabScreen({ device }: { device: Device }) {
     bleService
       .sendCommandToDevice(cmd)
       .then(() => setReceivedCommands((prev) => [...prev, cmd]))
-      .catch((err) => console.error(err));
+      .catch((err) =>
+        Toast.show({
+          type: "error",
+          text1: "Command Error",
+          text2: err.message,
+          position: "top",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        })
+      );
   };
 
   const renderStepper = (

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { BleService } from "../../Services/BleService";
 import { Device } from "react-native-ble-plx";
+import Toast from "react-native-toast-message";
 import DocumentPicker from "react-native-document-picker";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -79,7 +80,15 @@ export default function PlayTabScreen({ device }: { device: Device }) {
         setIsPlaying(true);
       }
     } catch (error) {
-      console.error("Error playing audio file:", error);
+      Toast.show({
+        type: "error",
+        text1: "Playback Error",
+        text2: "Please try again.",
+        position: "top",
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 50,
+      });
     }
   };
 
@@ -89,7 +98,6 @@ export default function PlayTabScreen({ device }: { device: Device }) {
 
   const fetchAudioFiles = async () => {
     const files = await bleService.getAudioFileList();
-    console.log("Fetched audio files:", files);
     setAudioFiles(files);
   };
 
@@ -114,7 +122,15 @@ export default function PlayTabScreen({ device }: { device: Device }) {
 
       await fetchAudioFiles(); // ✅ Ensure this runs after all uploads
     } catch (err) {
-      console.log("File Selection Error:", err);
+      Toast.show({
+        type: "error",
+        text1: "File Selection Error",
+        text2: "Please try again.",
+        position: "top",
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 50,
+      });
       setUploadProgress(null);
       setUploadTotal(null);
     }
@@ -127,7 +143,15 @@ export default function PlayTabScreen({ device }: { device: Device }) {
       setDeleteMode(false);
       await fetchAudioFiles(); // ✅ Wait for it to complete
     } catch (error) {
-      console.error("Delete error:", error);
+      Toast.show({
+        type: "error",
+        text1: "Delete Error",
+        text2: "Please try again.",
+        position: "top",
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 50,
+      });
     }
   };
   const toggleSelect = (name: string) => {
@@ -218,7 +242,15 @@ export default function PlayTabScreen({ device }: { device: Device }) {
                     setIsPlaying(true);
                   }
                 } catch (error) {
-                  console.error("Error toggling play/pause:", error);
+                  Toast.show({
+                    type: "error",
+                    text1: "Playback Error",
+                    text2: "Please try again.",
+                    position: "top",
+                    visibilityTime: 2000,
+                    autoHide: true,
+                    topOffset: 50,
+                  });
                 }
               }}
             >

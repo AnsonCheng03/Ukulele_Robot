@@ -9,7 +9,7 @@ import {
 import * as SplashScreen from "expo-splash-screen";
 import "react-native-reanimated";
 import Toast from "react-native-toast-message";
-import { usePathname, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 
 import RippleBluetooth from "./Component/bluetoothRipple";
 import BottomDrawer from "./Component/bottomDrawer";
@@ -63,12 +63,28 @@ export default function BluetoothSearch() {
           PermissionsAndroid.RESULTS.GRANTED;
 
       if (!granted) {
-        console.warn("Location or Bluetooth permission denied");
+        Toast.show({
+          type: "error",
+          text1: "Permission Denied",
+          text2: "Please enable permissions in settings.",
+          position: "top",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        });
       }
 
       return granted;
     } catch (error) {
-      console.error("Permission request failed", error);
+      Toast.show({
+        type: "error",
+        text1: "Permission Request Failed",
+        text2: "Please enable permissions in settings.",
+        position: "top",
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 50,
+      });
       return false;
     }
   };
@@ -90,19 +106,22 @@ export default function BluetoothSearch() {
         );
         return [...prevDevices, ...newDevices];
       });
-
-      connectedDevices.forEach((device) => {
-        console.log(`Already connected device: ${device.name}`, device);
-      });
     } catch (error) {
-      console.error("Failed to get connected devices:", error);
+      Toast.show({
+        type: "error",
+        text1: "Failed to get connected devices",
+        text2: "Please try again.",
+        position: "top",
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 50,
+      });
     }
   };
 
   const startBluetoothScan = () => {
     bleService.onStateChange((state) => {
       if (state === "PoweredOn") {
-        console.log("Bluetooth is PoweredOn, starting periodic scan...");
         startPeriodicScanning();
       }
     });
@@ -186,8 +205,6 @@ export default function BluetoothSearch() {
         }}
         device={foundDevice}
       />
-
-      <Toast />
     </>
   );
 }

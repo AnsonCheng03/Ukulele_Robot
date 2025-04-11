@@ -17,6 +17,7 @@ import { BleService } from "../../Services/BleService";
 import { Device } from "react-native-ble-plx";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
+import Toast from "react-native-toast-message";
 
 const ITEM_WIDTH = 70;
 
@@ -161,9 +162,26 @@ export default function PlayTabScreen({ device }: { device: Device }) {
     bleService
       .sendCommandToDevice(command)
       .then(() => {
-        console.log("Command sent:", command);
+        Toast.show({
+          type: "success",
+          text1: "Command sent successfully",
+          position: "top",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        });
       })
-      .catch((error: Error) => console.error(error.message));
+      .catch((error: Error) =>
+        Toast.show({
+          type: "error",
+          text1: "Command Error",
+          text2: error.message,
+          position: "top",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        })
+      );
   };
 
   return (

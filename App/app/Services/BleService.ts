@@ -9,6 +9,7 @@ import RNFS from "react-native-fs";
 import { basename } from "path-browserify";
 import { sha1 } from "react-native-sha256";
 import { Buffer } from "buffer";
+import Toast from "react-native-toast-message";
 
 export class BleService {
   private static instance: BleService;
@@ -48,7 +49,6 @@ export class BleService {
     return dev
       .connect()
       .then((connectedDevice: Device) => {
-        console.log("Discovering services and characteristics");
         this.device = connectedDevice; // update to connected instance
         return connectedDevice.discoverAllServicesAndCharacteristics();
       })
@@ -56,7 +56,15 @@ export class BleService {
         console.log("Device connected and services discovered");
       })
       .catch((error) => {
-        console.error("Error connecting to device: ", error);
+        Toast.show({
+          type: "error",
+          text1: "Connection Error",
+          text2: error.message,
+          position: "top",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        });
         throw error;
       });
   }
@@ -80,10 +88,16 @@ export class BleService {
           );
 
         const value = await response.read();
-        console.log("Received response:", value.value);
         return;
       } catch (error) {
-        console.log(`Attempt ${attempts + 1}: Reconnecting...`, error);
+        Toast.show({
+          type: "error",
+          text1: "Device disconnected. Reconnecting...",
+          position: "top",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        });
         await this.connectToDevice();
         attempts++;
       }
@@ -168,10 +182,14 @@ export class BleService {
           }
         } catch (err) {
           attempts++;
-          console.warn(
-            `Retrying chunk ${i} (attempt ${attempts}) due to error:`,
-            err
-          );
+          Toast.show({
+            type: "error",
+            text1: `Retrying chunk ${i} (attempt ${attempts})`,
+            position: "top",
+            visibilityTime: 2000,
+            autoHide: true,
+            topOffset: 50,
+          });
           if (attempts >= maxRetries) throw err;
         }
       }
@@ -200,16 +218,26 @@ export class BleService {
     const localChecksum = await sha1(fileContent); // fileContent is base64
 
     if (serverChecksum !== localChecksum) {
-      console.error(
-        "Checksum mismatch. Server:",
-        serverChecksum,
-        "Local:",
-        localChecksum
-      );
+      Toast.show({
+        type: "error",
+        text1: "File checksum mismatch",
+        text2: "Please try sending the file again.",
+        position: "top",
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 50,
+      });
       throw new Error("Final file checksum mismatch");
     }
 
-    console.log("✅ File sent and verified successfully");
+    Toast.show({
+      type: "success",
+      text1: "File sent and verified successfully",
+      position: "top",
+      visibilityTime: 2000,
+      autoHide: true,
+      topOffset: 50,
+    });
     const confirmChunk = Buffer.from("CONFIRM:" + fileName).toString("base64");
     await this.device.writeCharacteristicWithResponseForService(
       serviceUUID,
@@ -316,7 +344,15 @@ export class BleService {
       { allowDuplicates: false },
       (error, device) => {
         if (error) {
-          console.error("Scan error:", error);
+          Toast.show({
+            type: "error",
+            text1: "Scan Error",
+            text2: error.message,
+            position: "top",
+            visibilityTime: 2000,
+            autoHide: true,
+            topOffset: 50,
+          });
           return;
         }
         if (device) onDeviceFound(device);

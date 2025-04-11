@@ -12,6 +12,7 @@ import BleService from "../Services/BleService";
 import { Device } from "react-native-ble-plx";
 import { ThemedSafeAreaView, ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
+import Toast from "react-native-toast-message";
 
 export default function ControlLayout() {
   const navigation = useNavigation();
@@ -34,7 +35,15 @@ export default function ControlLayout() {
       await bleService.connectToDevice();
       setIsConnected(true);
     } catch (e) {
-      console.error("Connection failed", e);
+      Toast.show({
+        type: "error",
+        text1: "Connection Failed",
+        text2: "Please try again.",
+        position: "top",
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 50,
+      });
     } finally {
       setLoading(false);
     }

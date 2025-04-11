@@ -10,6 +10,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { Stack } from "expo-router";
+import Toast from "react-native-toast-message";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 
@@ -37,6 +38,7 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ gestureEnabled: true, headerShown: false }} />
       <StatusBar style="auto" />
+      <Toast />
     </ThemeProvider>
   );
 }

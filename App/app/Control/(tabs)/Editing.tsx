@@ -15,6 +15,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import DocumentPicker from "react-native-document-picker";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
+import Toast from "react-native-toast-message";
 
 export default function PlayTabScreen({ device }: { device: Device }) {
   const [command, setCommand] = useState<string>("");
@@ -29,7 +30,17 @@ export default function PlayTabScreen({ device }: { device: Device }) {
         setReceivedCommands((prev) => [...prev, command]);
         setCommand("");
       })
-      .catch((error: Error) => console.error(error.message));
+      .catch((error: Error) =>
+        Toast.show({
+          type: "error",
+          text1: "Command Error",
+          text2: error.message,
+          position: "top",
+          visibilityTime: 2000,
+          autoHide: true,
+          topOffset: 50,
+        })
+      );
   };
 
   const handleFileUpload = async () => {
@@ -45,7 +56,15 @@ export default function PlayTabScreen({ device }: { device: Device }) {
         setReceivedCommands((prev) => [...prev, "File sent"]);
       }
     } catch (err) {
-      console.log("File Selection Err:", err);
+      Toast.show({
+        type: "error",
+        text1: "File Selection Error",
+        text2: "Please try again.",
+        position: "top",
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 50,
+      });
     }
   };
 
