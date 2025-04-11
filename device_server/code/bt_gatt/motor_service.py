@@ -47,4 +47,4 @@ class MotorWriteChrc(Characteristic):
             raise exceptions.Failed("Failed to write value")
 
     def ReadValue(self, options):
-        return 0
+        return [0]
