@@ -1,0 +1,92 @@
+{
+  "expo": {
+    "name": "UkuleleRobot",
+    "slug": "UkuleleRobot",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.robot.ukulele",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSBluetoothAlwaysUsageDescription": "This app uses Bluetooth to connect to the Ukulele Robot"
+      },
+      "entitlements": {
+        "aps-environment": "development"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.robot.ukulele"
+    },
+    "build": {
+      "development": {
+        "developmentClient": false,
+        "android": {
+          "buildType": "apk"
+        }
+      },
+      "development-simulator": {
+        "developmentClient": false,
+        "android": {
+          "buildType": "apk"
+        },
+        "ios": {
+          "simulator": true
+        }
+      },
+      "preview": {
+        "android": {
+          "buildType": "apk"
+        }
+      },
+      "production": {
+        "developmentClient": false,
+        "android": {
+          "buildType": "apk"
+        },
+        "ios": {
+          "buildType": "archive"
+        }
+      }
+    },
+    "submit": {
+      "production": {}
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "56f516fd-992b-4ecd-9470-fb2b63261b3a"
+      }
+    }
+  }
+}
