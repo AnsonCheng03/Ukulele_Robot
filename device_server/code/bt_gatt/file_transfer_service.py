@@ -34,6 +34,7 @@ class FileWriteChrc(Characteristic):
             service)
         self.last_checksum = None
         self.open_files = {}
+        self.transfer_states = {}
         self.storage_dir = "RobotUserFiles"
         os.makedirs(self.storage_dir, exist_ok=True)  # Ensure folder exists
 
@@ -46,6 +47,7 @@ class FileWriteChrc(Characteristic):
             filename = filename_raw.replace(" ", "_")
             filepath = os.path.join(self.storage_dir, filename)
             self.open_files[client_address] = open(filepath, 'wb')
+            self.transfer_states[client_address] = 0  # initialize expected index
             print(f"Receiving file {filename_raw} from {client_address}, saved to {filepath}")
             return
 
@@ -53,16 +55,30 @@ class FileWriteChrc(Characteristic):
             if client_address in self.open_files:
                 self.open_files[client_address].close()
                 del self.open_files[client_address]
+                self.transfer_states.pop(client_address, None)
             print(f"Completed file transfer from {client_address}")
             self.last_checksum = dbus.Array([], signature=dbus.Signature('y'))
             return
 
+        # Chunk processing with sequence checking
         try:
-            self.open_files[client_address].write(byte_value)
+            parts = byte_value.split(b':', 2)
+            if len(parts) != 3 or parts[0] != b'CHUNK':
+                raise ValueError("Malformed chunk")
+
+            chunk_index = int(parts[1])
+            chunk_data = parts[2]
+
+            expected_index = self.transfer_states.get(client_address, 0)
+            if chunk_index != expected_index:
+                print(f"[ERROR] Out-of-order chunk from {client_address}: expected {expected_index}, got {chunk_index}")
+                raise exceptions.InvalidValueError("Chunk sequence mismatch")
+
+            self.open_files[client_address].write(chunk_data)
             self.open_files[client_address].flush()
+            self.transfer_states[client_address] += 1
 
-
-            base64_str = base64.b64encode(byte_value).decode()
+            base64_str = base64.b64encode(chunk_data).decode()
             checksum = hashlib.sha1(base64_str.encode()).digest()
             self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
 
