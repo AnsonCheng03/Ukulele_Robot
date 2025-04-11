@@ -132,38 +132,51 @@ export class BleService {
       const combinedBuffer = Buffer.concat([indexBuffer, chunkBuffer]);
       const base64Payload = combinedBuffer.toString("base64");
 
-      try {
-        const checksum = await sha1(chunk);
-        const response =
-          await this.device.writeCharacteristicWithResponseForService(
-            serviceUUID,
-            characteristicUUID,
-            base64Payload
-          );
+      const checksum = await sha1(chunk);
+      let success = false;
+      let attempts = 0;
+      const maxRetries = 3;
 
-        const value = await response.read();
-        if (value?.value) {
+      while (!success && attempts < maxRetries) {
+        try {
+          const response =
+            await this.device.writeCharacteristicWithResponseForService(
+              serviceUUID,
+              characteristicUUID,
+              base64Payload
+            );
+
+          const value = await response.read();
+          if (!value?.value) throw new Error("No checksum response received");
+
           const serverChecksum = Buffer.from(value.value, "base64").toString(
             "hex"
           );
-          // Uncomment for checksum validation if needed
-          if (serverChecksum !== checksum) {
-            throw new Error("Checksum mismatch");
-          }
-        } else {
-          throw new Error("No checksum response received.");
-        }
 
-        // Call progress callback
-        if (onProgress) {
-          const progress = Math.floor(((i + 1) / chunks.length) * 10000) / 100;
-          onProgress(progress, 100);
+          if (serverChecksum === checksum) {
+            success = true;
+
+            if (onProgress) {
+              const progress =
+                Math.floor(((i + 1) / chunks.length) * 10000) / 100;
+              onProgress(progress, 100);
+            }
+          } else {
+            throw new Error(
+              `Checksum mismatch: expected ${checksum}, got ${serverChecksum}`
+            );
+          }
+        } catch (err) {
+          attempts++;
+          console.warn(
+            `Retrying chunk ${i} (attempt ${attempts}) due to error:`,
+            err
+          );
+          if (attempts >= maxRetries) throw err;
         }
-      } catch (error) {
-        console.error(`Error sending chunk: ${chunk}`, error);
-        throw error;
       }
     }
+
 
     // Send EOF
     const eof = Buffer.from("EOF").toString("base64");
