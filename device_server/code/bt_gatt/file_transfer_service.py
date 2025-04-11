@@ -45,12 +45,32 @@ class FileWriteChrc(Characteristic):
         try: 
             client_address = options.get('client_address', 'default')
             byte_value = bytes(value)
+            
+            if byte_value.startswith(b'CONFIRM:'):
+                filename = byte_value[len(b'CONFIRM:'):].decode('utf-8')
+                temp_filename = filename + ".tmp"
+                temp_filepath = os.path.join(self.storage_dir, temp_filename)
+                final_filepath = os.path.join(self.storage_dir, filename)
+
+                if os.path.exists(temp_filepath):
+                    os.rename(temp_filepath, final_filepath)
+                    print(f"[INFO] Confirmed and renamed {temp_filepath} -> {final_filepath}")
+                else:
+                    print(f"[WARN] Tried to confirm missing file: {temp_filepath}")
+                return
+
 
             if byte_value.startswith(b'FILENAME:'):
                 filename_raw = byte_value[len(b'FILENAME:'):].decode('utf-8')
                 filename = filename_raw.replace(" ", "_")
-                filepath = os.path.join(self.storage_dir, filename)
+                temp_filename = filename + ".tmp"
+                filepath = os.path.join(self.storage_dir, temp_filename)
                 self.open_files[client_address] = open(filepath, 'wb')
+                self.transfer_states[client_address] = {
+                    "filename": filename,
+                    "temp_filename": temp_filename,
+                    "path": filepath
+                }
                 self.transfer_states[client_address] = 0  # initialize expected index
                 print(f"Receiving file {filename_raw} from {client_address}, saved to {filepath}")
                 return
@@ -61,8 +81,16 @@ class FileWriteChrc(Characteristic):
                     if client_address in self.chunk_buffers:
                         self.open_files[client_address].write(self.chunk_buffers[client_address])
                         self.open_files[client_address].flush()
+                        
+                    transfer = self.transfer_states.get(client_address)
+                    if not transfer:
+                        print(f"[ERROR] No transfer state for client {client_address}")
+                        return
 
-                    filepath = self.open_files[client_address].name
+                    filepath = transfer["path"]
+                    real_filename = transfer["filename"]
+                    real_filepath = os.path.join(self.storage_dir, real_filename)
+                    
                     self.open_files[client_address].close()
                     del self.open_files[client_address]
                     self.chunk_buffers.pop(client_address, None)
@@ -74,6 +102,7 @@ class FileWriteChrc(Characteristic):
                         base64_str = base64.b64encode(file_data).decode()
                         sha1sum = hashlib.sha1(base64_str.encode()).digest()
                     self.last_checksum = dbus.Array(sha1sum, signature=dbus.Signature('y'))
+                    
                     print(f"[INFO] File {filepath} received and checksum computed")
                     return
 
