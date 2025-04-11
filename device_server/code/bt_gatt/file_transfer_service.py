@@ -63,7 +63,9 @@ class FileWriteChrc(Characteristic):
             print(f"Wrote {len(byte_value)} bytes for {client_address}")
             print(f"Data: {byte_value}")
 
-            checksum = hashlib.sha1(byte_value).digest()
+
+            base64_str = base64.b64encode(byte_value).decode()
+            checksum = hashlib.sha1(base64_str.encode()).digest()
             # Hexadecimal string (same format as JS `sha1()`)
             print("🔐 SHA1 (hex):", binascii.hexlify(checksum).decode())
 
