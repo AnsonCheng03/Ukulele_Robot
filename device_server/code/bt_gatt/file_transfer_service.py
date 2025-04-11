@@ -108,6 +108,21 @@ class FileWriteChrc(Characteristic):
                     base64_str = base64.b64encode(chunk_data).decode()
                     checksum = hashlib.sha1(base64_str.encode()).digest()
                     self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
+                    
+                if chunk_index == 0:
+                    print(f"[INFO] {client_address} is resending file from beginning")
+
+                    if client_address in self.open_files:
+                        self.open_files[client_address].seek(0)
+                        self.open_files[client_address].truncate(0)
+
+                    self.chunk_buffers[client_address] = chunk_data
+                    self.last_chunk_index[client_address] = 0
+
+                    base64_str = base64.b64encode(chunk_data).decode()
+                    checksum = hashlib.sha1(base64_str.encode()).digest()
+                    self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
+                    return
 
                 else:
                     print(f"[ERROR] Unexpected chunk index from {client_address}: got {chunk_index}, expected {expected_index} or {expected_index + 1}")
