@@ -73,7 +73,7 @@ void Slider::update() {
             case CALIBRATION_SEEK_SENSOR:
                 Serial.println("Seeking sensor... " + String(motorID) + " " + String(getSensorValue()));
                 setDirection(reverseDirection ? HIGH : LOW);
-                analogWrite(speedPin, 10);
+                analogWrite(speedPin, 1000);
                 startMovement(10000);
                 if (getSensorValue() <= 1000) {
                     Serial.println("Sensor triggered. Calibration done for motor ID: " + String(motorID));
