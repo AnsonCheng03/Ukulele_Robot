@@ -1,19 +1,34 @@
 #ifndef RACKMOTOR_H
 #define RACKMOTOR_H
 
-#include "Device.h"
-#include "JobQueue.h"
+#include "UpperMotor.h"
+#include "CalibrationPhase.h"
+#include "MotorConfig.h"
+#include "Slider.h"
 
-class RackMotor : public Device {
+class RackMotor : public UpperMotor {
 public:
-    RackMotor(int startPin, int directionPin, int speedPin, int boardAddress);
+    RackMotor(int startPin, int directionPin, int speedPin, int sensorPin, int motorID, const UpperMotorConfig& config);
     int getSpeedPin();
 
     void setup();
-    void calibrate();
-    void move(int positionMm);
+    void calibrate() override;
+    void update() override;
+    void setSlider(Slider* slider);
+    void move(int positionMm) override;
     void up();
     void down();
+
+private:
+    int sensorPin;
+    CalibrationPhase calibrationPhase;
+    unsigned long calibrationPhaseStart;
+    int getSensorValue();
+    Slider* slider;
+    UpperMotorConfig config;
 };
 
 #endif // RACKMOTOR_H
+
+
+

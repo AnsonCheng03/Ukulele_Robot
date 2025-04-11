@@ -1,73 +1,26 @@
 #include "Slider.h"
 
-Slider::Slider(int startPin, int directionPin, int speedPin, int sensorPin, int boardAddress)
-    : Device(startPin, directionPin, speedPin, boardAddress), sensorPin(sensorPin), isCalibrating(false) {}
+Slider::Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID, const UpperMotorConfig& config)
+    : UpperMotor(startPin, directionPin, speedPin, motorID, config), sensorPin(sensorPin) {}
 
-void Slider::setup() {
-    Device::setup();
+void Slider::setup()
+{
+    UpperMotor::setup();
     pinMode(sensorPin, INPUT);
     Serial.println("Slider setup for sensor pin: " + String(sensorPin));
-    max_distance = 100;
-    fixedMoveSpeed = 1000;
-    distanceToDurationRatio = 0.01;
 }
 
-void Slider::calibrate() {
-    Serial.println("Calibrating slider...");
-    isCalibrating = true;
-    if(sensorPin > 0) {
-        Serial.println("slider sensor pin: " + String(sensorPin) + ", sensor value: " + String(digitalRead(sensorPin)));
-
-        unsigned long waitDuration = 100; // Combined duration for movement and waiting (in milliseconds)
-        unsigned long movementDuration = waitDuration / 100; // Start movement parameter derived from wait duration
-
-        unsigned long startWaitTime = millis();
-
-        // Step 1: If the sensor is already HIGH, move backward for 5 seconds
-        if (digitalRead(sensorPin) == HIGH) {
-            setDirection(boardAddress >= 10 ? LOW : HIGH);
-            analogWrite(speedPin, 1000);
-            startMovement(movementDuration); // Move backward for 5 seconds
-
-            unsigned long loopWaitTime = millis();
-            while (millis() - loopWaitTime < waitDuration) {
-                // Waiting for 5 seconds
-            }
-        }
-
-        // Step 2: Wait for 5 seconds after movement to avoid command override
-        startWaitTime = millis();
-        while (millis() - startWaitTime < waitDuration) {
-            // Waiting for 5 seconds
-        }
-
-        // Step 3: Move slowly until it reaches the sensor, 5 seconds per loop
-        while (digitalRead(sensorPin) == LOW) {
-            setDirection(boardAddress >= 10 ? HIGH : LOW);
-            analogWrite(speedPin, 1000);
-            startMovement(movementDuration); // Move slowly for 5 seconds
-
-            // Wait for 5 seconds before starting the next movement
-            unsigned long loopWaitTime = millis();
-            while (millis() - loopWaitTime < waitDuration) {
-                // Waiting for 5 seconds
-            }
-        }
-
-        isCalibrated = true;
-        Serial.println("Slider calibration complete.");
-    } else {
-        isCalibrated = true;
-        currentPosition = 0;
-        Serial.println("Slider calibration complete.");
-    }
-    isCalibrating = false;
+void Slider::calibrate()
+{
+    Serial.println("Starting FSM-based calibration...");
+    trueState = CALIBRATING;
+    currentState = CALIBRATING;
+    calibrationPhase = CALIBRATION_INIT;
 }
 
-
-
-int Slider::getSensorValue() {
-    return digitalRead(sensorPin);
+int Slider::getSensorValue()
+{
+    return analogRead(sensorPin);
 }
 
 void Slider::move(int positionMm)
@@ -77,16 +30,69 @@ void Slider::move(int positionMm)
         Serial.println("Device not calibrated. Cannot move.");
         return;
     }
-    moveBy(positionMm - currentPosition, boardAddress >= 10);
+
+    moveBy(positionMm - currentPosition, reverseDirection);
 }
 
 void Slider::update() {
-    Device::update();
-    if (isCalibrating && !isMoving) {
-        isCalibrating = false;
-        isCalibrated = true;
+    if (currentState == MOVING && getSensorValue() < 1000 && millis() > moveIgnoreSensorUntil) {
+        Serial.println("Slider sensor triggered. Stopping and recalibrating. ID: " + String(motorID));
+        stopMovement();
         currentPosition = 0;
-        stop();
-        Serial.println("Slider calibration complete.");
+        isCalibrated = true;
     }
+
+    UpperMotor::update(); // Handles MOVING → IDLE transitions
+
+    if (trueState == CALIBRATING && currentState != MOVING) {
+        switch (calibrationPhase) {
+            case CALIBRATION_INIT:
+                setDirection(reverseDirection ? LOW : HIGH);
+                analogWrite(speedPin, 2000);
+                if (getSensorValue() < 1000) 
+                    calibrationPhase = CALIBRATION_BACK_OFF;
+                else 
+                    calibrationPhase = CALIBRATION_SEEK_SENSOR;
+                break;
+
+            case CALIBRATION_BACK_OFF:
+                setDirection(reverseDirection ? LOW : HIGH);
+                analogWrite(speedPin, 1000);
+                startMovement(30);  // Back off for a short distance
+                calibrationPhase = CALIBRATION_WAIT_1;
+                calibrationPhaseStart = millis();
+                break;
+
+            case CALIBRATION_WAIT_1:
+                if (millis() - calibrationPhaseStart >= 1000) {
+                    calibrationPhase = CALIBRATION_SEEK_SENSOR;
+                    calibrationPhaseStart = millis();
+                }
+                break;
+
+            case CALIBRATION_SEEK_SENSOR:
+                Serial.println("Seeking sensor... " + String(motorID) + " " + String(getSensorValue()));
+                setDirection(reverseDirection ? HIGH : LOW);
+                analogWrite(speedPin, 1000);
+                startMovement(10000);
+                if (getSensorValue() <= 1000) {
+                    Serial.println("Sensor triggered. Calibration done for motor ID: " + String(motorID));
+                    calibrationPhase = CALIBRATION_DONE;
+                }
+                break;
+
+            case CALIBRATION_DONE:
+                stop();
+                trueState = IDLE;
+                currentState = IDLE;
+                isCalibrated = true;
+                currentPosition = 0;
+                Serial.println("Slider calibration complete.");
+                break;
+        }
+    }
+}
+
+int Slider::getCurrentPosition() {
+    return currentPosition;  // Assuming currentPosition holds the slider's position in mm
 }

@@ -5,6 +5,7 @@
 # 1. Enable I2C and Bluetooth on Raspberry Pi
 echo "Enabling I2C and Bluetooth..."
 sudo raspi-config nonint do_i2c 0
+sudo raspi-config nonint do_serial 1
 
 # 2. Install necessary libraries
 echo "Updating package lists and installing necessary libraries..."
@@ -21,7 +22,7 @@ cd ..
 
 # Install Bluedot and PyBluez
 echo "Installing Bluedot and PyBluez..."
-sudo pip3 install bluedot git+https://github.com/pybluez/pybluez.git#egg=pybluez --break-system-packages
+sudo pip3 install pretty_midi music21 mido bluedot prompt_toolkit git+https://github.com/pybluez/pybluez.git#egg=pybluez --break-system-packages
 
 # 4. Install Raspberry Pi Bluetooth Manager
 echo "Cloning and installing Raspberry Pi Bluetooth Manager..."
@@ -41,7 +42,29 @@ echo "PRETTY_HOSTNAME=GuitarRobot" | sudo tee /etc/machine-info > /dev/null
 
 # 7. Add main.py to run on startup
 echo "Adding ./code/main.py to run on startup..."
-echo "sudo python3 /home/pi/code/main.py" | sudo tee -a /etc/rc.local > /dev/null
+SERVICE_NAME="fyp_startup"
+SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME.service"
+SCRIPT_PATH="/home/pi/CSCI_FYP/device_server/code/main.py"
+echo "Creating systemd service file at $SERVICE_PATH..."
+sudo bash -c "cat > $SERVICE_PATH" <<EOL
+[Unit]
+Description=Auto Start Python Script in LXTerminal
+After=graphical.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/lxterminal -e "sudo python3 $SCRIPT_PATH"
+Restart=always
+User=pi
+Environment=DISPLAY=:0
+WorkingDirectory=/home/pi
+
+[Install]
+WantedBy=default.target
+EOL
+sudo systemctl daemon-reload
+sudo systemctl enable $SERVICE_NAME.service
+sudo systemctl start $SERVICE_NAME.service
 
 # Finish
 echo "Setup complete. Please reboot the Raspberry Pi for all changes to take effect."

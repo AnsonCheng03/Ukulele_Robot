@@ -1,20 +1,24 @@
 #ifndef SLIDER_H
 #define SLIDER_H
 
-#include "Device.h"
+#include "UpperMotor.h"
+#include "CalibrationPhase.h"
+#include "MotorConfig.h"
 
-class Slider : public Device {
+class Slider : public UpperMotor {
 public:
-    Slider(int startPin, int directionPin, int speedPin, int sensorPin, int boardAddress);
+    Slider(int startPin, int directionPin, int speedPin, int sensorPin, int motorID, const UpperMotorConfig& config);
     void setup();
     void calibrate();
     void update();
-    void move(int positionMm);
+    void move(int positionMm) override;
     int getSensorValue();
+    int getCurrentPosition();
 
 private:
     int sensorPin;
-    bool isCalibrating;
+    CalibrationPhase calibrationPhase;
+    unsigned long calibrationPhaseStart;
 };
 
 #endif // SLIDER_H
