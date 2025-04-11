@@ -38,6 +38,8 @@ class ListFilesChrc(Characteristic):
         files_info = []
         try:
             for f in os.listdir(self.service.storage_dir):
+                if f.endswith(".tmp"):
+                    continue  # skip temp files
                 full_path = os.path.join(self.service.storage_dir, f)
                 if os.path.isfile(full_path):
                     mod_time = os.path.getmtime(full_path)
