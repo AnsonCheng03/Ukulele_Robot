@@ -60,20 +60,10 @@ class FileWriteChrc(Characteristic):
         try:
             self.open_files[client_address].write(byte_value)
             self.open_files[client_address].flush()
-            print(f"Wrote {len(byte_value)} bytes for {client_address}")
-            print(f"Data: {byte_value}")
 
 
             base64_str = base64.b64encode(byte_value).decode()
             checksum = hashlib.sha1(base64_str.encode()).digest()
-            # Hexadecimal string (same format as JS `sha1()`)
-            print("🔐 SHA1 (hex):", binascii.hexlify(checksum).decode())
-
-            # Base64 string (for BLE transmission)
-            print("🔐 SHA1 (base64):", base64.b64encode(checksum).decode())
-
-            # Optional: show raw bytes
-            print("🔐 SHA1 (raw bytes):", list(checksum))
             self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
 
         except Exception as e:
