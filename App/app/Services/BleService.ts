@@ -172,6 +172,32 @@ export class BleService {
       characteristicUUID,
       eof
     );
+
+    // Read back full file checksum
+    const finalChecksumChar = await this.readFileResponse();
+    if (!finalChecksumChar?.value) {
+      throw new Error("No final checksum received from device");
+    }
+
+    const serverChecksum = Buffer.from(
+      finalChecksumChar.value,
+      "base64"
+    ).toString("hex");
+
+    // Calculate local file checksum
+    const localChecksum = await sha1(fileContent); // fileContent is base64
+
+    if (serverChecksum !== localChecksum) {
+      console.error(
+        "Checksum mismatch. Server:",
+        serverChecksum,
+        "Local:",
+        localChecksum
+      );
+      throw new Error("Final file checksum mismatch");
+    }
+
+    console.log("✅ File sent and verified successfully");
   }
 
   public async getAudioFileList(): Promise<
