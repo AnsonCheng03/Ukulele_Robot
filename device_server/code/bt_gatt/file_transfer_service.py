@@ -82,14 +82,7 @@ class FileWriteChrc(Characteristic):
                         self.open_files[client_address].write(self.chunk_buffers[client_address])
                         self.open_files[client_address].flush()
                         
-                    transfer = self.transfer_states.get(client_address)
-                    if not transfer:
-                        print(f"[ERROR] No transfer state for client {client_address}")
-                        return
-
-                    filepath = transfer["path"]
-                    real_filename = transfer["filename"]
-                    real_filepath = os.path.join(self.storage_dir, real_filename)
+                    filepath = self.open_files[client_address].name
                     
                     self.open_files[client_address].close()
                     del self.open_files[client_address]
