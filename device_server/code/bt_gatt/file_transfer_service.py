@@ -62,18 +62,22 @@ class FileWriteChrc(Characteristic):
 
         # Chunk processing with sequence checking
         try:
+            print(f"Received chunk from {client_address}: {byte_value}")
             parts = byte_value.split(b':', 2)
             if len(parts) != 3 or parts[0] != b'CHUNK':
                 raise ValueError("Malformed chunk")
 
             chunk_index = int(parts[1])
             chunk_data = parts[2]
+            print(f"Chunk index: {chunk_index}, data length: {len(chunk_data)}")
 
             expected_index = self.transfer_states.get(client_address, 0)
+            print(f"Expected index: {expected_index}")
             if chunk_index != expected_index:
                 print(f"[ERROR] Out-of-order chunk from {client_address}: expected {expected_index}, got {chunk_index}")
                 raise exceptions.InvalidValueError("Chunk sequence mismatch")
 
+            print(f"Writing chunk to file for {client_address}")
             self.open_files[client_address].write(chunk_data)
             self.open_files[client_address].flush()
             self.transfer_states[client_address] += 1
