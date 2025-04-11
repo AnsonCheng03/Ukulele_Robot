@@ -78,7 +78,7 @@ export class BleService {
     ];
 
     let attempts = 0;
-    while (attempts < 1) {
+    while (attempts < 3) {
       try {
         const response =
           await this.device.writeCharacteristicWithResponseForService(
@@ -98,6 +98,7 @@ export class BleService {
           autoHide: true,
           topOffset: 50,
         });
+        console.error("Error sending command:", error);
         await this.connectToDevice();
         attempts++;
       }
