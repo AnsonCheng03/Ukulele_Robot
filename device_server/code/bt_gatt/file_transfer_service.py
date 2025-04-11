@@ -83,13 +83,29 @@ class FileWriteChrc(Characteristic):
                     print(f"[ERROR] Out-of-order chunk from {client_address}: expected {expected_index}, got {chunk_index}")
                     raise exceptions.InvalidValueError("Chunk sequence mismatch")
 
-                self.open_files[client_address].write(chunk_data)
-                self.open_files[client_address].flush()
-                self.transfer_states[client_address] += 1
+                expected_index = self.transfer_states.get(client_address, 0)
 
-                base64_str = base64.b64encode(chunk_data).decode()
-                checksum = hashlib.sha1(base64_str.encode()).digest()
-                self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
+                if chunk_index == expected_index:
+                    self.open_files[client_address].write(chunk_data)
+                    self.open_files[client_address].flush()
+                    self.transfer_states[client_address] += 1
+
+                    base64_str = base64.b64encode(chunk_data).decode()
+                    checksum = hashlib.sha1(base64_str.encode()).digest()
+                    self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
+
+                elif chunk_index < expected_index:
+                    print(f"[WARN] Duplicate chunk {chunk_index} (already written). Sending previous checksum again.")
+                    # Resend last good checksum (same as above)
+                    base64_str = base64.b64encode(chunk_data).decode()
+                    checksum = hashlib.sha1(base64_str.encode()).digest()
+                    self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
+
+                else:
+                    print(f"[ERROR] Out-of-order chunk. Expected {expected_index}, got {chunk_index}")
+                    # Send fake checksum to force retry
+                    self.last_checksum = dbus.Array(b'\x00' * 20, signature=dbus.Signature('y'))
+
 
             except Exception as e:
                 print(f"Error writing chunk from {client_address}: {e}")
