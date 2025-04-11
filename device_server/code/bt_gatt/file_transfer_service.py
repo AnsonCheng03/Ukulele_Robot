@@ -60,6 +60,7 @@ class FileWriteChrc(Characteristic):
 
                 # Calculate file checksum (SHA-1)
                 with open(filepath, 'rb') as f:
+                    print(f"[DEBUG] Pi file hash input: {file_data[:64].hex()}... total {len(file_data)} bytes")
                     file_data = f.read()
                 sha1sum = hashlib.sha1(file_data).digest()
                 self.last_checksum = dbus.Array(sha1sum, signature=dbus.Signature('y'))
@@ -76,7 +77,6 @@ class FileWriteChrc(Characteristic):
             chunk_data = byte_value[2:]
 
             expected_index = self.transfer_states.get(client_address, 0)
-            print(f"Expected index: {expected_index}")
             if chunk_index != expected_index:
                 print(f"[ERROR] Out-of-order chunk from {client_address}: expected {expected_index}, got {chunk_index}")
                 raise exceptions.InvalidValueError("Chunk sequence mismatch")
