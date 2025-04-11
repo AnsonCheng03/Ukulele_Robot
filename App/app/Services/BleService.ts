@@ -127,7 +127,9 @@ export class BleService {
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       try {
-        const checksum = await sha1(chunk);
+        const rawBuffer = Buffer.from(chunk, "base64");
+        const base64Str = rawBuffer.toString("base64");
+        const checksum = await sha1(base64Str);
         const response =
           await this.device.writeCharacteristicWithResponseForService(
             serviceUUID,
@@ -141,16 +143,17 @@ export class BleService {
             "hex"
           );
           // Uncomment for checksum validation if needed
-          // if (serverChecksum !== checksum) {
-          //   throw new Error("Checksum mismatch");
-          // }
+          if (serverChecksum !== checksum) {
+            throw new Error("Checksum mismatch");
+          }
         } else {
           throw new Error("No checksum response received.");
         }
 
         // Call progress callback
         if (onProgress) {
-          onProgress(i + 1, chunks.length);
+          const progress = Math.floor(((i + 1) / chunks.length) * 10000) / 100;
+          onProgress(progress, 100);
         }
       } catch (error) {
         console.error(`Error sending chunk: ${chunk}`, error);
