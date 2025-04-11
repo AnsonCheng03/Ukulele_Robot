@@ -63,12 +63,10 @@ class FileWriteChrc(Characteristic):
         # Chunk processing with sequence checking
         try:
             print(f"Received chunk from {client_address}: {byte_value}")
-            parts = byte_value.split(b':', 2)
-            if len(parts) != 3 or parts[0] != b'CHUNK':
-                raise ValueError("Malformed chunk")
-
-            chunk_index = int(parts[1])
-            chunk_data = parts[2]
+            if len(byte_value) < 2:
+                raise ValueError("Chunk too short to contain index")
+            chunk_index = int.from_bytes(byte_value[:2], byteorder='big')
+            chunk_data = byte_value[2:]
             print(f"Chunk index: {chunk_index}, data length: {len(chunk_data)}")
 
             expected_index = self.transfer_states.get(client_address, 0)
