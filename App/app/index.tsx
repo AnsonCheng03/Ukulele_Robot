@@ -8,7 +8,8 @@ import {
 } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import "react-native-reanimated";
-import { useRouter } from "expo-router";
+import Toast from "react-native-toast-message";
+import { usePathname, useRouter } from "expo-router";
 
 import RippleBluetooth from "./Component/bluetoothRipple";
 import BottomDrawer from "./Component/bottomDrawer";
@@ -26,6 +27,7 @@ export default function BluetoothSearch() {
   const [scanning, setScanning] = useState(false);
   const [foundDevice, setFoundDevice] = useState<any | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [alreadyShownModal, setAlreadyShownModal] = useState(false);
   const bleService = BleService.getInstance();
   const router = useRouter();
 
@@ -120,7 +122,10 @@ export default function BluetoothSearch() {
               normalized.includes("ukulelerobot")
             ) {
               setFoundDevice(device);
-              setShowModal(true);
+              if (!alreadyShownModal) {
+                setAlreadyShownModal(true);
+                setShowModal(true);
+              }
             }
 
             setDevices((prevDevices) => {
@@ -181,6 +186,8 @@ export default function BluetoothSearch() {
         }}
         device={foundDevice}
       />
+
+      <Toast />
     </>
   );
 }
