@@ -107,22 +107,21 @@ export default function PlayTabScreen({ device }: { device: Device }) {
     }
   };
 
-  const renderNoteItem = useCallback(
-    ({ item, index }: { item: number; index: number }) => {
+  const NoteItem = React.memo(
+    ({
+      item,
+      index,
+      isSelected,
+      onPress,
+    }: {
+      item: number;
+      index: number;
+      isSelected: boolean;
+      onPress: () => void;
+    }) => {
       const { note } = getNoteWithOctave(item);
-      const isSelected = index === selectedNoteIndex;
-
       return (
-        <TouchableOpacity
-          style={styles.noteColumn}
-          onPress={() => {
-            setSelectedNoteIndex(index);
-            flatListRef.current?.scrollToOffset({
-              offset: index * ITEM_WIDTH,
-              animated: true,
-            });
-          }}
-        >
+        <TouchableOpacity style={styles.noteColumn} onPress={onPress}>
           <ThemedText
             style={[
               styles.noteLabel,
@@ -136,7 +135,24 @@ export default function PlayTabScreen({ device }: { device: Device }) {
           />
         </TouchableOpacity>
       );
-    },
+    }
+  );
+
+  const renderNoteItem = useCallback(
+    ({ item, index }: { item: number; index: number }) => (
+      <NoteItem
+        item={item}
+        index={index}
+        isSelected={index === selectedNoteIndex}
+        onPress={() => {
+          setSelectedNoteIndex(index);
+          flatListRef.current?.scrollToOffset({
+            offset: index * ITEM_WIDTH,
+            animated: true,
+          });
+        }}
+      />
+    ),
     [selectedNoteIndex]
   );
 
@@ -168,6 +184,8 @@ export default function PlayTabScreen({ device }: { device: Device }) {
           })}
           initialNumToRender={12}
           maxToRenderPerBatch={12}
+          removeClippedSubviews={true}
+          scrollEventThrottle={16}
           windowSize={5}
           contentContainerStyle={{
             paddingHorizontal: screenWidth / 2 - ITEM_WIDTH / 2,
