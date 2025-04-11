@@ -36,6 +36,8 @@ class FileWriteChrc(Characteristic):
         self.last_checksum = None
         self.open_files = {}
         self.transfer_states = {}
+        self.chunk_buffers = {}  # buffer chunk_data temporarily per client
+        self.last_chunk_index = {}  # track last good index
         self.storage_dir = "RobotUserFiles"
         os.makedirs(self.storage_dir, exist_ok=True)  # Ensure folder exists
 
@@ -55,56 +57,63 @@ class FileWriteChrc(Characteristic):
 
             if byte_value == b'EOF':
                 if client_address in self.open_files:
-                    self.open_files[client_address].close()
-                    filepath = self.open_files[client_address].name
-                    del self.open_files[client_address]
-                    self.transfer_states.pop(client_address, None)
+                    # ✅ Write final buffered chunk
+                    if client_address in self.chunk_buffers:
+                        self.open_files[client_address].write(self.chunk_buffers[client_address])
+                        self.open_files[client_address].flush()
 
-                    # Calculate file checksum (SHA-1)
+                    filepath = self.open_files[client_address].name
+                    self.open_files[client_address].close()
+                    del self.open_files[client_address]
+                    self.chunk_buffers.pop(client_address, None)
+                    self.last_chunk_index.pop(client_address, None)
+
+                    # Final checksum
                     with open(filepath, 'rb') as f:
                         file_data = f.read()
                         base64_str = base64.b64encode(file_data).decode()
                         sha1sum = hashlib.sha1(base64_str.encode()).digest()
                     self.last_checksum = dbus.Array(sha1sum, signature=dbus.Signature('y'))
-
                     print(f"[INFO] File {filepath} received and checksum computed")
                     return
 
-
             # Chunk processing with sequence checking
             try:
+                expected_index = self.last_chunk_index.get(client_address, 0)
+
                 if len(byte_value) < 2:
                     raise ValueError("Chunk too short to contain index")
                 chunk_index = int.from_bytes(byte_value[:2], byteorder='big')
                 chunk_data = byte_value[2:]
 
-                expected_index = self.transfer_states.get(client_address, 0)
-                if chunk_index != expected_index:
-                    print(f"[ERROR] Out-of-order chunk from {client_address}: expected {expected_index}, got {chunk_index}")
-                    raise exceptions.InvalidValueError("Chunk sequence mismatch")
+                # Check if this is the next chunk
+                if chunk_index == expected_index + 1:
+                    # ✅ Commit the last buffered chunk to file
+                    if client_address in self.chunk_buffers:
+                        self.open_files[client_address].write(self.chunk_buffers[client_address])
+                        self.open_files[client_address].flush()
 
-                expected_index = self.transfer_states.get(client_address, 0)
-
-                if chunk_index == expected_index:
-                    self.open_files[client_address].write(chunk_data)
-                    self.open_files[client_address].flush()
-                    self.transfer_states[client_address] += 1
+                    # ✅ Buffer this new chunk
+                    self.chunk_buffers[client_address] = chunk_data
+                    self.last_chunk_index[client_address] = chunk_index
 
                     base64_str = base64.b64encode(chunk_data).decode()
                     checksum = hashlib.sha1(base64_str.encode()).digest()
                     self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
 
-                elif chunk_index < expected_index:
-                    print(f"[WARN] Duplicate chunk {chunk_index} (already written). Sending previous checksum again.")
-                    # Resend last good checksum (same as above)
+                elif chunk_index == expected_index:
+                    # 🌀 Resend or corrupted retry — replace buffer with new data
+                    self.chunk_buffers[client_address] = chunk_data
+
                     base64_str = base64.b64encode(chunk_data).decode()
                     checksum = hashlib.sha1(base64_str.encode()).digest()
                     self.last_checksum = dbus.Array(checksum, signature=dbus.Signature('y'))
 
                 else:
-                    print(f"[ERROR] Out-of-order chunk. Expected {expected_index}, got {chunk_index}")
-                    # Send fake checksum to force retry
+                    print(f"[ERROR] Unexpected chunk index from {client_address}: got {chunk_index}, expected {expected_index} or {expected_index + 1}")
+                    # Return fake checksum to force retry
                     self.last_checksum = dbus.Array(b'\x00' * 20, signature=dbus.Signature('y'))
+
 
 
             except Exception as e:
