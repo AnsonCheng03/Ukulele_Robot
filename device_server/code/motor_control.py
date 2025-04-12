@@ -174,6 +174,7 @@ def send_motor_command(motor_id, command_type, *args):
                 serial_port.flushInput()
                 serial_port.write(msg.encode('utf-8'))
             else:
+                print(f"OS error: {e}")
                 raise
 
     except Exception as e:
