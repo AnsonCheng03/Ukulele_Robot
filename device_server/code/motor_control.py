@@ -163,7 +163,7 @@ def send_motor_command(motor_id, command_type, *args):
             serial_port.flushInput()
             serial_port.write(msg.encode('utf-8'))
 
-        except OSError as e:
+        except Exception as e:
             if e.errno == 5:
                 print("I/O Error (5): Port likely reset. Reopening serial port...")
                 try:
@@ -174,16 +174,8 @@ def send_motor_command(motor_id, command_type, *args):
                 serial_port.flushInput()
                 serial_port.write(msg.encode('utf-8'))
             else:
-                print(f"OS error: {e}")
+                print(f"error: {e}")
                 raise
-            
-        except serial.SerialException as e:
-            print(f"Serial exception: {e}")
-            raise
-        
-        except Exception as e:
-            print(f"General exception: {e}")
-            raise
 
     except Exception as e:
         print(f"Error sending command: {e}")
