@@ -3,6 +3,7 @@
 
 #include "Device.h"
 #include "MotorConfig.h"
+#include "FSMState.h"
 
 class FingeringMotor : public Device {
 public:

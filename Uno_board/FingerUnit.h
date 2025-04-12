@@ -5,17 +5,6 @@
 #include "RackMotor.h"
 #include "FingeringMotor.h"
 
-enum FingerMoveState {
-    FINGER_IDLE,
-    FINGER_UP,
-    FINGER_SLIDE,
-    FINGER_DOWN,
-    FINGER_PRESS,
-    CALIBRATING_SLIDER,
-    CALIBRATING_RACK,
-    CALIBRATING_FINGERING
-};
-
 class FingerUnit {
 public:
     FingerUnit(Slider* slider, RackMotor* rackMotor, FingeringMotor* fingeringMotor);

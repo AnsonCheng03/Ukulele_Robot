@@ -3,6 +3,7 @@
 
 #include "Device.h"
 #include "MotorConfig.h"
+#include "FSMState.h"
 
 class UpperMotor : public Device {
 public:
