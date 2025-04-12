@@ -1,26 +1,11 @@
 import serial
-import time
-import errno
 
-def reconnect_serial():
-    while True:
-        try:
-            print("Attempting to reconnect serial...")
-            s = serial.Serial(port='/dev/serial0', baudrate=115200, timeout=1)
-            time.sleep(2)  # Give Arduino time to finish reboot
-            print("Serial reconnected.")
-            return s
-        except serial.SerialException:
-            print("SerialException: Waiting for device...")
-            time.sleep(1)
-        except OSError as e:
-            if e.errno == errno.EIO:
-                print("OSError [EIO]: Device not ready, retrying...")
-                time.sleep(1)
-            else:
-                raise
+serial_port = serial.Serial(
+    port='/dev/serial0',  # or '/dev/ttyAMA0'
+    baudrate=115200,
+    timeout=1
+)
 
-serial_port = reconnect_serial()
 
 note_mapping = {  # Address: Note: MoveDistance
     1: {'A': -1, '0': -1,
@@ -128,7 +113,6 @@ chord_mapping = {  # Chord: [Note, Address]
 } 
 
 def send_motor_command(motor_id, command_type, *args):
-    global serial_port
     try:
         print(f"Sending to {motor_id} via UART - Type {command_type}, Args: {args}")
 
@@ -169,28 +153,31 @@ def send_motor_command(motor_id, command_type, *args):
             print("Unsupported command type")
             return
 
-        # Send command
+        # Send over UART
         print(f"Sending command: {msg.strip()}")
-        if not serial_port.is_open:
-            serial_port.open()
-
-        serial_port.flushInput()
-        serial_port.write(msg.encode('utf-8'))
-
-    except (serial.SerialException, OSError) as e:
-        print(f"Serial error: {e}")
-        if isinstance(e, OSError) and e.errno == errno.EIO:
-            print("Detected device reset. Reconnecting...")
-        else:
-            print("Serial port error, reconnecting...")
 
         try:
-            serial_port.close()
-        except Exception:
-            pass
+            if not serial_port.is_open:
+                serial_port.open()
+                print("Serial port opened")
+            serial_port.flushInput()
+            serial_port.write(msg.encode('utf-8'))
 
-        serial_port = reconnect_serial()
-        serial_port.write(msg.encode('utf-8'))
+        except OSError as e:
+            if e.errno == 5:
+                print("I/O Error (5): Port likely reset. Reopening serial port...")
+                try:
+                    serial_port.close()
+                except:
+                    pass
+                serial_port.open()
+                serial_port.flushInput()
+                serial_port.write(msg.encode('utf-8'))
+            else:
+                raise
+
+    except Exception as e:
+        print(f"Error sending command: {e}")
 
 
 def handle_command_input(command):
