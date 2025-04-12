@@ -20,20 +20,7 @@ def reconnect_serial():
             else:
                 raise
 
-def wait_for_arduino_ready():
-    print("Waiting for Arduino HELLO...")
-    while True:
-        try:
-            line = serial_port.readline().decode().strip()
-            if "HELLO" in line:
-                print("Arduino is ready.")
-                break
-        except Exception:
-            pass
-        time.sleep(0.1)
-
 serial_port = reconnect_serial()
-wait_for_arduino_ready()
 
 note_mapping = {  # Address: Note: MoveDistance
     1: {'A': -1, '0': -1,
@@ -203,7 +190,6 @@ def send_motor_command(motor_id, command_type, *args):
             pass
 
         serial_port = reconnect_serial()
-        wait_for_arduino_ready()
         serial_port.write(msg.encode('utf-8'))
 
 
