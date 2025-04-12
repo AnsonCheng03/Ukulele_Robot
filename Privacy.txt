@@ -1,0 +1,20 @@
+Privacy Policy for Ukulele Robot Companion
+
+Last updated: 2025-04-13
+
+Ukulele Robot Companion does not collect, store, or share any personal information from users.
+
+Bluetooth Usage:
+This app uses Bluetooth solely to connect to and communicate with your physical ukulele-playing robot. No Bluetooth data is shared externally or stored.
+
+Data Collection:
+
+- No personal data is collected.
+- No analytics or tracking tools are used.
+- No third-party SDKs are integrated.
+
+User Consent:
+By using this app, you consent to the use of Bluetooth functionality strictly for device communication.
+
+Contact:
+If you have any questions or concerns, please contact us at [your email address or support page].
