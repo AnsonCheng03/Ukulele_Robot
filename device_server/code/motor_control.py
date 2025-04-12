@@ -176,6 +176,14 @@ def send_motor_command(motor_id, command_type, *args):
             else:
                 print(f"OS error: {e}")
                 raise
+            
+        except serial.SerialException as e:
+            print(f"Serial exception: {e}")
+            raise
+        
+        except Exception as e:
+            print(f"General exception: {e}")
+            raise
 
     except Exception as e:
         print(f"Error sending command: {e}")
