@@ -44,7 +44,7 @@ echo "PRETTY_HOSTNAME=GuitarRobot" | sudo tee /etc/machine-info > /dev/null
 echo "Adding ./code/main.py to run on startup..."
 SERVICE_NAME="fyp_startup"
 SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME.service"
-SCRIPT_PATH="/home/pi/CSCI_FYP/device_server/code/main.py"
+SCRIPT_PATH="/home/pi/Ukulele_Robot/device_server/code/main.py"
 echo "Creating systemd service file at $SERVICE_PATH..."
 sudo bash -c "cat > $SERVICE_PATH" <<EOL
 [Unit]

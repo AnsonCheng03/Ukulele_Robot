@@ -24,47 +24,11 @@ Choose Interface Options
 Choose I2C
 Then enable.
 
-### 2. Install necessary libraries: (Make sure you are connected to internet)
+### 2. Get script
 
 ```bash
-sudo apt update
-sudo apt install -y i2c-tools python3-smbus bluetooth bluez python3-serial libbluetooth-dev git build-essential libglib2.0-dev
-git clone https://github.com/IanHarvey/bluepy.git
-cd bluepy
-sudo python3 setup.py build
-sudo python3 setup.py install
-sudo pip3 install bluedot git+https://github.com/pybluez/pybluez.git#egg=pybluez --break-system-packages
-cd ../
-git clone https://github.com/cbusuioceanu/Raspberry-Pi-Bluetooth-Manager.git rpibtman && cd rpibtman && sudo bash rpibtman.sh
+git clone https://github.com/AnsonCheng03/Ukulele_Robot.git
+cd Ukulele_Robot/device_server
+chmod +x ./script.sh
+sudo ./script.sh
 ```
-
-### 3. Setup Bluetooth
-
-#### 1. Edit Bluetooth configuration file
-
-```bash
-sudo nano /etc/bluetooth/main.conf
-```
-
-Add or edit the following settings:
-
-```md
-[General]
-AutoEnable=true
-DiscoverableTimeout = 0
-AlwaysPairable = true
-JustWorksRepairing = always
-
-[Policy]
-AutoPair=true
-```
-
-#### 2. Edit the machine name
-
-Goto `sudo nano /etc/machine-info`
-
-```md
-PRETTY_HOSTNAME=GuitarRobot
-```
-
-### 4. Get script
