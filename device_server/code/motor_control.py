@@ -1,4 +1,5 @@
 import serial
+import time
 
 serial_port = serial.Serial(
     port='/dev/serial0',  # or '/dev/ttyAMA0'
@@ -156,22 +157,34 @@ def send_motor_command(motor_id, command_type, *args):
         # Send over UART
         print(f"Sending command: {msg.strip()}")
 
-        try:
-            if not serial_port.is_open:
-                serial_port.open()
-                print("Serial port opened")
-            serial_port.flushInput()
-            serial_port.write(msg.encode('utf-8'))
-
-        except Exception as e:
-            print("I/O Error (5): Port likely reset. Reopening serial port...")
+        for attempt in range(3):
             try:
-                serial_port.close()
-            except:
-                pass
-            serial_port.open()
-            serial_port.flushInput()
-            serial_port.write(msg.encode('utf-8'))
+                if not serial_port.is_open:
+                    serial_port.open()
+                    print(f"[Attempt {attempt+1}] Serial port opened")
+
+                serial_port.flushInput()
+                serial_port.write(msg.encode('utf-8'))
+                print(f"[Attempt {attempt+1}] Command sent successfully")
+                break  # Success, exit retry loop
+
+            except Exception as e:
+                print(f"[Attempt {attempt+1}] Serial write error: {e}")
+
+                try:
+                    serial_port.close()
+                    print(f"[Attempt {attempt+1}] Serial port closed for reset")
+                except Exception:
+                    pass
+
+                time.sleep(0.1)  # brief pause before retry
+
+                try:
+                    serial_port.open()
+                    print(f"[Attempt {attempt+1}] Serial port reopened")
+                except Exception as open_err:
+                    print(f"[Attempt {attempt+1}] Failed to reopen serial port: {open_err}")
+
 
     except Exception as e:
         print(f"Error sending command: {e}")
