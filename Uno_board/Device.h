@@ -3,13 +3,6 @@
 
 #include <Arduino.h>
 
-enum DeviceState {
-    IDLE,
-    MOVING,
-    CALIBRATING,
-    ERROR
-};
-
 class Device {
 public:
     virtual void setup() = 0;

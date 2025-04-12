@@ -1,4 +1,5 @@
 import serial
+import time
 
 serial_port = serial.Serial(
     port='/dev/serial0',  # or '/dev/ttyAMA0'
@@ -121,7 +122,7 @@ def send_motor_command(motor_id, command_type, *args):
             speed = int(args[1])
             direction = int(args[2])
             duration = int(args[3])
-            msg = f"control {motor_id} {target} {speed} {direction} {duration}\n"
+            msg = f"S {motor_id} {target} {speed} {direction} {duration}\n"
 
         elif command_type == 1:  # Calibrate
             calib_target = int(args[0]) if args else 0
@@ -155,15 +156,35 @@ def send_motor_command(motor_id, command_type, *args):
 
         # Send over UART
         print(f"Sending command: {msg.strip()}")
-        
-        if not serial_port.is_open:
-            serial_port.open()
-            print("Serial port opened")
-        elif serial_port.is_open:
-            print("Serial port already open, sending command")
-            
-        serial_port.flushInput()
-        serial_port.write(msg.encode('utf-8'))
+
+        for attempt in range(3):
+            try:
+                if not serial_port.is_open:
+                    serial_port.open()
+                    print(f"[Attempt {attempt+1}] Serial port opened")
+
+                serial_port.flushInput()
+                serial_port.write(msg.encode('utf-8'))
+                print(f"[Attempt {attempt+1}] Command sent successfully")
+                break  # Success, exit retry loop
+
+            except Exception as e:
+                print(f"[Attempt {attempt+1}] Serial write error: {e}")
+
+                try:
+                    serial_port.close()
+                    print(f"[Attempt {attempt+1}] Serial port closed for reset")
+                except Exception:
+                    pass
+
+                time.sleep(0.1)  # brief pause before retry
+
+                try:
+                    serial_port.open()
+                    print(f"[Attempt {attempt+1}] Serial port reopened")
+                except Exception as open_err:
+                    print(f"[Attempt {attempt+1}] Failed to reopen serial port: {open_err}")
+
 
     except Exception as e:
         print(f"Error sending command: {e}")
@@ -177,12 +198,12 @@ def handle_command_input(command):
 
     try:
         command_mapping = {
-            "0": 0, "control": 0,
-            "1": 1, "calibrate": 1,
-            "2": 2, "move": 2,
-            "3": 3, "fingering": 3,
-            "4": 4, "chord": 4,
-            "debug": 5
+            "0": 0, "control": 0, "S": 0,
+            "1": 1, "calibrate": 1, "C": 1,
+            "2": 2, "move": 2, "M": 2,
+            "3": 3, "fingering": 3, "F": 3,
+            "4": 4, "chord": 4, 
+            "debug": 5, "D": 5
         }
 
         command_type_input = command_parts[0].lower()

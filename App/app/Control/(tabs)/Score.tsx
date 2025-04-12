@@ -16,6 +16,7 @@ import DocumentPicker from "react-native-document-picker";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import Slider from "@react-native-community/slider";
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 
 export default function PlayTabScreen({ device }: { device: Device }) {
@@ -236,7 +237,7 @@ export default function PlayTabScreen({ device }: { device: Device }) {
           </View>
           <View style={styles.controlsRow}>
             <TouchableOpacity onPress={playPrev}>
-              <Text style={styles.controlBtn}>⏮️</Text>
+              <Ionicons name="play-skip-back" size={20} color="#eee" />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={async () => {
@@ -264,10 +265,14 @@ export default function PlayTabScreen({ device }: { device: Device }) {
                 }
               }}
             >
-              <Text style={styles.controlBtn}>{isPlaying ? "⏸️" : "▶️"}</Text>
+              <Ionicons
+                name={isPlaying ? "pause-circle" : "play-circle"}
+                size={40}
+                color="#fff"
+              />
             </TouchableOpacity>
             <TouchableOpacity onPress={playNext}>
-              <Text style={styles.controlBtn}>⏭️</Text>
+              <Ionicons name="play-skip-forward" size={20} color="#eee" />
             </TouchableOpacity>
           </View>
         </View>
@@ -280,75 +285,91 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    width: "100%",
   },
   rowButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 12,
-    gap: "5%",
+    marginBottom: 16,
+    gap: 12,
   },
   uploadBtn: {
     backgroundColor: "#007aff",
-    padding: 10,
-    borderRadius: 8,
-    width: "47.5%",
+    paddingVertical: 12,
+    borderRadius: 12,
+    flex: 1,
     alignItems: "center",
+    elevation: 2,
   },
   deleteBtn: {
     backgroundColor: "#ff3b30",
-    padding: 10,
-    borderRadius: 8,
-
-    width: "47.5%",
+    paddingVertical: 12,
+    borderRadius: 12,
+    flex: 1,
     alignItems: "center",
+    elevation: 2,
   },
   deleteActive: {
     backgroundColor: "#ff9500",
   },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
   fileItem: {
-    padding: 12,
-    borderRadius: 10,
-    borderColor: "#ddd",
-    borderWidth: 1,
-    marginBottom: 8,
+    padding: 14,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   selectedItem: {
     backgroundColor: "#ffe4e1",
   },
   fileName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "600",
+    marginBottom: 2,
   },
   modified: {
-    fontSize: 12,
-    color: "#666",
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "600",
+    fontSize: 13,
+    color: "#888",
   },
   controlPanel: {
-    padding: 16,
-    backgroundColor: "#f2f2f2",
-    borderTopWidth: 1,
-    borderColor: "#ccc",
-    marginTop: 8,
+    padding: 18,
+    backgroundColor: "#222",
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: -2 },
+    elevation: 8,
+    marginTop: 16,
   },
   nowPlaying: {
     fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
+    fontWeight: "700",
+    marginBottom: 10,
+    textAlign: "center",
+    color: "#fff",
   },
   timeRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
-    gap: 8,
+    marginBottom: 12,
+    gap: 10,
   },
   timeText: {
-    width: 40,
+    width: 42,
     textAlign: "center",
-    color: "#333",
+    color: "#eee",
+    fontSize: 14,
   },
   controlsRow: {
     flexDirection: "row",
@@ -356,7 +377,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   controlBtn: {
-    fontSize: 24,
-    paddingHorizontal: 12,
+    fontSize: 28,
+    paddingHorizontal: 14,
   },
 });

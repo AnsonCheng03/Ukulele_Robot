@@ -2,7 +2,7 @@
 #define SLIDER_H
 
 #include "UpperMotor.h"
-#include "CalibrationPhase.h"
+#include "FSMState.h"
 #include "MotorConfig.h"
 
 class Slider : public UpperMotor {

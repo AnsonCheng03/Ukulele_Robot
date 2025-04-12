@@ -6,7 +6,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useTheme } from "@react-navigation/native";
 import ConnectedScreen from "./ConnectedScreen";
 import BleService from "../Services/BleService";
 import { Device } from "react-native-ble-plx";
@@ -18,6 +18,8 @@ export default function ControlLayout() {
   const navigation = useNavigation();
   const bleService = BleService.getInstance();
   const device = bleService.getDevice();
+
+  const { colors } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
@@ -111,7 +113,7 @@ export default function ControlLayout() {
     <ThemedSafeAreaView style={styles.container}>
       <ThemedView style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.statusContainer}>
           {renderStatusIcon()}

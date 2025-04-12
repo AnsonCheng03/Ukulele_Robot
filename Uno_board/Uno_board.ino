@@ -11,6 +11,8 @@
 #define CMD_MOVE 2
 #define CMD_DEBUG 5
 
+// 18: White
+
 // slider     left_up   left_down right_up right_down
 // Start      49        53        23        27
 // Direction  47        51        25        29

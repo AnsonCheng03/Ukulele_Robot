@@ -3,6 +3,7 @@
 
 #include "Device.h"
 #include "MotorConfig.h"
+#include "FSMState.h"
 
 class UpperMotor : public Device {
 public:
@@ -27,6 +28,7 @@ protected:
     DeviceState trueState;
     unsigned long moveIgnoreSensorUntil = 0;
     bool reverseDirection;
+    int currentDirectionSignal; 
 
     void startMovement(unsigned long durationTenths);
     void stopMovement();

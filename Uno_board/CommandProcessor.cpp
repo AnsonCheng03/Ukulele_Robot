@@ -17,7 +17,7 @@ void processCommand(const String& commandStr, FingerUnit* fingers[]) {
 
     String cmd = tokens[0];
 
-    if (cmd == "control" && tokenCount == 6) {
+    if (cmd == "S" && tokenCount == 6) {
         int motorID = atoi(tokens[1]);
         int target = atoi(tokens[2]);
         int speed = atoi(tokens[3]);

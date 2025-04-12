@@ -6,7 +6,7 @@ from motor_control import handle_command_input
 
 # Define autocomplete words (can be dynamic too)
 command_words = [
-    'control', 'calibrate', 'move', 'fingering', 'chord', 'debug',
+    'control', 'calibrate', 'move', 'fingering', 'chord', 
     'C', 'M', 'F', 'D',
     '100', '50', '200',
 ]
@@ -22,10 +22,11 @@ def manual_input_handler():
     while True:
         print("\nEnter commands followed by the parameters.")
         print("Control format: 'control [motor_ID] [target] [speed] [direction] [duration]'")
-        print("Calibration format: 'C [motor_ID] [calib_target]'")
-        print("Move format: 'M [motor_ID] [target] [distance]'")
-        print("Fingering format: 'F [motor_ID] [note]'")
-        print("Debug format: 'D [motor_ID] [action_type] [target] [position_mm]'")
+        print("Calibration format: 'calibrate [motor_ID] [calib_target]'")
+        print("Move format: 'move [motor_ID] [target] [distance]'")
+        print("Fingering format: 'fingering [motor_ID] [note]'")
+        print("Chord format: 'chord [note] [octave] [type]'")
+        # print("Debug format: 'debug [motor_ID] [action_type] [target] [position_mm]'")
 
         try:
             command = session.prompt("Enter command\n").strip()

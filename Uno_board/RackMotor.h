@@ -2,7 +2,7 @@
 #define RACKMOTOR_H
 
 #include "UpperMotor.h"
-#include "CalibrationPhase.h"
+#include "FSMState.h"
 #include "MotorConfig.h"
 #include "Slider.h"
 
