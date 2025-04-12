@@ -121,7 +121,7 @@ def send_motor_command(motor_id, command_type, *args):
             speed = int(args[1])
             direction = int(args[2])
             duration = int(args[3])
-            msg = f"control {motor_id} {target} {speed} {direction} {duration}\n"
+            msg = f"S {motor_id} {target} {speed} {direction} {duration}\n"
 
         elif command_type == 1:  # Calibrate
             calib_target = int(args[0]) if args else 0
@@ -177,12 +177,12 @@ def handle_command_input(command):
 
     try:
         command_mapping = {
-            "0": 0, "control": 0,
-            "1": 1, "calibrate": 1,
-            "2": 2, "move": 2,
-            "3": 3, "fingering": 3,
-            "4": 4, "chord": 4,
-            "debug": 5
+            "0": 0, "control": 0, "S": 0,
+            "1": 1, "calibrate": 1, "C": 1,
+            "2": 2, "move": 2, "M": 2,
+            "3": 3, "fingering": 3, "F": 3,
+            "4": 4, "chord": 4, 
+            "debug": 5, "D": 5
         }
 
         command_type_input = command_parts[0].lower()
