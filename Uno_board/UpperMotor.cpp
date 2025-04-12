@@ -49,7 +49,7 @@ void UpperMotor::moveBy(int distanceMm, bool reverse)
     setDirection(reverse ? !direction : direction);
     analogWrite(speedPin, fixedMoveSpeed);
     startMovement(durationTenths);
-    moveIgnoreSensorUntil = millis() + 300;
+    // moveIgnoreSensorUntil = millis() + 300;
     currentPosition += distanceMm;
 }
 
@@ -92,6 +92,7 @@ void UpperMotor::stop()
 void UpperMotor::setDirection(int direction)
 {
     digitalWrite(directionPin, direction);
+    currentDirectionSignal = direction;
 }
 
 bool UpperMotor::isMovementComplete()

@@ -10,59 +10,65 @@ void RackMotor::setup() {
 }
 
 void RackMotor::update() {
-    if (currentState == MOVING && getSensorValue() < 1000 && millis() > moveIgnoreSensorUntil) {
-        Serial.println("Rack sensor triggered. Stopping and recalibrating. ID: " + String(motorID));
-        stopMovement();
-        currentPosition = 0;
-        isCalibrated = true;
+    int sensorValue = getSensorValue();
+    if (currentState == MOVING && sensorValue < 1000 && millis() > moveIgnoreSensorUntil && trueState != CALIBRATING) {
+        bool movingTowardSensor = currentDirectionSignal == (reverseDirection ? HIGH : LOW);
+
+        if (movingTowardSensor) {
+            Serial.println("Rack sensor triggered while moving toward it. Stopping. ID: " + String(motorID));
+            stopMovement();
+            currentPosition = 0;
+            isCalibrated = true;
+        }
     }
 
 
     UpperMotor::update(); // Handles MOVING → IDLE transitions
 
-    if (trueState == CALIBRATING && currentState != MOVING) {
+    if (trueState == CALIBRATING) {
         switch (calibrationPhase) {
             case CALIBRATION_INIT:
-                Serial.println("Calibration phase: CALIBRATION_INIT");
                 setDirection(reverseDirection ? LOW : HIGH);
                 analogWrite(speedPin, 2000);
-                if (getSensorValue() < 1000) 
+                if (sensorValue < 1000) 
                     calibrationPhase = CALIBRATION_BACK_OFF;
                 else 
                     calibrationPhase = CALIBRATION_SEEK_SENSOR;
                 break;
 
             case CALIBRATION_BACK_OFF:
-                Serial.println("Calibration phase: CALIBRATION_BACK_OFF");
                 setDirection(reverseDirection ? HIGH : LOW);
                 analogWrite(speedPin, 30);
-                startMovement(3); 
-                calibrationPhase = CALIBRATION_WAIT_1;
-                calibrationPhaseStart = millis();
+                startMovement(1000);
+                calibrationPhase = CALIBRATION_WAIT_RELEASE;
+                break;
+
+            case CALIBRATION_WAIT_RELEASE:
+                if (sensorValue > 1000) {  // sensor no longer triggered
+                    calibrationPhase = CALIBRATION_WAIT_1;
+                    calibrationPhaseStart = millis();
+                }
                 break;
 
             case CALIBRATION_WAIT_1:
-                Serial.println("Calibration phase: CALIBRATION_WAIT_1");
-                if (millis() - calibrationPhaseStart >= 1000) {
+                if (millis() - calibrationPhaseStart >= 10) {
                     calibrationPhase = CALIBRATION_SEEK_SENSOR;
                     calibrationPhaseStart = millis();
                 }
                 break;
 
             case CALIBRATION_SEEK_SENSOR:
-                Serial.println("Calibration phase: CALIBRATION_SEEK_SENSOR");
-                Serial.println("Seeking sensor..." + String(motorID) + " " + String(getSensorValue()));
+                // Serial.println("Seeking sensor..." + String(motorID) + " " + String(sensorValue));
                 setDirection(reverseDirection ? LOW : HIGH); // Keep pulsing up
                 analogWrite(speedPin, 10);
                 startMovement(10000);
-                if (getSensorValue() <= 1000) {
+                if (sensorValue <= 1000) {
                     Serial.println("Sensor triggered. Calibration done for motor ID: " + String(motorID));
                     calibrationPhase = CALIBRATION_DONE;
                 }
                 break;
 
             case CALIBRATION_DONE:
-                Serial.println("Calibration phase: CALIBRATION_DONE");
                 stop();
                 trueState = IDLE;
                 currentState = IDLE;
@@ -122,7 +128,7 @@ void RackMotor::down() {
     Serial.println("Slider position: " + String(sliderPosition) + "mm, Calculated down distance: " + String(downDistance) + "mm");
 
     // Move by the calculated down distance
-    moveBy(downDistance, reverseDirection);
+    moveBy(downDistance, !reverseDirection);
 }
 
 
