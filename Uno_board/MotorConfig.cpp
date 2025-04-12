@@ -16,8 +16,8 @@ UpperMotorConfig rackConfigs[] = {
 };
 
 FingeringMotorConfig fingeringConfigs[] = {
-    {1000, false},  // LEFT_UP
-    {1000, false},  // LEFT_DOWN
-    {1000, true},   // RIGHT_UP
-    {1000, true}    // RIGHT_DOWN
+    {1, false},  // LEFT_UP
+    {1, false},  // LEFT_DOWN
+    {1, true},   // RIGHT_UP
+    {1, true}    // RIGHT_DOWN
 };

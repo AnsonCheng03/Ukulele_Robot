@@ -20,6 +20,7 @@ void FingeringMotor::control(int direction, int speedHz, int durationTenths) {
 
 void FingeringMotor::calibrate() {
     Serial.println("Calibrating fingering motor...");
+    moveFor(2000); // Move for 1 second for calibration
 }
 
 void FingeringMotor::move() {
