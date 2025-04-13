@@ -12,8 +12,8 @@ void FingerUnit::setup() {
 }
 
 void FingerUnit::calibrate() {
-    moveState = CALIBRATING_SLIDER;
-    slider->calibrate();
+    moveState = CALIBRATING_RACK;
+    rackMotor->calibrate();
 }
 
 void FingerUnit::update() {
@@ -22,17 +22,17 @@ void FingerUnit::update() {
     fingeringMotor->update();
 
     switch (moveState) {
-        case CALIBRATING_SLIDER:
-            slider->update();
-            if (slider->isMovementComplete()) {
-                moveState = CALIBRATING_RACK;
-                rackMotor->calibrate();
-            }
-            break;
-
         case CALIBRATING_RACK:
             rackMotor->update();
             if (rackMotor->isMovementComplete()) {
+                moveState = CALIBRATING_SLIDER;
+                slider->calibrate();
+            }
+            break;
+
+        case CALIBRATING_SLIDER:
+            slider->update();
+            if (slider->isMovementComplete()) {
                 moveState = CALIBRATING_FINGERING;
                 fingeringMotor->calibrate();
             }
