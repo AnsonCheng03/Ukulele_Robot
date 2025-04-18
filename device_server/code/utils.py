@@ -22,7 +22,7 @@ def manual_input_handler():
     while True:
         print("\nEnter commands followed by the parameters.")
         print("Control format: 'control [motor_ID] [target] [speed] [direction] [duration]'")
-        print("Calibration format: 'calibrate [motor_ID] [calib_target]'")
+        print("Calibration format: 'calibrate [motor_ID] [target]'")
         print("Move format: 'move [motor_ID] [target] [distance]'")
         print("Fingering format: 'fingering [motor_ID] [note]'")
         print("Chord format: 'chord [note] [octave] [type]'")
