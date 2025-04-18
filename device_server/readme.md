@@ -14,17 +14,7 @@ This project runs a device server on a Raspberry Pi, enabling I2C device configu
 
 Set the user name to Pi
 
-### 1. Enable I2C and Bluetooth on Raspberry Pi
-
-```bash
-sudo raspi-config
-```
-
-Choose Interface Options
-Choose I2C
-Then enable.
-
-### 2. Get script
+### 1. Get script
 
 ```bash
 git clone https://github.com/AnsonCheng03/Ukulele_Robot.git
