@@ -14,6 +14,7 @@ public:
     void moveBy(int positionMm, bool reverse = false) override;
     void update() override;
     bool isMovementComplete() override;
+    void moveUntilTouchSensor(bool toward = true);
 
 protected:
     int startPin, directionPin, speedPin, motorID;
@@ -26,9 +27,9 @@ protected:
     double distanceToDurationRatio;
     DeviceState currentState;
     DeviceState trueState;
-    unsigned long moveIgnoreSensorUntil = 0;
     bool reverseDirection;
     int currentDirectionSignal; 
+    bool movingIndefinitely = false; 
 
     void startMovement(unsigned long durationTenths);
     void stopMovement();

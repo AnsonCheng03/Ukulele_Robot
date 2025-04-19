@@ -31,6 +31,11 @@ void Slider::move(int positionMm)
         return;
     }
 
+    if(positionMm == 0) {
+        moveUntilTouchSensor();
+        return;
+    }
+
     moveBy(positionMm - currentPosition, reverseDirection);
 }
 
@@ -38,7 +43,7 @@ void Slider::update() {
     int sensorValue = getSensorValue();
     // Serial.println("Sensor value: " + String(sensorValue) + " ID: " + String(motorID) + " State: " + String(currentState));
 
-    if (currentState == MOVING && sensorValue < 1000 && millis() > moveIgnoreSensorUntil && trueState != CALIBRATING) {
+    if (currentState == MOVING && sensorValue < 1000 && trueState != CALIBRATING) {
         bool movingTowardSensor = currentDirectionSignal == (reverseDirection ? HIGH : LOW);
 
         if (movingTowardSensor) {
@@ -54,8 +59,6 @@ void Slider::update() {
     if (trueState == CALIBRATING) {
         switch (calibrationPhase) {
             case CALIBRATION_INIT:
-                setDirection(reverseDirection ? LOW : HIGH);
-                analogWrite(speedPin, 2000);
                 if (sensorValue < 1000) 
                     calibrationPhase = CALIBRATION_BACK_OFF;
                 else 
@@ -63,31 +66,32 @@ void Slider::update() {
                 break;
 
             case CALIBRATION_BACK_OFF:
-                setDirection(reverseDirection ? LOW : HIGH);
-                analogWrite(speedPin, 1000);
-                startMovement(10000);  
-                calibrationPhase = CALIBRATION_WAIT_RELEASE;
+                if(currentState != MOVING) {
+                    moveUntilTouchSensor(false);
+                }
+                calibrationPhase = CALIBRATION_WAIT_1;
+                calibrationPhaseStart = millis();
+                break;
+
+            case CALIBRATION_WAIT_1:
+                if (millis() - calibrationPhaseStart >= 2000) {
+                    calibrationPhase = CALIBRATION_WAIT_RELEASE;
+                }
                 break;
 
             case CALIBRATION_WAIT_RELEASE:
                 if (sensorValue > 1000) {  // sensor no longer triggered
-                    calibrationPhase = CALIBRATION_WAIT_1;
-                    calibrationPhaseStart = millis();
-                }
-                break;
-
-            case CALIBRATION_WAIT_1:
-                if (millis() - calibrationPhaseStart >= 1000) {
+                    stopMovement();
                     calibrationPhase = CALIBRATION_SEEK_SENSOR;
-                    calibrationPhaseStart = millis();
                 }
                 break;
 
             case CALIBRATION_SEEK_SENSOR:
                 // Serial.println("Seeking sensor... " + String(motorID) + " " + String(sensorValue));
-                setDirection(reverseDirection ? HIGH : LOW);
-                analogWrite(speedPin, 1000);
-                startMovement(10000);
+                if(currentState != MOVING) {
+                    printf("Moving toward sensor... %d\n", motorID);
+                    moveUntilTouchSensor();
+                }
                 if (sensorValue <= 1000) {
                     Serial.println("Sensor triggered. Calibration done for motor ID: " + String(motorID));
                     calibrationPhase = CALIBRATION_DONE;
@@ -95,9 +99,8 @@ void Slider::update() {
                 break;
 
             case CALIBRATION_DONE:
-                stop();
                 trueState = IDLE;
-                currentState = IDLE;
+                stopMovement();
                 isCalibrated = true;
                 currentPosition = 0;
                 Serial.println("Slider calibration complete.");

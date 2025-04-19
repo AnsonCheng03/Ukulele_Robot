@@ -26,6 +26,7 @@ private:
     int getSensorValue();
     Slider* slider;
     UpperMotorConfig config;
+    void moveUntilTouchSensor(bool toward = true);
 };
 
 #endif // RACKMOTOR_H

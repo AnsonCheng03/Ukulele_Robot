@@ -5,7 +5,7 @@ UpperMotor::UpperMotor(int startPin, int directionPin, int speedPin, int motorID
       max_distance(config.maxDistance), fixedMoveSpeed(config.fixedMoveSpeed),
       distanceToDurationRatio(config.distanceToDurationRatio), reverseDirection(config.reverseDirection),
       moveStartMillis(0), moveDuration(0), isCalibrated(false), currentPosition(0),
-      currentState(IDLE), trueState(IDLE), moveIgnoreSensorUntil(0) {}
+      currentState(IDLE), trueState(IDLE) {}
 
 void UpperMotor::setup()
 {
@@ -49,14 +49,26 @@ void UpperMotor::moveBy(int distanceMm, bool reverse)
     setDirection(reverse ? !direction : direction);
     analogWrite(speedPin, fixedMoveSpeed);
     startMovement(durationTenths);
-    // moveIgnoreSensorUntil = millis() + 300;
     currentPosition += distanceMm;
 }
 
-void UpperMotor::update()
-{
-    if (currentState == MOVING && millis() - moveStartMillis >= moveDuration)
-    {
+void UpperMotor::moveUntilTouchSensor(bool towardSensor = true) {
+    Serial.println("UpperMotor moving until sensor trigger (non-blocking)...!");
+
+    int directionSignal = towardSensor
+        ? (reverseDirection ? HIGH : LOW)
+        : (reverseDirection ? LOW : HIGH);
+
+    setDirection(directionSignal);
+    analogWrite(speedPin, fixedMoveSpeed);
+    start();
+
+    currentState = MOVING;
+    movingIndefinitely = true; 
+}
+
+void UpperMotor::update() {
+    if (currentState == MOVING && !movingIndefinitely && millis() - moveStartMillis >= moveDuration) {
         stopMovement();
     }
 }
@@ -72,6 +84,7 @@ void UpperMotor::startMovement(unsigned long durationTenths)
 void UpperMotor::stopMovement()
 {
     stop();
+    movingIndefinitely = false; 
     if (trueState != CALIBRATING) {
         currentState = IDLE;
     } else {
