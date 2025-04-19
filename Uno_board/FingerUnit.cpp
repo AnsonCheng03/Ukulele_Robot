@@ -93,6 +93,8 @@ void FingerUnit::update() {
         case FINGER_PRESS:
             if (fingeringMotor->isMovementComplete()) {
                 moveState = FINGER_IDLE;
+
+                fingeringMotor->moveForever();
             }
             break;
 

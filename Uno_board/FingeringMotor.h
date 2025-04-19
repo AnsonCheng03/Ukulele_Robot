@@ -13,7 +13,7 @@ public:
     void control(int direction, int speedHz, int durationTenths) override;
     void calibrate() override;
     void move();
-    void moveBy(int durationMs, bool reverse = false) override; // durationMs instead of positionMm
+    void moveBy(int durationMs, bool reverse = false) override;
     void update() override;
     bool isMovementComplete() override;
 
@@ -22,6 +22,9 @@ public:
     void up();
     void down();
 
+    void moveForever();
+    void stopRepeat();
+
 private:
     void moveFor(unsigned long durationMs);
 
@@ -29,10 +32,14 @@ private:
     bool isRunning;
     DeviceState currentState;
     int defaultDurationMs;
-    // bool reverseDirection;
-
     unsigned long movementStartTime;
     unsigned long movementDuration;
+
+    bool repeating = false;
+    bool isOnCycle = false;
+    bool inPause = false;
+    unsigned long lastToggleTime = 0;
+    const unsigned long pulsePauseMs = 1000;  // Adjustable pause time between cycles
 };
 
 #endif // FINGERINGMOTOR_H

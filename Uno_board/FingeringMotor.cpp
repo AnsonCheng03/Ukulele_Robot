@@ -20,7 +20,7 @@ void FingeringMotor::control(int direction, int speedHz, int durationTenths) {
 
 void FingeringMotor::calibrate() {
     Serial.println("Calibrating fingering motor...");
-    moveFor(2000); // Move for 1 second for calibration
+    moveFor(100); // Move for 1 second for calibration
 }
 
 void FingeringMotor::move() {
@@ -33,6 +33,23 @@ void FingeringMotor::moveBy(int durationMs, bool reverse) {
     moveFor(durationMs);
 }
 
+void FingeringMotor::moveForever() {
+    Serial.println("Fingering motor repeating start");
+    repeating = true;
+    isOnCycle = false;         // start with OFF
+    inPause = false;           // start without pause
+    lastToggleTime = millis();
+    currentState = MOVING;
+}
+
+void FingeringMotor::stopRepeat() {
+    Serial.println("Fingering motor repeating stopped");
+    repeating = false;
+    inPause = false;
+    stop();
+    currentState = IDLE;
+}
+
 void FingeringMotor::moveFor(unsigned long durationMs) {
     start();
     movementStartTime = millis();
@@ -41,7 +58,25 @@ void FingeringMotor::moveFor(unsigned long durationMs) {
 }
 
 void FingeringMotor::update() {
-    if (currentState == MOVING && millis() - movementStartTime >= movementDuration) {
+    unsigned long now = millis();
+
+    if (repeating) {
+        if (!inPause && now - lastToggleTime >= defaultDurationMs) {
+            if (isOnCycle) {
+                stop(); // turn OFF
+            } else {
+                start(); // turn ON
+            }
+            isOnCycle = !isOnCycle;
+            inPause = true;
+            lastToggleTime = now;
+        } 
+        else if (inPause && now - lastToggleTime >= pulsePauseMs) {
+            inPause = false;
+            lastToggleTime = now;
+        }
+    } 
+    else if (currentState == MOVING && millis() - movementStartTime >= movementDuration) {
         stop();
         currentState = IDLE;
         Serial.println("Fingering motor movement complete");
