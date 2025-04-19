@@ -29,6 +29,8 @@ private:
 
     FingerMoveState moveState = FINGER_IDLE;
     int pendingDistance = 0;
+    unsigned long waitStartTime = 0;
+    const unsigned long fingerWaitDelay = 1000;
 };
 
 #endif // FINGER_UNIT_H

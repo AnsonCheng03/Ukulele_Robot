@@ -13,13 +13,17 @@ enum CalibrationPhase {
 enum FingerMoveState {
     FINGER_IDLE,
     FINGER_UP,
+    FINGER_WAIT_AFTER_UP,
     FINGER_SLIDE,
+    FINGER_WAIT_AFTER_SLIDE,
     FINGER_DOWN,
+    FINGER_WAIT_AFTER_DOWN, 
     FINGER_PRESS,
     CALIBRATING_SLIDER,
     CALIBRATING_RACK,
     CALIBRATING_FINGERING
 };
+
 
 enum DeviceState {
     IDLE,

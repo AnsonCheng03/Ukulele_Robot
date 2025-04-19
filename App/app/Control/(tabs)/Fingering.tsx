@@ -89,7 +89,7 @@ export default function FingeringPage({ device }: { device: Device }) {
       }
     }
 
-    const distanceMM = Math.round(fretPositions[closestFret]);
+    const distanceMM = Math.round(fretPositions[closestFret] * (310 / 141.59));
     const note = getNoteName(
       stringTuning[closestString],
       stringOctaves[closestString],

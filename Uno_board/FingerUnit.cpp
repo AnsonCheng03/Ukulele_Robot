@@ -43,11 +43,20 @@ void FingerUnit::update() {
             if (fingeringMotor->isMovementComplete()) {
                 moveState = FINGER_IDLE; // Calibration complete
                 Serial.println("All motors calibrated.");
+
+                moveFinger(30); // Move finger to initial position
             }
             break;
 
         case FINGER_UP:
             if (rackMotor->isMovementComplete()) {
+                waitStartTime = millis();
+                moveState = FINGER_WAIT_AFTER_UP;
+            }
+            break;
+
+        case FINGER_WAIT_AFTER_UP:
+            if (millis() - waitStartTime >= fingerWaitDelay) {
                 slider->move(pendingDistance);
                 moveState = FINGER_SLIDE;
             }
@@ -55,6 +64,13 @@ void FingerUnit::update() {
 
         case FINGER_SLIDE:
             if (slider->isMovementComplete()) {
+                waitStartTime = millis();
+                moveState = FINGER_WAIT_AFTER_SLIDE;
+            }
+            break;
+
+        case FINGER_WAIT_AFTER_SLIDE:
+            if (millis() - waitStartTime >= fingerWaitDelay) {
                 rackMotor->down();
                 moveState = FINGER_DOWN;
             }
@@ -62,6 +78,13 @@ void FingerUnit::update() {
 
         case FINGER_DOWN:
             if (rackMotor->isMovementComplete()) {
+                waitStartTime = millis();
+                moveState = FINGER_WAIT_AFTER_DOWN;
+            }
+            break;
+
+        case FINGER_WAIT_AFTER_DOWN:
+            if (millis() - waitStartTime >= fingerWaitDelay) {
                 fingeringMotor->move();
                 moveState = FINGER_PRESS;
             }

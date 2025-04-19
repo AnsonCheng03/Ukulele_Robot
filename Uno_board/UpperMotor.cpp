@@ -39,7 +39,7 @@ void UpperMotor::moveBy(int distanceMm, bool reverse)
     }
     int direction = distanceMm >= 0 ? HIGH : LOW;
     int distanceAbs = abs(distanceMm);
-    unsigned long durationTenths = distanceAbs * distanceToDurationRatio * 100;
+    unsigned long durationTenths = distanceAbs * distanceToDurationRatio;
     if (durationTenths <= 0)
     {
         Serial.println("Requested distance is too small. Cannot move.");

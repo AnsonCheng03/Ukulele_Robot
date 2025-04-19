@@ -13,21 +13,8 @@
 
 // 18: White
 
-// slider     left_up   left_down right_up right_down
-// Start      49        53        23        27
-// Direction  47        51        25        29
-// Speed      5         3         7         9
-// Sensor     A0        A1        A2        A3
 
-// rack       left_up   left_down right_up right_down
-// Start      48        52        22        26
-// Direction  46        50        24        28
-// Speed      4         2         6         8
-// Sensor     A5        A6        A7        A8
-
-// fingering  left_up   left_down right_up right_down
-// Start      33        34        35        36
-
+// {left_up, left_down, right_up, right_down}
 const uint8_t SLIDER_START_PINS[] = {49, 53, 23, 27};
 const uint8_t SLIDER_DIR_PINS[] = {47, 51, 25, 29};
 const uint8_t SLIDER_SPEED_PINS[] = {5, 3, 7, 9};

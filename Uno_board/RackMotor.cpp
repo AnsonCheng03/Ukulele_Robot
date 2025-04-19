@@ -16,7 +16,7 @@ void RackMotor::moveUntilTouchSensor(bool towardSensor) {
 void RackMotor::update() {
     int sensorValue = getSensorValue();
     if (currentState == MOVING && sensorValue < 1000 && trueState != CALIBRATING) {
-        bool movingTowardSensor = currentDirectionSignal == (reverseDirection ? HIGH : LOW);
+        bool movingTowardSensor = currentDirectionSignal == (reverseDirection ? LOW : HIGH);
 
         if (movingTowardSensor) {
             Serial.println("Rack sensor triggered while moving toward it. Stopping. ID: " + String(motorID));
@@ -103,7 +103,7 @@ void RackMotor::move(int positionMm)
 // need integrate with calibration later
 void RackMotor::up() {
     Serial.println("Rack motor moving up...");
-    moveBy(reverseDirection ? -2 : 2);
+    moveUntilTouchSensor();
 }
 
 void RackMotor::down() {
