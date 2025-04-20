@@ -200,8 +200,8 @@ class MidiScheduler:
                 # print(f"Scheduling note: {note} on string {string} with distance {dist} at time {current_time}")
                 if string is not None:
                     send_motor_command(string, 2, 0, dist)
-                else:
-                    print(f"⚠️ No motor mapped for {note}")
+                # else:
+                #     print(f"⚠️ No motor mapped for {note}")
 
         except Exception as e:
             print(f"Error during playback: {e}")
