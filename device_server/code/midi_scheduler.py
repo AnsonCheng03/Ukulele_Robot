@@ -88,6 +88,7 @@ class MidiScheduler:
 
         shortest = float("inf")
         for times in by_string.values():
+            print(f"[Scheduler] Found {len(times)} timings for string {string}, which are {times}")
             times.sort()
             for i in range(1, len(times)):
                 gap = times[i] - times[i - 1]
