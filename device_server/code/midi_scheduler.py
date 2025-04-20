@@ -81,8 +81,10 @@ class MidiScheduler:
                 self.precomputed_fingering_timeline.append((string, time))
 
     def scale_timings(self, notes, min_gap):
+        print(f"[Scheduler] Scaling timings with min gap: {min_gap}µs")
         self.precompute_fingering_timeline()
         by_string = defaultdict(list)
+        print(f"[Scheduler] Precomputed fingering timeline: {self.precomputed_fingering_timeline}")
         for string, time in self.precomputed_fingering_timeline:
             by_string[string].append(time)
 
