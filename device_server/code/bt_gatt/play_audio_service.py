@@ -75,7 +75,7 @@ class PlayAudioChrc(Characteristic):
 
             print(f"Playing '{filename}' from {start_time}s")
             self.service.scheduler = scheduler  # store it for pause/resume access
-            scheduler.set_min_gap(3_000_000)  # 200ms min gap in μs
+            scheduler.set_min_gap(1_000_000)  # 200ms min gap in μs
             scheduler.play(filepath, offset=start_time)
 
         except Exception as e:
