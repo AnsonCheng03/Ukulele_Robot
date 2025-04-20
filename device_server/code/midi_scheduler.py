@@ -19,7 +19,7 @@ class MidiScheduler:
         self.start_time = 0
         self.resume_offset = 0
         self.notes = []
-        self.min_same_string_gap = 100_000  # default minimum gap in μs (100ms)
+        self.min_same_string_gap = 100_000  # default minimum gap in µs (100ms)
         self.active_strings = {1: 0, 2: 0, 3: 0, 4: 0}
         self.precomputed_fingering_timeline = []
 
@@ -32,29 +32,51 @@ class MidiScheduler:
         raw_position = (fretPositions[fret] + fretPositions[fret + 1]) / 2
         return raw_position * fretScaler
 
+    def assign_fingerings_to_notes(self, notes):
+        active = {1: 0, 2: 0, 3: 0, 4: 0}
+        result = []
+
+        for note_obj in notes:
+            raw_note = note_obj["note"].upper()
+            octave = note_obj.get("octave")
+            duration = note_obj["duration"]
+            current_time = note_obj["time"]
+            end_time = current_time + duration
+
+            octaves_to_check = [octave] if octave in note_mapping else note_mapping.keys()
+            used_strings = set(r[1] for r in result if r[3] > current_time)
+            found = False
+
+            for o in octaves_to_check:
+                if raw_note in note_mapping.get(o, {}):
+                    for string, fret in note_mapping[o][raw_note]:
+                        if string not in used_strings and current_time >= active.get(string, 0):
+                            distance = self.calculate_distance_from_fret(fret)
+                            if distance is None:
+                                print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
+                                continue
+                            active[string] = end_time
+                            result.append((raw_note, string, distance, end_time, current_time))
+                            found = True
+                            break
+            if not found:
+                print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}")
+                result.append((raw_note, None, None, None, current_time))
+
+        return result
+
     def precompute_fingering_timeline(self):
         self.precomputed_fingering_timeline = []
-        active = {1: 0, 2: 0, 3: 0, 4: 0}
+        all_notes = []
+        for group, start_time in zip(self.grouped_notes, self.start_times):
+            for note in group:
+                note["time"] = start_time
+                all_notes.append(note)
 
-        for i, group in enumerate(self.grouped_notes):
-            current_time = self.start_times[i]
-            used_strings = set()
-            for note_obj in group:
-                raw_note = note_obj["note"].upper()
-                octave = note_obj.get("octave")
-                duration = note_obj["duration"]
-                end_time = current_time + duration
-
-                octaves_to_check = [octave] if octave in note_mapping else note_mapping.keys()
-                for o in octaves_to_check:
-                    if raw_note in note_mapping.get(o, {}):
-                        for string, fret in note_mapping[o][raw_note]:
-                            if string not in used_strings and current_time >= active.get(string, 0):
-                                used_strings.add(string)
-                                active[string] = end_time
-                                self.precomputed_fingering_timeline.append((string, current_time))
-                                break
-                        break
+        assigned = self.assign_fingerings_to_notes(all_notes)
+        for _, string, _, _, time in assigned:
+            if string is not None:
+                self.precomputed_fingering_timeline.append((string, time))
 
     def get_shortest_gap(self, notes):
         self.precompute_fingering_timeline()
@@ -93,42 +115,6 @@ class MidiScheduler:
         return [
             {**note, "time": int(note["time"] * scale_factor)} for note in notes
         ]
-
-    def find_non_conflicting_fingerings_with_duration(self, notes, current_time):
-        used_strings = set()
-        results = []
-
-        for note_obj in notes:
-            raw_note = note_obj["note"].upper()
-            octave = note_obj.get("octave")
-            duration = note_obj["duration"]
-            end_time = current_time + duration
-
-            octaves_to_check = [octave] if octave in note_mapping else note_mapping.keys()
-            found = False
-
-            for o in octaves_to_check:
-                if raw_note in note_mapping.get(o, {}):
-                    for string, fret in note_mapping[o][raw_note]:
-                        if string not in used_strings and current_time >= self.active_strings.get(string, 0):
-                            distance = self.calculate_distance_from_fret(fret)
-                            if distance is None:
-                                print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
-                                continue
-
-                            results.append((raw_note, string, distance, end_time))
-                            used_strings.add(string)
-                            self.active_strings[string] = end_time
-                            found = True
-                            break
-                if found:
-                    break
-
-        if not found:
-            print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}")
-            results.append((raw_note, None, None, None))
-
-        return results
 
     def get_motor_for_note(self, note, octave):
         for motor_id, note_map in note_mapping.items():
@@ -191,27 +177,32 @@ class MidiScheduler:
         print(f"Scheduling notes with offset: {offset}")
         try:
             self.start_time = time.time() - offset
-            for i, group_time in enumerate(self.start_times):
-                if group_time < offset:
+            all_notes = []
+            for group, start_time in zip(self.grouped_notes, self.start_times):
+                for note in group:
+                    note["time"] = start_time
+                    all_notes.append(note)
+
+            fingerings = self.assign_fingerings_to_notes(all_notes)
+
+            for note, string, dist, _, current_time in fingerings:
+                if current_time < offset:
                     continue
 
                 now = time.time()
-                wait_time = group_time - (now - self.start_time)
+                wait_time = current_time - (now - self.start_time)
                 if wait_time > 0:
                     await asyncio.sleep(wait_time)
 
                 if self.paused:
-                    self.resume_offset = group_time
+                    self.resume_offset = current_time
                     return
 
-                notes = self.grouped_notes[i]
-                fingering = self.find_non_conflicting_fingerings_with_duration(notes, group_time)
-                for note, string, dist, end_time in fingering:
-                    print(f"Scheduling note: {note} on string {string} with distance {dist} at time {group_time}")
-                    if string is not None:
-                        send_motor_command(string, 2, 0, dist)
-                    else:
-                        print(f"⚠️ No motor mapped for {note}")
+                print(f"Scheduling note: {note} on string {string} with distance {dist} at time {current_time}")
+                if string is not None:
+                    send_motor_command(string, 2, 0, dist)
+                else:
+                    print(f"⚠️ No motor mapped for {note}")
 
         except Exception as e:
             print(f"Error during playback: {e}")
