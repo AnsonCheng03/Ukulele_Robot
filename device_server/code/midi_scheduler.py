@@ -54,8 +54,21 @@ class MidiScheduler:
             for o in octaves_to_check:
                 if raw_note in note_mapping.get(o, {}):
                     for string, fret in note_mapping[o][raw_note]:
-                        gap_ok = (not check_gap) or ((current_time - active[string]) * 1_000_000 >= self.min_same_string_gap)
-                        if gap_ok:
+                        if active[string] <= current_time:
+                            # ✅ Immediately use this available string
+                            distance = self.calculate_distance_from_fret(fret)
+                            if distance is None:
+                                print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
+                                continue
+                            active[string] = end_time
+                            result.append((raw_note, string, distance, end_time, current_time))
+                            found = True
+                            break
+                        elif (not check_gap) or ((current_time - active[string]) * 1_000_000 >= self.min_same_string_gap):
+                            if active[string] > latest_free_time:
+                                latest_free_time = active[string]
+                                best_string = string
+                                best_fret = fret
                             if active[string] <= current_time:
                                 # ✅ Immediately use this available string
                                 distance = self.calculate_distance_from_fret(fret)
