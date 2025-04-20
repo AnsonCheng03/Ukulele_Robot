@@ -87,7 +87,8 @@ class MidiScheduler:
                     for future_note in notes[i+1:]:
                         future_note["time"] += delta
                     print(f"⏩ Adjusting {raw_note}{octave} at time {note_obj['time']:.6f}s — shifted by {delta:.6f}s")
-                    continue  # retry this same note
+                    i -= 1  # retry this same note
+                    continue
                 else:
                     print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}, currently active: {active}")
                     result.append((raw_note, None, None, None, current_time))
