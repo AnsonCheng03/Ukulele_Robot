@@ -49,7 +49,8 @@ class MidiScheduler:
             for o in octaves_to_check:
                 if raw_note in note_mapping.get(o, {}):
                     for string, fret in note_mapping[o][raw_note]:
-                        gap_ok = True if not check_gap else (current_time - active.get(string, 0)) * 1_000_000 >= self.min_same_string_gap
+                        gap_sec = current_time - active.get(string, 0)
+                        gap_ok = True if not check_gap else (gap_sec * 1_000_000 + 1) >= self.min_same_string_gap
                         if string not in used_strings and gap_ok:
                             distance = self.calculate_distance_from_fret(fret)
                             if distance is None:
