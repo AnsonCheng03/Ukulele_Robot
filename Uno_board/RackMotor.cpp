@@ -47,7 +47,8 @@ void RackMotor::update() {
                 break;
 
             case CALIBRATION_WAIT_1:
-                if (micros() - calibrationPhaseStart >= 100) {
+                if (micros() - calibrationPhaseStart >= 100000UL) {
+                    
                     calibrationPhase = CALIBRATION_WAIT_RELEASE;
                 }
                 break;

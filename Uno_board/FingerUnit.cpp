@@ -58,7 +58,7 @@ void FingerUnit::update() {
                 moveState = FINGER_IDLE; // Calibration complete
                 Serial.println("All motors calibrated.");
 
-                moveFinger(10); // Move finger to initial position
+                // moveFinger(10); // Move finger to initial position
             }
             break;
 
@@ -108,7 +108,7 @@ void FingerUnit::update() {
             if (fingeringMotor->isMovementComplete()) {
                 moveState = FINGER_IDLE;
 
-                fingeringMotor->moveForever();
+                // fingeringMotor->moveForever();
             }
             break;
 

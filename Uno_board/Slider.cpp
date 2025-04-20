@@ -74,7 +74,7 @@ void Slider::update() {
                 break;
 
             case CALIBRATION_WAIT_1:
-                if (micros() - calibrationPhaseStart >= 2000) {
+                if (micros() - calibrationPhaseStart >= 2000000UL) {
                     calibrationPhase = CALIBRATION_WAIT_RELEASE;
                 }
                 break;
