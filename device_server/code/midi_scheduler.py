@@ -34,6 +34,7 @@ class MidiScheduler:
     def assign_fingerings_to_notes(self, notes, check_gap=True):
         active = {1: -9999, 2: -9999, 3: -9999, 4: -9999}
         result = []
+        EPSILON = 1e-6 
 
         i = 0
         while i < len(notes):
@@ -54,7 +55,7 @@ class MidiScheduler:
             for o in octaves_to_check:
                 if raw_note in note_mapping.get(o, {}):
                     for string, fret in note_mapping[o][raw_note]:
-                        if active[string] <= current_time:
+                        if active[string] <= current_time + EPSILON:
                             # ✅ Immediately use this available string
                             distance = self.calculate_distance_from_fret(fret)
                             if distance is None:
@@ -64,12 +65,12 @@ class MidiScheduler:
                             result.append((raw_note, string, distance, end_time, current_time))
                             found = True
                             break
-                        elif (not check_gap) or ((current_time - active[string]) * 1_000_000 >= self.min_same_string_gap):
+                        elif (not check_gap) or ((current_time - active[string]) * 1_000_000  + EPSILON  >= self.min_same_string_gap):
                             if active[string] > latest_free_time:
                                 latest_free_time = active[string]
                                 best_string = string
                                 best_fret = fret
-                            if active[string] <= current_time:
+                            if active[string] <= current_time + EPSILON:
                                 # ✅ Immediately use this available string
                                 distance = self.calculate_distance_from_fret(fret)
                                 if distance is None:
