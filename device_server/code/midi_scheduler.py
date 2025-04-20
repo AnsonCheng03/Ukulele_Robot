@@ -38,13 +38,12 @@ class MidiScheduler:
         MAX_SHIFT = 0.1  # max allowed shift in seconds
         MIN_SHIFT_BUFFER = 0.001  # try to shift by 1ms at a time
 
-        shift = 0.0  # accumulated shift
-
-        for note_obj in notes:
+        for i in range(len(notes)):
+            note_obj = notes[i]
             raw_note = note_obj["note"].upper()
             octave = note_obj.get("octave")
             duration = note_obj["duration"]
-            current_time = note_obj["time"] + shift
+            current_time = note_obj["time"]
             end_time = current_time + duration
 
             octaves_to_check = [octave] if octave in note_mapping else note_mapping.keys()
@@ -89,7 +88,7 @@ class MidiScheduler:
                     # reattempt same note at shifted time
                     end_time = current_time + duration
                     note_obj["time"] = current_time
-                    for future_note in notes[notes.index(note_obj) + 1:]:
+                    for future_note in notes[i + 1:]:
                         future_note["time"] += delta
                     continue  # retry this same note
                 else:
