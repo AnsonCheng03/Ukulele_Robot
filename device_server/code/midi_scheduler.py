@@ -44,7 +44,7 @@ class MidiScheduler:
             end_time = current_time + duration
 
             octaves_to_check = [octave] if octave in note_mapping else note_mapping.keys()
-            used_strings = set(r[1] for r in result if r[3] > current_time)
+            used_strings = set(r[1] for r in result if r[3] is not None and r[3] > current_time)
             found = False
 
             for o in octaves_to_check:
@@ -80,8 +80,6 @@ class MidiScheduler:
 
     def get_shortest_gap(self, notes):
         self.precompute_fingering_timeline()
-        gaps_per_string = defaultdict(list)
-
         by_string = defaultdict(list)
         for string, time in self.precomputed_fingering_timeline:
             by_string[string].append(time)
@@ -94,23 +92,19 @@ class MidiScheduler:
                 if gap > 0:
                     shortest = min(shortest, gap)
 
-        return shortest if shortest != float("inf") else None
+        return shortest if shortest != float("inf") else 0  # Return 0 explicitly
 
     def scale_timings(self, notes, min_gap):
         shortest = self.get_shortest_gap(notes)
 
-        if shortest is None:
-            print("[Scheduler] No valid note gaps found — skipping scaling")
-            return notes
-
-        if shortest == 0:
-            print("[Scheduler] Found zero gap — cannot scale reliably")
+        if shortest is None or shortest <= 0:
+            print("[Scheduler] No valid note gaps found or zero gap — skipping scaling")
             return notes
 
         if shortest >= min_gap:
             return notes
 
-        scale_factor = min_gap / shortest
+        scale_factor = min_gap / shortest if shortest != 0 else 1
         print(f"[Scheduler] Scaling all note timings by factor {scale_factor:.2f}")
         return [
             {**note, "time": int(note["time"] * scale_factor)} for note in notes
