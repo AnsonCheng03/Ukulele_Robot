@@ -81,7 +81,7 @@ class MidiScheduler:
 
                 # If it's very close, shift and retry
                 if closest_margin != float('inf') and (closest_margin / 1_000_000) < MAX_SHIFT:
-                    delta = min(MIN_SHIFT_BUFFER, closest_margin / 1_000_000)
+                    delta = max(MIN_SHIFT_BUFFER, closest_margin / 1_000_000)
                     shift += delta
                     current_time += delta
                     print(f"⏩ Shifting note {raw_note}{octave} and beyond by {delta:.6f}s due to gap issue")
