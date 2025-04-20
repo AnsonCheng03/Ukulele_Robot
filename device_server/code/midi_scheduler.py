@@ -34,7 +34,7 @@ class MidiScheduler:
     def assign_fingerings_to_notes(self, notes, check_gap=True):
         active = {1: -9999, 2: -9999, 3: -9999, 4: -9999}
         result = []
-        EPSILON = 1e-6 
+        EPSILON = 1e-5
 
         i = 0
         while i < len(notes):
