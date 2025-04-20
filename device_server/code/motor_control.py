@@ -12,7 +12,7 @@ fretPositions = [
     129.24, 141.59, 153.24, 164.24, 174.83, 184.43
 ]
 
-fretScaler = 1.0
+fretScaler = 1.900734006
 
 note_mapping = {
     4: {
