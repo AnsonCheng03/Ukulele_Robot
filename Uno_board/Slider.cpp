@@ -70,11 +70,11 @@ void Slider::update() {
                     moveUntilTouchSensor(false);
                 }
                 calibrationPhase = CALIBRATION_WAIT_1;
-                calibrationPhaseStart = millis();
+                calibrationPhaseStart = micros();
                 break;
 
             case CALIBRATION_WAIT_1:
-                if (millis() - calibrationPhaseStart >= 2000) {
+                if (micros() - calibrationPhaseStart >= 2000) {
                     calibrationPhase = CALIBRATION_WAIT_RELEASE;
                 }
                 break;

@@ -51,8 +51,8 @@ FingeringMotor fingeringMotors[4] = {
 
 FingerUnit* fingers[4];
 
-unsigned long previousMillis = 0;
-const long interval = 50;
+unsigned long previousMicros = 0;
+const long interval = 50000;
 static uint8_t serialBuffer[64];
 static int serialBufferIndex = 0;
 
@@ -82,9 +82,9 @@ void updateMotorsAndSliders() {
 }
 
 void handleIntervalTasks() {
-    unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= interval) {
-        previousMillis = currentMillis;
+    unsigned long currentMillis = micros();
+    if (currentMillis - previousMicros >= interval) {
+        previousMicros = currentMillis;
         // Perform time-sensitive tasks here
     }
 }

@@ -32,14 +32,14 @@ private:
     bool isRunning;
     DeviceState currentState;
     int defaultDurationMs;
-    unsigned long movementStartTime;
+    unsigned long movementStartMicros;
     unsigned long movementDuration;
 
     bool repeating = false;
     bool isOnCycle = false;
     bool inPause = false;
-    unsigned long lastToggleTime = 0;
-    const unsigned long pulsePauseMs = 1000;  // Adjustable pause time between cycles
+    unsigned long lastToggleMicros = 0;
+    const unsigned long pulsePauseMicros = 1000000UL; // 1000ms = 1,000,000µs
 };
 
 #endif // FINGERINGMOTOR_H

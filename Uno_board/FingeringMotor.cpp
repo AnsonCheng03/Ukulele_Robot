@@ -2,7 +2,7 @@
 
 FingeringMotor::FingeringMotor(int startPin, int motorID, const FingeringMotorConfig& config)
     : startPin(startPin), motorID(motorID), isRunning(false), currentState(IDLE),
-      movementStartTime(0), movementDuration(0),
+      movementStartMicros(0), movementDuration(0),
     //   , reverseDirection(config.reverseDirection) 
       defaultDurationMs(config.defaultDurationMs) {}
 
@@ -38,7 +38,7 @@ void FingeringMotor::moveForever() {
     repeating = true;
     isOnCycle = false;         // start with OFF
     inPause = false;           // start without pause
-    lastToggleTime = millis();
+    lastToggleMicros = micros();
     currentState = MOVING;
 }
 
@@ -52,34 +52,27 @@ void FingeringMotor::stopRepeat() {
 
 void FingeringMotor::moveFor(unsigned long durationMs) {
     start();
-    movementStartTime = millis();
-    movementDuration = durationMs;
+    movementStartMicros = micros();
+    movementDuration = durationMs * 1000UL;  // convert ms to µs
     currentState = MOVING;
 }
 
 void FingeringMotor::update() {
-    unsigned long now = millis();
+    unsigned long now = micros();
 
     if (repeating) {
-        if (!inPause && now - lastToggleTime >= defaultDurationMs) {
-            if (isOnCycle) {
-                stop(); // turn OFF
-            } else {
-                start(); // turn ON
-            }
+        if (!inPause && now - lastToggleMicros >= defaultDurationMs * 1000UL) {
+            if (isOnCycle) stop(); else start();
             isOnCycle = !isOnCycle;
             inPause = true;
-            lastToggleTime = now;
-        } 
-        else if (inPause && now - lastToggleTime >= pulsePauseMs) {
+            lastToggleMicros = now;
+        } else if (inPause && now - lastToggleMicros >= pulsePauseMicros) {
             inPause = false;
-            lastToggleTime = now;
+            lastToggleMicros = now;
         }
-    } 
-    else if (currentState == MOVING && millis() - movementStartTime >= movementDuration) {
+    } else if (currentState == MOVING && micros() - movementStartMicros >= movementDuration) {
         stop();
         currentState = IDLE;
-        Serial.println("Fingering motor movement complete");
     }
 }
 

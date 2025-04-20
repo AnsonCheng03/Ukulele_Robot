@@ -25,13 +25,13 @@ void FingerUnit::update() {
         case CALIBRATING_RACK:
             rackMotor->update();
             if (rackMotor->isMovementComplete()) {
-                waitStartTime = millis();
+                waitStartTime = micros();
                 moveState = CALIBRATING_WAIT_AFTER_RACK;
             }
             break;
 
         case CALIBRATING_WAIT_AFTER_RACK:
-            if (millis() - waitStartTime >= fingerWaitDelay) {
+            if (micros() - waitStartTime >= fingerWaitDelay) {
                 moveState = CALIBRATING_SLIDER;
                 slider->calibrate();
             }
@@ -40,13 +40,13 @@ void FingerUnit::update() {
         case CALIBRATING_SLIDER:
             slider->update();
             if (slider->isMovementComplete()) {
-                waitStartTime = millis();
+                waitStartTime = micros();
                 moveState = CALIBRATING_WAIT_AFTER_SLIDER;
             }
             break;
 
         case CALIBRATING_WAIT_AFTER_SLIDER:
-            if (millis() - waitStartTime >= fingerWaitDelay) {
+            if (micros() - waitStartTime >= fingerWaitDelay) {
                 moveState = CALIBRATING_FINGERING;
                 fingeringMotor->calibrate();
             }
@@ -64,13 +64,13 @@ void FingerUnit::update() {
 
         case FINGER_UP:
             if (rackMotor->isMovementComplete()) {
-                waitStartTime = millis();
+                waitStartTime = micros();
                 moveState = FINGER_WAIT_AFTER_UP;
             }
             break;
 
         case FINGER_WAIT_AFTER_UP:
-            if (millis() - waitStartTime >= fingerWaitDelay) {
+            if (micros() - waitStartTime >= fingerWaitDelay) {
                 slider->move(pendingDistance);
                 moveState = FINGER_SLIDE;
             }
@@ -78,13 +78,13 @@ void FingerUnit::update() {
 
         case FINGER_SLIDE:
             if (slider->isMovementComplete()) {
-                waitStartTime = millis();
+                waitStartTime = micros();
                 moveState = FINGER_WAIT_AFTER_SLIDE;
             }
             break;
 
         case FINGER_WAIT_AFTER_SLIDE:
-            if (millis() - waitStartTime >= fingerWaitDelay) {
+            if (micros() - waitStartTime >= fingerWaitDelay) {
                 rackMotor->down();
                 moveState = FINGER_DOWN;
             }
@@ -92,13 +92,13 @@ void FingerUnit::update() {
 
         case FINGER_DOWN:
             if (rackMotor->isMovementComplete()) {
-                waitStartTime = millis();
+                waitStartTime = micros();
                 moveState = FINGER_WAIT_AFTER_DOWN;
             }
             break;
 
         case FINGER_WAIT_AFTER_DOWN:
-            if (millis() - waitStartTime >= fingerWaitDelay) {
+            if (micros() - waitStartTime >= fingerWaitDelay) {
                 fingeringMotor->move();
                 moveState = FINGER_PRESS;
             }

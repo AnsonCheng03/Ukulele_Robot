@@ -68,7 +68,7 @@ void UpperMotor::moveUntilTouchSensor(bool towardSensor = true) {
 }
 
 void UpperMotor::update() {
-    if (currentState == MOVING && !movingIndefinitely && millis() - moveStartMillis >= moveDuration) {
+    if (currentState == MOVING && !movingIndefinitely && micros() - moveStartMillis >= moveDuration) {
         stopMovement();
     }
 }
@@ -76,8 +76,8 @@ void UpperMotor::update() {
 void UpperMotor::startMovement(unsigned long durationTenths)
 {
     start();
-    moveStartMillis = millis();
-    moveDuration = durationTenths * 100;
+    moveStartMillis = micros();
+    moveDuration = durationTenths * 100000UL; 
     currentState = MOVING;
 }
 

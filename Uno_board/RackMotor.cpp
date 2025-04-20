@@ -42,12 +42,12 @@ void RackMotor::update() {
                 if(currentState != MOVING) {
                     moveUntilTouchSensor(false);
                 }
-                calibrationPhaseStart = millis();
+                calibrationPhaseStart = micros();
                 calibrationPhase = CALIBRATION_WAIT_1;
                 break;
 
             case CALIBRATION_WAIT_1:
-                if (millis() - calibrationPhaseStart >= 100) {
+                if (micros() - calibrationPhaseStart >= 100) {
                     calibrationPhase = CALIBRATION_WAIT_RELEASE;
                 }
                 break;
