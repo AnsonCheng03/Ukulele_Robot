@@ -31,7 +31,7 @@ class MidiScheduler:
         raw_position = (fretPositions[fret] + fretPositions[fret + 1]) / 2
         return raw_position * fretScaler
 
-    def assign_fingerings_to_notes(self, notes):
+    def assign_fingerings_to_notes(self, notes, check_gap=True):
         active = {1: -9999, 2: -9999, 3: -9999, 4: -9999}
         result = []
 
@@ -49,7 +49,8 @@ class MidiScheduler:
             for o in octaves_to_check:
                 if raw_note in note_mapping.get(o, {}):
                     for string, fret in note_mapping[o][raw_note]:
-                        if string not in used_strings and (current_time - active.get(string, 0)) * 1_000_000 >= self.min_same_string_gap:
+                        gap_ok = True if not check_gap else (current_time - active.get(string, 0)) * 1_000_000 >= self.min_same_string_gap
+                        if string not in used_strings and gap_ok:
                             distance = self.calculate_distance_from_fret(fret)
                             if distance is None:
                                 print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
@@ -84,7 +85,7 @@ class MidiScheduler:
         print(f"[Scheduler] Scaling timings with min gap: {min_gap}µs")
 
         # First, do a temporary assignment to compute original gaps
-        original_fingerings = self.assign_fingerings_to_notes(notes)
+        original_fingerings = self.assign_fingerings_to_notes(notes, check_gap=False)
         by_string = defaultdict(list)
         for _, string, _, _, time in original_fingerings:
             if string is not None:
