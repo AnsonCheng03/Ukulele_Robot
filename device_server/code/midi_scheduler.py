@@ -197,6 +197,8 @@ class MidiScheduler:
             print(f"Playing {path} from {offset}s")
             pmidi = self.parse_file(path)
             all_notes = self.parse_pretty_midi(pmidi)
+            for n in all_notes:
+                n["time"] = n["start"]
             scaled_notes = self.scale_timings(all_notes, self.min_same_string_gap)
             self.notes = scaled_notes
 
