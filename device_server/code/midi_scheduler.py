@@ -41,7 +41,16 @@ class MidiScheduler:
 
     def scale_timings(self, notes, min_gap):
         shortest = self.get_shortest_gap(notes)
-        if shortest is None or shortest >= min_gap:
+
+        if shortest is None:
+            print("[Scheduler] No valid note gaps found — skipping scaling")
+            return notes
+
+        if shortest == 0:
+            print("[Scheduler] Found zero gap — cannot scale reliably")
+            return notes  # or raise an exception if you'd rather fail
+
+        if shortest >= min_gap:
             return notes
 
         scale_factor = min_gap / shortest
