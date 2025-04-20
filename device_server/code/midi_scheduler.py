@@ -34,9 +34,6 @@ class MidiScheduler:
     def assign_fingerings_to_notes(self, notes, check_gap=True):
         active = {1: -9999, 2: -9999, 3: -9999, 4: -9999}
         result = []
-        
-        MAX_SHIFT = 0.1  # max allowed shift in seconds
-        MIN_SHIFT_BUFFER = 0.01  # try to shift by 1ms at a time
 
         i = 0
         while i < len(notes):
@@ -51,13 +48,27 @@ class MidiScheduler:
             used_strings = set(r[1] for r in result if r[3] is not None and r[3] > current_time)
             found = False
 
+            # Determine the soonest time any candidate string is free
+            min_required_time = current_time
+            for o in octaves_to_check:
+                if raw_note in note_mapping.get(o, {}):
+                    for string, _ in note_mapping[o][raw_note]:
+                        if check_gap:
+                            required_time = active[string] + self.min_same_string_gap / 1_000_000
+                            min_required_time = max(min_required_time, required_time)
+
+            if min_required_time > current_time:
+                delta = min_required_time - current_time
+                note_obj["time"] += delta
+                for future_note in notes[i+1:]:
+                    future_note["time"] += delta
+                print(f"⏩ Shifted {raw_note}{octave} and future notes by {delta:.6f}s to wait for string availability")
+                continue  # retry same note after shift
+
             for o in octaves_to_check:
                 if raw_note in note_mapping.get(o, {}):
                     for string, fret in note_mapping[o][raw_note]:
-                        EPSILON_US = 10
-                        gap_sec = current_time - active.get(string, 0)
-                        gap_ok = True if not check_gap else (gap_sec * 1_000_000 + EPSILON_US) >= self.min_same_string_gap
-                        if string not in used_strings and gap_ok:
+                        if string not in used_strings:
                             distance = self.calculate_distance_from_fret(fret)
                             if distance is None:
                                 print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
@@ -70,29 +81,11 @@ class MidiScheduler:
                         break
 
             if not found:
-                # Check the smallest time margin that caused failure
-                closest_margin = float('inf')
-                for o in octaves_to_check:
-                    if raw_note in note_mapping.get(o, {}):
-                        for string, _ in note_mapping[o][raw_note]:
-                            if string in active:
-                                diff = (current_time - active[string]) * 1_000_000
-                                if 0 <= diff < self.min_same_string_gap:
-                                    closest_margin = min(closest_margin, self.min_same_string_gap - diff)
+                print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}, currently active: {active}")
+                result.append((raw_note, None, None, None, current_time))
 
-                # If it's very close, shift and retry
-                if closest_margin != float('inf') and (closest_margin / 1_000_000) < MAX_SHIFT:
-                    delta = max(MIN_SHIFT_BUFFER, closest_margin / 1_000_000)
-                    note_obj["time"] += delta
-                    for future_note in notes[i+1:]:
-                        future_note["time"] += delta
-                    print(f"⏩ Adjusting {raw_note}{octave} at time {note_obj['time']:.6f}s — shifted by {delta:.6f}s")
-                    i -= 1  # retry this same note
-                    continue
-                else:
-                    print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}, currently active: {active}")
-                    result.append((raw_note, None, None, None, current_time))
             i += 1
+
         return result
 
     def precompute_fingering_timeline(self):
@@ -111,7 +104,6 @@ class MidiScheduler:
     def scale_timings(self, notes, min_gap):
         print(f"[Scheduler] Scaling timings with min gap: {min_gap}µs")
 
-        # First, do a temporary assignment to compute original gaps
         original_fingerings = self.assign_fingerings_to_notes(notes, check_gap=False)
         by_string = defaultdict(list)
         for _, string, _, _, time in original_fingerings:
@@ -149,16 +141,14 @@ class MidiScheduler:
                 "duration": round(duration, 6),
                 "time": round(start, 6),
             })
-            
+
         print(f"[Scheduler] Shortest valid same-string gap: {shortest:.6f} sec")
         print(f"[Scheduler] Scaling factor: {scale_factor:.2f}")
         print("[Scheduler] First 5 scaled notes (time, duration):")
         for note in scaled_notes[:5]:
             print(f"  → {note['note']}{note['octave']} at {note['time']}s, duration {note['duration']}")
 
-
         return scaled_notes
-
 
 
     def get_motor_for_note(self, note, octave):
