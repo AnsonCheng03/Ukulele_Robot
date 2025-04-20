@@ -38,7 +38,8 @@ class MidiScheduler:
         MAX_SHIFT = 0.1  # max allowed shift in seconds
         MIN_SHIFT_BUFFER = 0.001  # try to shift by 1ms at a time
 
-        for i in range(len(notes)):
+        i = 0
+        while i < len(notes):
             note_obj = notes[i]
             raw_note = note_obj["note"].upper()
             octave = note_obj.get("octave")
@@ -81,22 +82,16 @@ class MidiScheduler:
 
                 # If it's very close, shift and retry
                 if closest_margin != float('inf') and (closest_margin / 1_000_000) < MAX_SHIFT:
-                    delta = max(MIN_SHIFT_BUFFER, closest_margin / 1_000_000)
-                    shift += delta
-                    current_time += delta
-                    print(f"⏩ Shifting note {raw_note}{octave} and beyond by {delta:.6f}s due to gap issue")
-                    # reattempt same note at shifted time
-                    end_time = current_time + duration
-                    note_obj["time"] = current_time
-                    for future_note in notes[i + 1:]:
+                    delta = min(MIN_SHIFT_BUFFER, closest_margin / 1_000_000)
+                    note_obj["time"] += delta
+                    for future_note in notes[i+1:]:
                         future_note["time"] += delta
                     print(f"⏩ Adjusting {raw_note}{octave} at time {note_obj['time']:.6f}s — shifted by {delta:.6f}s")
-                    i -= 1  # 🔁 retry the same note with updated time
-                    continue
+                    continue  # retry this same note
                 else:
                     print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}, currently active: {active}")
                     result.append((raw_note, None, None, None, current_time))
-
+            i += 1
         return result
 
     def precompute_fingering_timeline(self):
