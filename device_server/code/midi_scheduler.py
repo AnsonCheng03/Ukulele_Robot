@@ -20,9 +20,45 @@ class MidiScheduler:
         self.pause_time = 0
         self.start_time = 0
         self.resume_offset = 0
-
+        self.notes = []
+        self.min_same_string_gap = 100_000  # default minimum gap in μs (100ms)
         # ⏱ Persistent: tracks when each string becomes free
         self.active_strings = {1: 0, 2: 0, 3: 0, 4: 0}
+
+    def set_min_gap(self, micros):
+        self.min_same_string_gap = micros
+
+    def load_notes(self, notes):
+        # Before scheduling, rescale timings to respect minimum gap
+        self.notes = self.scale_timings(notes, self.min_same_string_gap)
+
+    def get_shortest_gap(self, notes):
+        last_times = {}
+        min_gap = float('inf')
+
+        for note in sorted(notes, key=lambda x: x["time"]):
+            s = note["string"]
+            t = note["time"]
+
+            if s in last_times:
+                gap = t - last_times[s]
+                if gap > 0:
+                    min_gap = min(min_gap, gap)
+
+            last_times[s] = t
+
+        return min_gap if min_gap != float('inf') else None
+
+    def scale_timings(self, notes, min_gap):
+        shortest = self.get_shortest_gap(notes)
+        if shortest is None or shortest >= min_gap:
+            return notes
+
+        scale_factor = min_gap / shortest
+        print(f"[Scheduler] Scaling all note timings by factor {scale_factor:.2f}")
+        return [
+            {**note, "time": int(note["time"] * scale_factor)} for note in notes
+        ]
 
     def find_non_conflicting_fingerings_with_duration(self, notes, current_time):
         used_strings = set()
@@ -104,6 +140,7 @@ class MidiScheduler:
 
         self.grouped_notes = [grouped_notes[t] for t in sorted(grouped_notes)]
         self.start_times = sorted(grouped_notes)
+        return all_notes
 
     def parse_mxl_to_pretty_midi(self, input_file):
         score = converter.parse(input_file)
@@ -123,6 +160,7 @@ class MidiScheduler:
         else:
             raise ValueError("Unsupported file type.")
         self.parse_pretty_midi(pmidi)
+        return pmidi
 
     async def schedule_notes(self, offset=0):
         print(f"Scheduling notes with offset: {offset}")
@@ -157,8 +195,23 @@ class MidiScheduler:
     def play(self, path, offset=0):
         try:
             print(f"Playing {path} from {offset}s")
-            self.last_file = path
-            self.parse_file(path)
+            pmidi = self.parse_file(path)
+            all_notes = self.parse_pretty_midi(pmidi)
+            scaled_notes = self.scale_timings(all_notes, self.min_same_string_gap)
+
+            # Regroup scaled notes into group timings
+            grouped_notes = defaultdict(list)
+            for note in scaled_notes:
+                print(f"Grouping note: {note}")
+                grouped_notes[note["start"]].append({
+                    "note": note["note"],
+                    "octave": note["octave"],
+                    "duration": note["duration"]
+                })
+
+            self.grouped_notes = [grouped_notes[t] for t in sorted(grouped_notes)]
+            self.start_times = sorted(grouped_notes)
+
             self.paused = False
             if self.current_task:
                 self.current_task.cancel()
