@@ -151,18 +151,6 @@ class MidiScheduler:
                     "octave": octave,
                     "duration": round(note.end - note.start, 3)
                 })
-
-        grouped_notes = defaultdict(list)
-        for note in scaled_notes:
-            grouped_notes[note["time"]].append({
-                "note": note["note"],
-                "octave": note["octave"],
-                "duration": note["duration"],
-                "time": note["time"]
-            })
-
-        self.grouped_notes = [grouped_notes[t] for t in sorted(grouped_notes)]
-        self.start_times = sorted(grouped_notes)
         return all_notes
 
     def parse_mxl_to_pretty_midi(self, input_file):
@@ -230,11 +218,11 @@ class MidiScheduler:
 
             grouped_notes = defaultdict(list)
             for note in scaled_notes:
-                grouped_notes[note["start"]].append({
+                grouped_notes[note["time"]].append({
                     "note": note["note"],
                     "octave": note["octave"],
                     "duration": note["duration"],
-                    "time": note["start"]
+                    "time": note["time"]
                 })
 
             self.grouped_notes = [grouped_notes[t] for t in sorted(grouped_notes)]
