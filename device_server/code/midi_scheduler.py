@@ -82,15 +82,16 @@ class MidiScheduler:
 
     def scale_timings(self, notes, min_gap):
         print(f"[Scheduler] Scaling timings with min gap: {min_gap}µs")
-        self.precompute_fingering_timeline()
+
+        # First, do a temporary assignment to compute original gaps
+        original_fingerings = self.assign_fingerings_to_notes(notes)
         by_string = defaultdict(list)
-        print(f"[Scheduler] Precomputed fingering timeline: {self.precomputed_fingering_timeline}")
-        for string, time in self.precomputed_fingering_timeline:
-            by_string[string].append(time)
+        for _, string, _, _, time in original_fingerings:
+            if string is not None:
+                by_string[string].append(time)
 
         shortest = float("inf")
-        for times in by_string.values():
-            print(f"[Scheduler] Found {len(times)} timings for string {string}, which are {times}")
+        for string, times in by_string.items():
             times.sort()
             for i in range(1, len(times)):
                 gap = times[i] - times[i - 1]
@@ -122,6 +123,7 @@ class MidiScheduler:
             })
 
         return scaled_notes
+
 
 
     def get_motor_for_note(self, note, octave):
