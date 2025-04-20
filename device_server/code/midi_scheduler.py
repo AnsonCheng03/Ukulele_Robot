@@ -220,13 +220,24 @@ class MidiScheduler:
             all_notes = self.parse_pretty_midi(pmidi)
             for n in all_notes:
                 n["time"] = n["start"]
-            scaled_notes = self.scale_timings(all_notes, self.min_same_string_gap)
+            grouped = defaultdict(list)
+            for n in all_notes:
+                grouped[n["start"]].append(n)
+            grouped_times = sorted(grouped)
+
+            # Flatten back into note list with time assigned
+            clustered_notes = []
+            for t in grouped_times:
+                for note in grouped[t]:
+                    note["time"] = t
+                    clustered_notes.append(note)
+            scaled_notes = self.scale_timings(clustered_notes, self.min_same_string_gap)
+
             print(f"[DEBUG] Scaled first 5 notes:")
             for note in scaled_notes[:5]:
                 print(f"  {note['note']}{note['octave']} — time: {note['time']}, dur: {note['duration']}")
 
             self.notes = scaled_notes
-
             grouped_notes = defaultdict(list)
             for note in scaled_notes:
                 grouped_notes[note["time"]].append({
