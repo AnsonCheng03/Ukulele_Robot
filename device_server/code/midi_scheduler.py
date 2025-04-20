@@ -19,7 +19,7 @@ class MidiScheduler:
         self.start_time = 0
         self.resume_offset = 0
         self.notes = []
-        self.min_same_string_gap = 100_000  # default minimum gap in µs (100ms)
+        self.min_same_string_gap = 3_000_000  # default minimum gap in µs (100ms)
         self.active_strings = {1: 0, 2: 0, 3: 0, 4: 0}
         self.precomputed_fingering_timeline = []
 
