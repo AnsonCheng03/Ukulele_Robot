@@ -107,11 +107,24 @@ class MidiScheduler:
         if shortest >= min_gap:
             return notes
 
-        scale_factor = min_gap / shortest if shortest != 0 else 1
+        scale_factor = min_gap / shortest
         print(f"[Scheduler] Scaling all note timings by factor {scale_factor:.2f}")
-        return [
-            {**note, "time": int(note["time"] * scale_factor)} for note in notes
-        ]
+
+        scaled_notes = []
+        for note in notes:
+            start = note["start"] * scale_factor
+            end = note["end"] * scale_factor
+            duration = end - start
+            scaled_notes.append({
+                **note,
+                "start": round(start, 6),
+                "end": round(end, 6),
+                "duration": round(duration, 6),
+                "time": round(start, 6),  # for consistency
+            })
+
+        return scaled_notes
+
 
     def get_motor_for_note(self, note, octave):
         for motor_id, note_map in note_mapping.items():
@@ -140,11 +153,12 @@ class MidiScheduler:
                 })
 
         grouped_notes = defaultdict(list)
-        for note in all_notes:
-            grouped_notes[note["start"]].append({
+        for note in scaled_notes:
+            grouped_notes[note["time"]].append({
                 "note": note["note"],
                 "octave": note["octave"],
-                "duration": note["duration"]
+                "duration": note["duration"],
+                "time": note["time"]
             })
 
         self.grouped_notes = [grouped_notes[t] for t in sorted(grouped_notes)]
