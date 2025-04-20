@@ -20,7 +20,6 @@ class MidiScheduler:
         self.resume_offset = 0
         self.notes = []
         self.min_same_string_gap = 3_000_000  # default minimum gap in µs (100ms)
-        self.active_strings = {1: 0, 2: 0, 3: 0, 4: 0}
         self.precomputed_fingering_timeline = []
 
     def set_min_gap(self, micros):
@@ -33,7 +32,7 @@ class MidiScheduler:
         return raw_position * fretScaler
 
     def assign_fingerings_to_notes(self, notes):
-        active = {1: 0, 2: 0, 3: 0, 4: 0}
+        active = {1: -9999, 2: -9999, 3: -9999, 4: -9999}
         result = []
 
         for note_obj in notes:
