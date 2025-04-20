@@ -62,7 +62,7 @@ class MidiScheduler:
                         break
 
             if not found:
-                print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}")
+                print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}, currently active: {active}")
                 result.append((raw_note, None, None, None, current_time))
 
         return result
