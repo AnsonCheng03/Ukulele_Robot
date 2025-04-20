@@ -80,7 +80,7 @@ class MidiScheduler:
             if string is not None:
                 self.precomputed_fingering_timeline.append((string, time))
 
-    def get_shortest_gap(self, notes):
+    def scale_timings(self, notes, min_gap):
         self.precompute_fingering_timeline()
         by_string = defaultdict(list)
         for string, time in self.precomputed_fingering_timeline:
@@ -94,19 +94,15 @@ class MidiScheduler:
                 if gap > 0:
                     shortest = min(shortest, gap)
 
-        return shortest if shortest != float("inf") else 0  # Return 0 explicitly
-
-    def scale_timings(self, notes, min_gap):
-        shortest = self.get_shortest_gap(notes)
-
-        if shortest is None or shortest <= 0:
-            print("[Scheduler] No valid note gaps found or zero gap — skipping scaling")
+        if shortest == float("inf"):
+            print("[Scheduler] No valid same-string note gaps found — skipping scaling")
             return notes
 
-        if shortest >= min_gap:
+        actual_shortest_micro = shortest * 1_000_000
+        if actual_shortest_micro >= min_gap:
             return notes
 
-        scale_factor = min_gap / shortest
+        scale_factor = min_gap / actual_shortest_micro
         print(f"[Scheduler] Scaling all note timings by factor {scale_factor:.2f}")
 
         scaled_notes = []
@@ -119,7 +115,7 @@ class MidiScheduler:
                 "start": round(start, 6),
                 "end": round(end, 6),
                 "duration": round(duration, 6),
-                "time": round(start, 6),  # for consistency
+                "time": round(start, 6),
             })
 
         return scaled_notes
