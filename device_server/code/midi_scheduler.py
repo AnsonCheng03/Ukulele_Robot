@@ -159,7 +159,7 @@ class MidiScheduler:
             pmidi = pretty_midi.PrettyMIDI(path)
         else:
             raise ValueError("Unsupported file type.")
-        self.parse_pretty_midi(pmidi)
+        # self.parse_pretty_midi(pmidi)
         return pmidi
 
     async def schedule_notes(self, offset=0):
@@ -198,6 +198,7 @@ class MidiScheduler:
             pmidi = self.parse_file(path)
             all_notes = self.parse_pretty_midi(pmidi)
             scaled_notes = self.scale_timings(all_notes, self.min_same_string_gap)
+            self.notes = scaled_notes
 
             # Regroup scaled notes into group timings
             grouped_notes = defaultdict(list)
@@ -206,7 +207,8 @@ class MidiScheduler:
                 grouped_notes[note["start"]].append({
                     "note": note["note"],
                     "octave": note["octave"],
-                    "duration": note["duration"]
+                    "duration": note["duration"],
+                    "time": note["start"] 
                 })
 
             self.grouped_notes = [grouped_notes[t] for t in sorted(grouped_notes)]
