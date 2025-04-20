@@ -36,7 +36,7 @@ class MidiScheduler:
         result = []
         
         MAX_SHIFT = 0.1  # max allowed shift in seconds
-        MIN_SHIFT_BUFFER = 0.001  # try to shift by 1ms at a time
+        MIN_SHIFT_BUFFER = 0.01  # try to shift by 1ms at a time
 
         i = 0
         while i < len(notes):
@@ -82,7 +82,7 @@ class MidiScheduler:
 
                 # If it's very close, shift and retry
                 if closest_margin != float('inf') and (closest_margin / 1_000_000) < MAX_SHIFT:
-                    delta = min(MIN_SHIFT_BUFFER, closest_margin / 1_000_000)
+                    delta = max(MIN_SHIFT_BUFFER, closest_margin / 1_000_000)
                     note_obj["time"] += delta
                     for future_note in notes[i+1:]:
                         future_note["time"] += delta
