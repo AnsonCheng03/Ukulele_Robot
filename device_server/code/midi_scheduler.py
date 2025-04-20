@@ -49,6 +49,7 @@ class MidiScheduler:
             best_string = None
             best_fret = None
             latest_free_time = current_time
+            found = False  # ✅ initialize here
 
             for o in octaves_to_check:
                 if raw_note in note_mapping.get(o, {}):
@@ -56,29 +57,40 @@ class MidiScheduler:
                         gap_ok = (not check_gap) or ((current_time - active[string]) * 1_000_000 >= self.min_same_string_gap)
                         if gap_ok:
                             if active[string] <= current_time:
-                                best_string = string
-                                best_fret = fret
+                                # ✅ Immediately use this available string
+                                distance = self.calculate_distance_from_fret(fret)
+                                if distance is None:
+                                    print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
+                                    continue
+                                active[string] = end_time
+                                result.append((raw_note, string, distance, end_time, current_time))
+                                found = True
                                 break
-                            elif active[string] > latest_free_time:
-                                latest_free_time = active[string]
-                    if best_string:
+                            else:
+                                # Track latest free time if none are currently available
+                                if active[string] > latest_free_time:
+                                    latest_free_time = active[string]
+                                    best_string = string
+                                    best_fret = fret
+                    if found:
                         break
 
-            if best_string:
+            if found:
+                i += 1
+            elif best_string:
                 distance = self.calculate_distance_from_fret(best_fret)
                 if distance is None:
                     print(f"⚠️ Fret {best_fret} out of range for {raw_note}{octave}")
                     i += 1
                 else:
-                    active[best_string] = end_time
-                    result.append((raw_note, best_string, distance, end_time, current_time))
-                    i += 1
-            elif latest_free_time > current_time:
-                delta = latest_free_time - current_time
-                note_obj["time"] += delta
-                for future_note in notes[i + 1:]:
-                    future_note["time"] += delta
-                print(f"⏩ Shifted {raw_note}{octave} and future notes by {delta:.6f}s to wait for string availability")
+                    delta = latest_free_time - current_time
+                    note_obj["time"] += delta
+                    for future_note in notes[i + 1:]:
+                        future_note["time"] += delta
+                    print(f"⏩ Shifted {raw_note}{octave} and future notes by {delta:.6f}s to wait for string availability")
+                    active[best_string] = latest_free_time + duration
+                    result.append((raw_note, best_string, distance, latest_free_time + duration, latest_free_time))
+                i += 1
             else:
                 print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}, currently active: {active}")
                 result.append((raw_note, None, None, None, current_time))
