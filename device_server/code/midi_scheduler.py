@@ -33,21 +33,11 @@ class MidiScheduler:
         self.notes = self.scale_timings(notes, self.min_same_string_gap)
 
     def get_shortest_gap(self, notes):
-        last_times = {}
-        min_gap = float('inf')
-
-        for note in sorted(notes, key=lambda x: x["time"]):
-            s = note["string"]
-            t = note["time"]
-
-            if s in last_times:
-                gap = t - last_times[s]
-                if gap > 0:
-                    min_gap = min(min_gap, gap)
-
-            last_times[s] = t
-
-        return min_gap if min_gap != float('inf') else None
+        times = sorted(note["time"] for note in notes)
+        if len(times) < 2:
+            return None
+        gaps = [t2 - t1 for t1, t2 in zip(times, times[1:])]
+        return min(gaps) if gaps else None
 
     def scale_timings(self, notes, min_gap):
         shortest = self.get_shortest_gap(notes)
