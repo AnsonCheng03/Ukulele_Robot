@@ -121,6 +121,13 @@ class MidiScheduler:
                 "duration": round(duration, 6),
                 "time": round(start, 6),
             })
+            
+        print(f"[Scheduler] Shortest valid same-string gap: {shortest:.6f} sec")
+        print(f"[Scheduler] Scaling factor: {scale_factor:.2f}")
+        print("[Scheduler] First 5 scaled notes (time, duration):")
+        for note in scaled_notes[:5]:
+            print(f"  → {note['note']}{note['octave']} at {note['time']}s, duration {note['duration']}")
+
 
         return scaled_notes
 
@@ -214,6 +221,10 @@ class MidiScheduler:
             for n in all_notes:
                 n["time"] = n["start"]
             scaled_notes = self.scale_timings(all_notes, self.min_same_string_gap)
+            print(f"[DEBUG] Scaled first 5 notes:")
+            for note in scaled_notes[:5]:
+                print(f"  {note['note']}{note['octave']} — time: {note['time']}, dur: {note['duration']}")
+
             self.notes = scaled_notes
 
             grouped_notes = defaultdict(list)
