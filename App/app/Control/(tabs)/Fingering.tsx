@@ -46,7 +46,8 @@ export default function FingeringPage({ device }: { device: Device }) {
 
   const fretPositions = [
     0.0, 19.6, 38.1, 55.57, 72.05, 87.61, 102.29, 116.14, 129.24, 141.59,
-    153.24, 164.24, 174.83, 184.43, 193.2, 202.41, 210.26, 218.43, 225.77, 233.0,
+    153.24, 164.24, 174.83, 184.43, 193.2, 202.41, 210.26, 218.43, 225.77,
+    233.0,
   ];
   const scaleMM = fretPositions[fretPositions.length - 1];
   const totalHeight = screenHeight * 2.4;
@@ -89,14 +90,14 @@ export default function FingeringPage({ device }: { device: Device }) {
       }
     }
 
-    const distanceMM = Math.round(fretPositions[closestFret] * (310 / 141.59));
+    // const distanceMM = Math.round(fretPositions[closestFret] * (310 / 141.59));
     const note = getNoteName(
       stringTuning[closestString],
       stringOctaves[closestString],
       closestFret
     );
-    const cmd = `move ${stringID} ${distanceMM}`;
-    console.log(`Sending command: ${cmd} | ${distanceMM}mm`);
+    const cmd = `note 0 ${stringID} ${closestFret}`;
+    console.log(`Sending command: ${cmd} | ${closestFret} | ${stringID}`);
 
     Toast.show({
       type: "success",
@@ -142,7 +143,10 @@ export default function FingeringPage({ device }: { device: Device }) {
         lines.push(
           <Text
             key={`note-${i}-${fret}`}
-            style={[styles.noteLabel, { top: top + 5, left: left - 45, textAlign:"right", width: 40 }]}
+            style={[
+              styles.noteLabel,
+              { top: top + 5, left: left - 45, textAlign: "right", width: 40 },
+            ]}
           >
             {noteName}
           </Text>
@@ -156,7 +160,6 @@ export default function FingeringPage({ device }: { device: Device }) {
           pointerEvents="none"
         />
       );
-
     }
     return lines;
   };

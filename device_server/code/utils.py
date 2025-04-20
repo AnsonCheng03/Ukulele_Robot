@@ -6,7 +6,7 @@ from motor_control import handle_command_input
 
 # Define autocomplete words (can be dynamic too)
 command_words = [
-    'control', 'calibrate', 'move', 'fingering', 'chord', 
+    'control', 'calibrate', 'move', 'fingering', 'chord', 'note',
     'C', 'M', 'F', 'D',
     '100', '50', '200',
 ]

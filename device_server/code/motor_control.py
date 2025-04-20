@@ -85,7 +85,7 @@ def send_motor_command(motor_id, command_type, *args):
                 string = int(args[0])
                 fret = int(args[1])
 
-                if fret + 1 >= len(fretPositions):
+                if fret + 1 >= len(fretPositions): 
                     print(f"Fret {fret} out of range for fretPositions center calculation")
                     return
 
@@ -103,7 +103,20 @@ def send_motor_command(motor_id, command_type, *args):
         elif command_type == 4:  # Fingering
             raw_note = args[0].upper()
 
-            # Try extracting note and optional octave
+            if len(args) < 1:
+                print("Missing note argument.")
+                return
+
+            if len(args) >= 2:
+                try:
+                    selected_string = int(args[1])
+                except ValueError:
+                    print("Invalid string number.")
+                    return
+            else:
+                selected_string = 0  # default: auto-select
+
+            # Extract note and optional octave
             if raw_note[-1].isdigit() and len(raw_note) > 1:
                 note = raw_note[:-1]
                 try:
@@ -118,21 +131,20 @@ def send_motor_command(motor_id, command_type, *args):
 
             for octave in octaves_to_check:
                 if note in note_mapping.get(octave, {}):
-                    string, fret = note_mapping[octave][note][0]
+                    for string, fret in note_mapping[octave][note]:
+                        if selected_string == 0 or string == selected_string:
+                            if fret + 1 >= len(fretPositions):
+                                print(f"Fret {fret} out of range for center calculation")
+                                return
 
-                    if fret + 1 >= len(fretPositions):
-                        print(f"Fret {fret} out of range for fretPositions center calculation")
-                        return
+                            raw_position = (fretPositions[fret] + fretPositions[fret + 1]) / 2
+                            distance = int(raw_position * fretScaler)
 
-                    raw_position = (fretPositions[fret] + fretPositions[fret + 1]) / 2
-                    distance = int(raw_position * fretScaler)
+                            msg = f"M {string} 0 {distance}\n"
+                            print(f"Sending command: {msg.strip()}")
+                            return
 
-                    msg = f"M {string} 0 {distance}\n"
-                    print(f"Sending command: {msg.strip()}")
-                    break
-            else:
-                print(f"Invalid note: {raw_note}")
-                return
+            print(f"⚠️ Note {note} not playable on string {selected_string}" if selected_string else f"⚠️ Invalid note: {raw_note}")
 
         elif command_type == 5:  # Debug
             action_type_input = args[0].lower()
