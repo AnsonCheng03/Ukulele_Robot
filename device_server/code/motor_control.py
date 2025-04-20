@@ -62,7 +62,7 @@ chord_mapping = {  # Chord: [Note, Address]
 
 def send_motor_command(motor_id, command_type, *args):
     try:
-        print(f"Sending to {motor_id} via UART - Type {command_type}, Args: {args}")
+        # print(f"Sending to {motor_id} via UART - Type {command_type}, Args: {args}")
 
         if command_type == 0:  # Control
             target = int(args[0])
@@ -166,19 +166,19 @@ def send_motor_command(motor_id, command_type, *args):
             try:
                 if not serial_port.is_open:
                     serial_port.open()
-                    print(f"[Attempt {attempt+1}] Serial port opened")
+                    # print(f"[Attempt {attempt+1}] Serial port opened")
 
                 serial_port.flushInput()
                 serial_port.write(msg.encode('utf-8'))
-                print(f"[Attempt {attempt+1}] Command sent successfully")
+                # print(f"[Attempt {attempt+1}] Command sent successfully")
                 break  # Success, exit retry loop
 
             except Exception as e:
-                print(f"[Attempt {attempt+1}] Serial write error: {e}")
+                # print(f"[Attempt {attempt+1}] Serial write error: {e}")
 
                 try:
                     serial_port.close()
-                    print(f"[Attempt {attempt+1}] Serial port closed for reset")
+                    # print(f"[Attempt {attempt+1}] Serial port closed for reset")
                 except Exception:
                     pass
 
@@ -186,7 +186,7 @@ def send_motor_command(motor_id, command_type, *args):
 
                 try:
                     serial_port.open()
-                    print(f"[Attempt {attempt+1}] Serial port reopened")
+                    # print(f"[Attempt {attempt+1}] Serial port reopened")
                 except Exception as open_err:
                     print(f"[Attempt {attempt+1}] Failed to reopen serial port: {open_err}")
 

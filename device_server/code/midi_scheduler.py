@@ -197,7 +197,7 @@ class MidiScheduler:
                     self.resume_offset = current_time
                     return
 
-                print(f"Scheduling note: {note} on string {string} with distance {dist} at time {current_time}")
+                # print(f"Scheduling note: {note} on string {string} with distance {dist} at time {current_time}")
                 if string is not None:
                     send_motor_command(string, 2, 0, dist)
                 else:
