@@ -50,7 +50,7 @@ class MidiScheduler:
             for o in octaves_to_check:
                 if raw_note in note_mapping.get(o, {}):
                     for string, fret in note_mapping[o][raw_note]:
-                        if string not in used_strings and current_time >= active.get(string, 0):
+                        if string not in used_strings and (current_time - active.get(string, 0)) * 1_000_000 >= self.min_same_string_gap:
                             distance = self.calculate_distance_from_fret(fret)
                             if distance is None:
                                 print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
@@ -59,6 +59,9 @@ class MidiScheduler:
                             result.append((raw_note, string, distance, end_time, current_time))
                             found = True
                             break
+                    if found:
+                        break
+
             if not found:
                 print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}")
                 result.append((raw_note, None, None, None, current_time))
@@ -213,7 +216,6 @@ class MidiScheduler:
 
             grouped_notes = defaultdict(list)
             for note in scaled_notes:
-                print(f"Grouping note: {note}")
                 grouped_notes[note["start"]].append({
                     "note": note["note"],
                     "octave": note["octave"],
