@@ -120,10 +120,11 @@ void RackMotor::down() {
     int sliderPosition = slider->getCurrentPosition();
 
     // Calculate the down distance using linear interpolation (slope)
-    int downDistance = config.normalDownDistance + 
-                       (sliderPosition - config.measurementThreshold) * 
-                       (config.extendedDownDistance - config.normalDownDistance) / 
-                       (config.maxDistance - config.measurementThreshold);
+    // int downDistance = config.normalDownDistance + 
+    //                    (sliderPosition - config.measurementThreshold) * 
+    //                    (config.extendedDownDistance - config.normalDownDistance) / 
+    //                    (config.maxDistance - config.measurementThreshold);
+    int downDistance = config.normalDownDistance + sliderPosition / (config.measurementThreshold - 0) * (config.extendedDownDistance - config.normalDownDistance);
 
     // Log the calculated down distance for debugging
     Serial.println("Slider position: " + String(sliderPosition) + "mm, Calculated down distance: " + String(downDistance) + "mm");

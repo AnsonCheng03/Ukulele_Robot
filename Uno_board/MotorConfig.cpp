@@ -8,10 +8,10 @@
 // };
 
 UpperMotorConfig sliderConfigs[] = {
-    {10000, 1000, 0.7, true},  // LEFT_UP
-    {10000, 1000, 0.7, false},  // LEFT_DOWN
-    {10000, 1000, 0.7, true},   // RIGHT_UP
-    {10000, 1000, 0.7, true}    // RIGHT_DOWN
+    {10000, 500, 0.1, true},  // LEFT_UP
+    {10000, 500, 0.1, false},  // LEFT_DOWN
+    {10000, 500, 0.1, true},   // RIGHT_UP
+    {10000, 500, 0.1, true}    // RIGHT_DOWN
 };
 
 // {
@@ -27,10 +27,10 @@ UpperMotorConfig sliderConfigs[] = {
 
 UpperMotorConfig rackConfigs[] = {
     //
-    {1000, 10, 1, false, 10, 150, 30},   // LEFT_UP
-    {1000, 10, 1, false, 10, 85, 30},  // LEFT_DOWN
-    {1000, 10, 1, false, 10, 100, 30},     // RIGHT_UP
-    {1000, 10, 1, false, 10, 70, 30}    // RIGHT_DOWN
+    {1000, 1000, 1, false, 1, 8, 305},   // LEFT_UP
+    {1000, 1000, 1, false, 1, 8, 305},  // LEFT_DOWN
+    {1000, 1000, 1, false, 1, 8, 305},     // RIGHT_UP
+    {1000, 1000, 1, false, 1, 8, 305}    // RIGHT_DOWN
 };
 
 // {
