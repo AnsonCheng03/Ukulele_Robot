@@ -9,7 +9,7 @@ from loop_manager import global_asyncio_loop
 from collections import defaultdict
 import pretty_midi
 from music21 import converter
-from motor_control import send_motor_command, note_mapping
+from motor_control import send_motor_command, note_mapping, fretPositions, fretScaler 
 
 class MidiScheduler:
     def __init__(self):
@@ -20,6 +20,51 @@ class MidiScheduler:
         self.pause_time = 0
         self.start_time = 0
         self.resume_offset = 0
+
+        # ⏱ Persistent: tracks when each string becomes free
+        self.active_strings = {1: 0, 2: 0, 3: 0, 4: 0}
+
+    def find_non_conflicting_fingerings_with_duration(self, notes, current_time):
+        used_strings = set()
+        results = []
+
+        for note_obj in notes:
+            raw_note = note_obj["note"].upper()
+            octave = note_obj.get("octave")
+            duration = note_obj["duration"]
+            end_time = current_time + duration
+
+            octaves_to_check = [octave] if octave in note_mapping else note_mapping.keys()
+
+            found = False
+            for o in octaves_to_check:
+                if raw_note in note_mapping.get(o, {}):
+                    for string, fret in note_mapping[o][raw_note]:
+                        # Check if string is both physically available & not double-used in this group
+                        if (
+                            string not in used_strings and
+                            current_time >= self.active_strings.get(string, 0)
+                        ):
+                            if fret + 1 >= len(fretPositions):
+                                print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
+                                continue
+
+                            raw_position = (fretPositions[fret] + fretPositions[fret + 1]) / 2
+                            distance = raw_position * fretScaler
+
+                            results.append((raw_note, string, distance, end_time))
+                            used_strings.add(string)
+                            self.active_strings[string] = end_time  # reserve until end_time
+                            found = True
+                            break
+                if found:
+                    break
+
+        if not found:
+            print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}")
+            results.append((raw_note, None, None, None))
+
+        return results
         
     def get_motor_for_note(self, note, octave):
         # Try to find a motor that supports this note
@@ -86,23 +131,27 @@ class MidiScheduler:
             for i, group_time in enumerate(self.start_times):
                 if group_time < offset:
                     continue
+
                 now = time.time()
                 wait_time = group_time - (now - self.start_time)
                 if wait_time > 0:
                     await asyncio.sleep(wait_time)
+
                 if self.paused:
                     self.resume_offset = group_time
                     return
-                for note in self.grouped_notes[i]:
-                    print(f"NOTE @ {round(group_time, 2)}s: {note['note']}{note['octave']}")
-                    motor_id = self.get_motor_for_note(note['note'], note['octave'])
-                    if motor_id is not None:
-                        print(f"Sending command to motor {motor_id} for note {note['note']}{note['octave']}")
-                        send_motor_command(motor_id, 3, note['note'])  # Fingering command type
-                    else:
-                        print(f"⚠️ No motor mapped for {note['note']}{note['octave']}")
 
-        except Exception as e:  
+                notes = self.grouped_notes[i]
+                fingering = self.find_non_conflicting_fingerings_with_duration(notes, group_time)
+                for note, string, dist, end_time in fingering:
+                    print(f"Scheduling note: {note} on string {string} with distance {dist} at time {group_time}")
+                    if string is not None:
+                        send_motor_command(string, 2, 0, dist)
+                    else:
+                        print(f"⚠️ No motor mapped for {note}")
+
+
+        except Exception as e:
             print(f"Error during playback: {e}")
 
     def play(self, path, offset=0):
