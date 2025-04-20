@@ -34,12 +34,17 @@ class MidiScheduler:
     def assign_fingerings_to_notes(self, notes, check_gap=True):
         active = {1: -9999, 2: -9999, 3: -9999, 4: -9999}
         result = []
+        
+        MAX_SHIFT = 0.1  # max allowed shift in seconds
+        MIN_SHIFT_BUFFER = 0.001  # try to shift by 1ms at a time
+
+        shift = 0.0  # accumulated shift
 
         for note_obj in notes:
             raw_note = note_obj["note"].upper()
             octave = note_obj.get("octave")
             duration = note_obj["duration"]
-            current_time = note_obj["time"]
+            current_time = note_obj["time"] + shift
             end_time = current_time + duration
 
             octaves_to_check = [octave] if octave in note_mapping else note_mapping.keys()
@@ -49,8 +54,9 @@ class MidiScheduler:
             for o in octaves_to_check:
                 if raw_note in note_mapping.get(o, {}):
                     for string, fret in note_mapping[o][raw_note]:
+                        EPSILON_US = 10
                         gap_sec = current_time - active.get(string, 0)
-                        gap_ok = True if not check_gap else (gap_sec * 1_000_000 + 1) >= self.min_same_string_gap
+                        gap_ok = True if not check_gap else (gap_sec * 1_000_000 + EPSILON_US) >= self.min_same_string_gap
                         if string not in used_strings and gap_ok:
                             distance = self.calculate_distance_from_fret(fret)
                             if distance is None:
@@ -64,8 +70,31 @@ class MidiScheduler:
                         break
 
             if not found:
-                print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}, currently active: {active}")
-                result.append((raw_note, None, None, None, current_time))
+                # Check the smallest time margin that caused failure
+                closest_margin = float('inf')
+                for o in octaves_to_check:
+                    if raw_note in note_mapping.get(o, {}):
+                        for string, _ in note_mapping[o][raw_note]:
+                            if string in active:
+                                diff = (current_time - active[string]) * 1_000_000
+                                if 0 <= diff < self.min_same_string_gap:
+                                    closest_margin = min(closest_margin, self.min_same_string_gap - diff)
+
+                # If it's very close, shift and retry
+                if closest_margin != float('inf') and (closest_margin / 1_000_000) < MAX_SHIFT:
+                    delta = min(MIN_SHIFT_BUFFER, closest_margin / 1_000_000)
+                    shift += delta
+                    current_time += delta
+                    print(f"⏩ Shifting note {raw_note}{octave} and beyond by {delta:.6f}s due to gap issue")
+                    # reattempt same note at shifted time
+                    end_time = current_time + duration
+                    note_obj["time"] = current_time
+                    for future_note in notes[notes.index(note_obj) + 1:]:
+                        future_note["time"] += delta
+                    continue  # retry this same note
+                else:
+                    print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}, currently active: {active}")
+                    result.append((raw_note, None, None, None, current_time))
 
         return result
 
