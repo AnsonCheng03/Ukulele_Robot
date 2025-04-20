@@ -66,6 +66,7 @@ void setup()
         fingers[i] = new FingerUnit(&sliders[i], &rackMotors[i], &fingeringMotors[i]);
         fingers[i]->setup();
         fingers[i]->calibrate();
+        // fingers[i]->getFingeringMotor()->moveForever();
     }
 }
 
