@@ -68,6 +68,7 @@ class MidiScheduler:
                 distance = self.calculate_distance_from_fret(best_fret)
                 if distance is None:
                     print(f"⚠️ Fret {best_fret} out of range for {raw_note}{octave}")
+                    i += 1
                 else:
                     active[best_string] = end_time
                     result.append((raw_note, best_string, distance, end_time, current_time))
