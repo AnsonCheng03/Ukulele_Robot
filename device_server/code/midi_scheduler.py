@@ -1,5 +1,3 @@
-# File: midi_scheduler.py
-
 import asyncio
 import os
 import traceback
@@ -22,22 +20,59 @@ class MidiScheduler:
         self.resume_offset = 0
         self.notes = []
         self.min_same_string_gap = 100_000  # default minimum gap in μs (100ms)
-        # ⏱ Persistent: tracks when each string becomes free
         self.active_strings = {1: 0, 2: 0, 3: 0, 4: 0}
+        self.precomputed_fingering_timeline = []
 
     def set_min_gap(self, micros):
         self.min_same_string_gap = micros
 
-    def load_notes(self, notes):
-        # Before scheduling, rescale timings to respect minimum gap
-        self.notes = self.scale_timings(notes, self.min_same_string_gap)
+    def calculate_distance_from_fret(self, fret):
+        if fret + 1 >= len(fretPositions):
+            return None
+        raw_position = (fretPositions[fret] + fretPositions[fret + 1]) / 2
+        return raw_position * fretScaler
+
+    def precompute_fingering_timeline(self):
+        self.precomputed_fingering_timeline = []
+        active = {1: 0, 2: 0, 3: 0, 4: 0}
+
+        for i, group in enumerate(self.grouped_notes):
+            current_time = self.start_times[i]
+            used_strings = set()
+            for note_obj in group:
+                raw_note = note_obj["note"].upper()
+                octave = note_obj.get("octave")
+                duration = note_obj["duration"]
+                end_time = current_time + duration
+
+                octaves_to_check = [octave] if octave in note_mapping else note_mapping.keys()
+                for o in octaves_to_check:
+                    if raw_note in note_mapping.get(o, {}):
+                        for string, fret in note_mapping[o][raw_note]:
+                            if string not in used_strings and current_time >= active.get(string, 0):
+                                used_strings.add(string)
+                                active[string] = end_time
+                                self.precomputed_fingering_timeline.append((string, current_time))
+                                break
+                        break
 
     def get_shortest_gap(self, notes):
-        times = sorted(note["time"] for note in notes)
-        if len(times) < 2:
-            return None
-        gaps = [t2 - t1 for t1, t2 in zip(times, times[1:])]
-        return min(gaps) if gaps else None
+        self.precompute_fingering_timeline()
+        gaps_per_string = defaultdict(list)
+
+        by_string = defaultdict(list)
+        for string, time in self.precomputed_fingering_timeline:
+            by_string[string].append(time)
+
+        shortest = float("inf")
+        for times in by_string.values():
+            times.sort()
+            for i in range(1, len(times)):
+                gap = times[i] - times[i - 1]
+                if gap > 0:
+                    shortest = min(shortest, gap)
+
+        return shortest if shortest != float("inf") else None
 
     def scale_timings(self, notes, min_gap):
         shortest = self.get_shortest_gap(notes)
@@ -48,7 +83,7 @@ class MidiScheduler:
 
         if shortest == 0:
             print("[Scheduler] Found zero gap — cannot scale reliably")
-            return notes  # or raise an exception if you'd rather fail
+            return notes
 
         if shortest >= min_gap:
             return notes
@@ -70,26 +105,20 @@ class MidiScheduler:
             end_time = current_time + duration
 
             octaves_to_check = [octave] if octave in note_mapping else note_mapping.keys()
-
             found = False
+
             for o in octaves_to_check:
                 if raw_note in note_mapping.get(o, {}):
                     for string, fret in note_mapping[o][raw_note]:
-                        # Check if string is both physically available & not double-used in this group
-                        if (
-                            string not in used_strings and
-                            current_time >= self.active_strings.get(string, 0)
-                        ):
-                            if fret + 1 >= len(fretPositions):
+                        if string not in used_strings and current_time >= self.active_strings.get(string, 0):
+                            distance = self.calculate_distance_from_fret(fret)
+                            if distance is None:
                                 print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
                                 continue
 
-                            raw_position = (fretPositions[fret] + fretPositions[fret + 1]) / 2
-                            distance = raw_position * fretScaler
-
                             results.append((raw_note, string, distance, end_time))
                             used_strings.add(string)
-                            self.active_strings[string] = end_time  # reserve until end_time
+                            self.active_strings[string] = end_time
                             found = True
                             break
                 if found:
@@ -100,14 +129,12 @@ class MidiScheduler:
             results.append((raw_note, None, None, None))
 
         return results
-        
+
     def get_motor_for_note(self, note, octave):
-        # Try to find a motor that supports this note
         for motor_id, note_map in note_mapping.items():
             if note in note_map:
                 return motor_id
-        return None  # or some default motor
-
+        return None
 
     def note_number_to_components(self, note_number):
         name_with_octave = pretty_midi.note_number_to_name(note_number)
@@ -158,7 +185,6 @@ class MidiScheduler:
             pmidi = pretty_midi.PrettyMIDI(path)
         else:
             raise ValueError("Unsupported file type.")
-        # self.parse_pretty_midi(pmidi)
         return pmidi
 
     async def schedule_notes(self, offset=0):
@@ -187,7 +213,6 @@ class MidiScheduler:
                     else:
                         print(f"⚠️ No motor mapped for {note}")
 
-
         except Exception as e:
             print(f"Error during playback: {e}")
 
@@ -201,7 +226,6 @@ class MidiScheduler:
             scaled_notes = self.scale_timings(all_notes, self.min_same_string_gap)
             self.notes = scaled_notes
 
-            # Regroup scaled notes into group timings
             grouped_notes = defaultdict(list)
             for note in scaled_notes:
                 print(f"Grouping note: {note}")
@@ -209,7 +233,7 @@ class MidiScheduler:
                     "note": note["note"],
                     "octave": note["octave"],
                     "duration": note["duration"],
-                    "time": note["start"] 
+                    "time": note["start"]
                 })
 
             self.grouped_notes = [grouped_notes[t] for t in sorted(grouped_notes)]
@@ -227,7 +251,6 @@ class MidiScheduler:
         except Exception as e:
             print(f"Error in play request: {e}")
 
-
     def pause(self):
         self.paused = True
         self.pause_time = time.time()
@@ -239,4 +262,3 @@ class MidiScheduler:
         if self.resume_offset:
             self.play(self.last_file, self.resume_offset)
             self.resume_offset = 0
-
