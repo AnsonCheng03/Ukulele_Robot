@@ -25,7 +25,18 @@ class MidiScheduler:
     def set_min_gap(self, micros):
         self.min_same_string_gap = micros
 
+    def estimate_movement_time_us(self, string_number, distance_mm):
+        SLIDER_DISTANCE_TO_DURATION_RATIO = 0.1     # tenths of seconds per mm
+        SLIDER_SPEED_SCALE = 100000                 # tenths to micros
+        RACK_UP_TIME_US = 1_000_000                 # Assume 1 second
+        RACK_DOWN_TIME_US = 1_000_000               # Assume 1 second
+        PLUCK_PULSE_TIME_US = 10_000                # Assume 10ms pulse
 
+        slider_duration_us = int(distance_mm * SLIDER_DISTANCE_TO_DURATION_RATIO * SLIDER_SPEED_SCALE)
+        total_time_us = RACK_UP_TIME_US + slider_duration_us + RACK_DOWN_TIME_US + PLUCK_PULSE_TIME_US
+        return total_time_us
+    
+    
     def assign_fingerings_to_notes(self, notes, check_gap=True):
         active = {1: -9999, 2: -9999, 3: -9999, 4: -9999}
         result = []
@@ -228,9 +239,20 @@ class MidiScheduler:
 
             fingerings = self.assign_fingerings_to_notes(all_notes)
 
-            for note, string, dist, _, current_time in fingerings:
-                if current_time < offset:
-                    continue
+            for group, current_time in zip(self.grouped_notes, self.start_times):
+                distances = [None] * 4  # Strings 1–4
+
+                for note in group:
+                    raw_note = note["note"].upper()
+                    octave = note.get("octave")
+
+                    for o in [octave] if octave in note_mapping else note_mapping:
+                        if raw_note in note_mapping[o]:
+                            string, fret = note_mapping[o][raw_note][0]
+                            distance = calculate_distance_from_fret(fret)
+                            if distance is not None:
+                                distances[string - 1] = distance
+                            break
 
                 now = time.time()
                 wait_time = current_time - (now - self.start_time)
@@ -241,11 +263,10 @@ class MidiScheduler:
                     self.resume_offset = current_time
                     return
 
-                # print(f"Scheduling note: {note} on string {string} with distance {dist} at time {current_time}")
-                if string is not None:
-                    send_motor_command(string, 2, 0, dist)
-                # else:
-                #     print(f"⚠️ No motor mapped for {note}")
+                if any(d is not None for d in distances):
+                    dist_out = [d if d is not None else -1 for d in distances]
+                    print(f"[Scheduler] Sending MF @ t={current_time:.3f}s → {dist_out}")
+                    send_motor_command(0, 6, dist_out)
 
         except Exception as e:
             print(f"Error during playback: {e}")
@@ -257,18 +278,44 @@ class MidiScheduler:
             all_notes = self.parse_pretty_midi(pmidi)
             for n in all_notes:
                 n["time"] = n["start"]
+
             grouped = defaultdict(list)
             for n in all_notes:
-                grouped[n["start"]].append(n)
+                grouped[n["time"]].append(n)
             grouped_times = sorted(grouped)
 
-            # Flatten back into note list with time assigned
             clustered_notes = []
             for t in grouped_times:
                 for note in grouped[t]:
                     note["time"] = t
                     clustered_notes.append(note)
             scaled_notes = self.scale_timings(clustered_notes, self.min_same_string_gap)
+
+            # Adjust all note times earlier by estimated physical movement duration (AFTER scaling)
+            grouped_by_time = defaultdict(list)
+            for note in scaled_notes:
+                grouped_by_time[note["time"]].append(note)
+
+            for group_time, notes_in_group in grouped_by_time.items():
+                max_shift_us = 0
+
+                for note in notes_in_group:
+                    raw_note = note["note"].upper()
+                    octave = note.get("octave")
+
+                    for o in [octave] if octave in note_mapping else note_mapping:
+                        if raw_note in note_mapping[o]:
+                            string, fret = note_mapping[o][raw_note][0]
+                            distance = calculate_distance_from_fret(fret)
+                            if distance is not None:
+                                movement_us = self.estimate_movement_time_us(string, distance)
+                                max_shift_us = max(max_shift_us, movement_us)
+                            break
+
+                shift_s = max_shift_us / 1_000_000
+
+                for note in notes_in_group:
+                    note["time"] = max(0, note["time"] - shift_s)
 
             print(f"[DEBUG] Scaled first 5 notes:")
             for note in scaled_notes[:5]:

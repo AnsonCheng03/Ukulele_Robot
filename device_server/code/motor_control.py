@@ -162,6 +162,14 @@ def send_motor_command(motor_id, command_type, *args):
             target = int(args[1])
             position_mm = int(args[2])
             msg = f"D {motor_id} {target} {position_mm}\n"
+            
+        elif command_type == 6:  # Multi-finger MF command
+            distances = args[0]  # should be a list of 4 ints or -1
+            if len(distances) != 4:
+                print("MF command requires exactly 4 distances")
+                return
+
+            msg = f"MF {' '.join(str(d) for d in distances)}\n"
 
         else:
             print("Unsupported command type")

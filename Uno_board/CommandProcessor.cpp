@@ -50,8 +50,14 @@ void processCommand(const String& commandStr, FingerGroupController* fingerGroup
         } else if (motorID <= 4) {
             fingerGroup->moveSingle(motorID - 1, target, distance);
         }
-
-    } else if (cmd == "D" && tokenCount == 4) {
+    } else if (cmd == "MF" && tokenCount == 5) {
+        int distances[4];
+        for (int i = 0; i < 4; ++i) {
+            distances[i] = atoi(tokens[i + 1]);
+        }
+        fingerGroup->moveFinger(distances);
+    }
+    else if (cmd == "D" && tokenCount == 4) {
         int motorID = atoi(tokens[1]);
         int target = atoi(tokens[2]);
         int position = atoi(tokens[3]);
