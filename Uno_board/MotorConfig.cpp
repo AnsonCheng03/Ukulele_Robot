@@ -8,8 +8,8 @@
 // };
 
 UpperMotorConfig sliderConfigs[] = {
-    {10000, 500, 0.1, true},  // LEFT_UP
-    {10000, 500, 0.1, false},  // LEFT_DOWN
+    {10000, 500, 0.1, false},  // LEFT_UP
+    {10000, 500, 0.1, true},  // LEFT_DOWN
     {10000, 500, 0.1, true},   // RIGHT_UP
     {10000, 500, 0.1, true}    // RIGHT_DOWN
 };
@@ -27,15 +27,15 @@ UpperMotorConfig sliderConfigs[] = {
 
 UpperMotorConfig rackConfigs[] = {
     //
-    {1000, 1000, 1, false, 1, 8, 305},   // LEFT_UP
-    {1000, 1000, 1, false, 1, 8, 305},  // LEFT_DOWN
-    {1000, 1000, 1, false, 1, 8, 305},     // RIGHT_UP
-    {1000, 1000, 1, false, 1, 8, 305}    // RIGHT_DOWN
+    {1000, 1000, 1, false, 1, 7.5, 305},   // LEFT_UP
+    {1000, 1000, 1, false, 1, 7.5, 305},  // LEFT_DOWN
+    {1000, 1000, 1, false, 1, 7.5, 305},     // RIGHT_UP
+    {1000, 1000, 1, false, 1, 7.5, 305}    // RIGHT_DOWN
 };
 
 // {
 //     int defaultDurationMs;
-//     bool reverseDirection;
+//     bool reverseDirection; 
 // };
 
 FingeringMotorConfig fingeringConfigs[] = {
