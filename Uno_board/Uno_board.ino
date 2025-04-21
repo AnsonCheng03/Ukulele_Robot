@@ -5,6 +5,7 @@
 #include "FingeringMotor.h"
 #include "CommandProcessor.h"
 #include "MotorConfig.h"
+#include "FingerGroupController.h"
 
 #define CMD_CONTROL 0
 #define CMD_CALIBRATE 1
@@ -50,6 +51,7 @@ FingeringMotor fingeringMotors[4] = {
 };
 
 FingerUnit* fingers[4];
+FingerGroupController* fingerGroup;
 
 unsigned long previousMicros = 0;
 const long interval = 50000;
@@ -64,30 +66,25 @@ void setup()
     Serial1.begin(115200); // TX/RX communication
     for (int i = 0; i < 4; ++i) {
         fingers[i] = new FingerUnit(&sliders[i], &rackMotors[i], &fingeringMotors[i]);
-        fingers[i]->setup();
-        fingers[i]->calibrate();
     }
+    fingerGroup = new FingerGroupController(fingers);
+    fingerGroup->setup();
+    fingerGroup->calibrate();
 }
 
 void loop() {
-    updateMotorsAndSliders();
-    handleIntervalTasks(); 
+    fingerGroup->update();
+    // handleIntervalTasks(); 
     handleSerialInput(); // New function for Serial1 TX/RX
 }
 
-void updateMotorsAndSliders() {
-    for (int i = 0; i < 4; ++i) {
-        fingers[i]->update();
-    }
-}
-
-void handleIntervalTasks() {
-    unsigned long currentMillis = micros();
-    if (currentMillis - previousMicros >= interval) {
-        previousMicros = currentMillis;
-        // Perform time-sensitive tasks here
-    }
-}
+// void handleIntervalTasks() {
+//     unsigned long currentMillis = micros();
+//     if (currentMillis - previousMicros >= interval) {
+//         previousMicros = currentMillis;
+//         // Perform time-sensitive tasks here
+//     }
+// }
 
 String inputLine = "";
 

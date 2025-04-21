@@ -105,8 +105,13 @@ void FingerUnit::update() {
 
         case FINGER_WAIT_AFTER_DOWN:
             if (micros() - waitStartTime >= fingerWaitDelay) {
-                fingeringMotor->move();
-                moveState = FINGER_PRESS;
+                if (skipPluck) {
+                    skipPluck = false;
+                    moveState = FINGER_IDLE;
+                } else {
+                    fingeringMotor->move();
+                    moveState = FINGER_PRESS;
+                }
             }
             break;
 
@@ -125,7 +130,8 @@ void FingerUnit::update() {
 
 
 bool FingerUnit::isMovementComplete() {
-    return slider->isMovementComplete() && 
+    return moveState == FINGER_IDLE && 
+           slider->isMovementComplete() && 
            rackMotor->isMovementComplete() &&
            fingeringMotor->isMovementComplete();
 }
@@ -137,6 +143,12 @@ void FingerUnit::moveFinger(int distanceMm) {
         moveState = FINGER_UP;
     }
 }
+
+void FingerUnit::moveFingerWithoutPluck(int distanceMm) {
+    skipPluck = true;
+    moveFinger(distanceMm);  // use original FSM flow
+}
+
 
 Slider* FingerUnit::getSlider() {
     return slider;

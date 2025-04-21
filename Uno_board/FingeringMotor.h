@@ -15,6 +15,8 @@ public:
     void moveBy(int duration, bool reverse = false) override;
     void update() override;
     bool isMovementComplete() override;
+    void start(); 
+    void stop();  
 
     void pulse(unsigned int durationMicros);
     void moveForever();

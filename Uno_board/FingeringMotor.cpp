@@ -73,3 +73,11 @@ void FingeringMotor::update() {
 bool FingeringMotor::isMovementComplete() {
     return true;
 }
+
+void FingeringMotor::start() {
+    digitalWrite(startPin, HIGH);
+}
+
+void FingeringMotor::stop() {
+    digitalWrite(startPin, LOW);
+}

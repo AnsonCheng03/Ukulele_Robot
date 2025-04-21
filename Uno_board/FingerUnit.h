@@ -13,6 +13,7 @@ public:
     void calibrate();
     void update();
     bool isMovementComplete();
+    void moveFingerWithoutPluck(int distanceMm);
 
     // Combined motion
     void moveFinger(int distanceMm);
@@ -28,6 +29,7 @@ private:
     FingeringMotor* fingeringMotor;
 
     FingerMoveState moveState = FINGER_IDLE;
+    bool skipPluck = false;
     int pendingDistance = 0;
     unsigned long waitStartTime = 0;
     const unsigned long fingerWaitDelay = 200000UL; // 200ms -> 200,000µs
