@@ -47,7 +47,7 @@ bool FingerGroupController::areAllFingersReady() {
 void FingerGroupController::moveFinger(const int distances[4]) {
     for (int i = 0; i < 4; ++i) {
         selectedToPluck[i] = false;  // reset
-        if (distances[i] >= 0) {
+        if (distances[i] >= -1) {
             fingers[i]->moveFingerWithoutPluck(distances[i]);
             selectedToPluck[i] = true;
         }
@@ -103,7 +103,7 @@ void FingerGroupController::calibrateSingle(int index, int target) {
 
 void FingerGroupController::moveSingle(int index, int target, int distance) {
     if (target == 0) {
-        int moveArray[4] = {-1, -1, -1, -1};
+        int moveArray[4] = {-2, -2, -2, -2};
         moveArray[index] = distance;
         moveFinger(moveArray);
     } else if (target == 1) {

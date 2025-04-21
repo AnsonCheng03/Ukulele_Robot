@@ -72,7 +72,7 @@ void FingerUnit::update() {
 
         case FINGER_WAIT_AFTER_UP:
             if (micros() - waitStartTime >= fingerWaitDelay) {
-                slider->move(pendingDistance);
+                slider->move(pendingDistance == -1 ? 0 : pendingDistance);
                 moveState = FINGER_SLIDE;
             }
             break;
