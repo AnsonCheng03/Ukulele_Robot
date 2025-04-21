@@ -60,6 +60,16 @@ chord_mapping = {  # Chord: [Note, Address]
     'GB9': [['-1', 1], ['1', 2], ['1', 3], ['1', 4]]
 } 
 
+def calculate_distance_from_fret(fret):
+    if fret == 0:
+        return -1  # empty string: skip rack down
+    elif fret == 1:
+        return 0  # exact base for calibration
+    elif fret + 1 >= len(fretPositions):
+        return None
+    else:
+        return ((fretPositions[fret] + fretPositions[fret + 1]) / 2) * fretScaler
+
 def send_motor_command(motor_id, command_type, *args):
     try:
         # print(f"Sending to {motor_id} via UART - Type {command_type}, Args: {args}")
@@ -85,12 +95,11 @@ def send_motor_command(motor_id, command_type, *args):
                 string = int(args[0])
                 fret = int(args[1])
 
-                if fret + 1 >= len(fretPositions): 
-                    print(f"Fret {fret} out of range for fretPositions center calculation")
+                distance = calculate_distance_from_fret(fret)
+                if distance is None:
+                    print(f"Fret {fret} out of range for distance calculation")
                     return
-
-                raw_position = (fretPositions[fret] + fretPositions[fret + 1]) / 2
-                distance = int(raw_position * fretScaler)
+                distance = int(distance)
 
                 msg = f"M {string} 0 {distance}\n"
                 print(f"Sending command: {msg.strip()}")
@@ -133,12 +142,11 @@ def send_motor_command(motor_id, command_type, *args):
                 if note in note_mapping.get(octave, {}):
                     for string, fret in note_mapping[octave][note]:
                         if selected_string == 0 or string == selected_string:
-                            if fret + 1 >= len(fretPositions):
-                                print(f"Fret {fret} out of range for center calculation")
+                            distance = calculate_distance_from_fret(fret)
+                            if distance is None:
+                                print(f"Fret {fret} out of range for distance calculation")
                                 return
-
-                            raw_position = (fretPositions[fret] + fretPositions[fret + 1]) / 2
-                            distance = int(raw_position * fretScaler)
+                            distance = int(distance)
 
                             msg = f"M {string} 0 {distance}\n"
                             print(f"Sending command: {msg.strip()}")

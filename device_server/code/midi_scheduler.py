@@ -7,7 +7,7 @@ from loop_manager import global_asyncio_loop
 from collections import defaultdict
 import pretty_midi
 from music21 import converter
-from motor_control import send_motor_command, note_mapping, fretPositions, fretScaler 
+from motor_control import calculate_distance_from_fret, send_motor_command, note_mapping, fretPositions, fretScaler 
 
 class MidiScheduler:
     def __init__(self):
@@ -25,11 +25,6 @@ class MidiScheduler:
     def set_min_gap(self, micros):
         self.min_same_string_gap = micros
 
-    def calculate_distance_from_fret(self, fret):
-        if fret + 1 >= len(fretPositions):
-            return None
-        raw_position = (fretPositions[fret] + fretPositions[fret + 1]) / 2
-        return raw_position * fretScaler
 
     def assign_fingerings_to_notes(self, notes, check_gap=True):
         active = {1: -9999, 2: -9999, 3: -9999, 4: -9999}
@@ -57,7 +52,7 @@ class MidiScheduler:
                     for string, fret in note_mapping[o][raw_note]:
                         if active[string] <= current_time + EPSILON:
                             # ✅ Immediately use this available string
-                            distance = self.calculate_distance_from_fret(fret)
+                            distance = calculate_distance_from_fret(fret)
                             if distance is None:
                                 print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
                                 continue
@@ -72,7 +67,7 @@ class MidiScheduler:
                                 best_fret = fret
                             if active[string] <= current_time + EPSILON:
                                 # ✅ Immediately use this available string
-                                distance = self.calculate_distance_from_fret(fret)
+                                distance = calculate_distance_from_fret(fret)
                                 if distance is None:
                                     print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
                                     continue
@@ -92,7 +87,7 @@ class MidiScheduler:
             if found:
                 i += 1
             elif best_string:
-                distance = self.calculate_distance_from_fret(best_fret)
+                distance = calculate_distance_from_fret(best_fret)
                 if distance is None:
                     print(f"⚠️ Fret {best_fret} out of range for {raw_note}{octave}")
                     i += 1
