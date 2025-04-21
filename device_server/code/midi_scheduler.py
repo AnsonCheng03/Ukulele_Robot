@@ -7,7 +7,7 @@ from loop_manager import global_asyncio_loop
 from collections import defaultdict
 import pretty_midi
 from music21 import converter
-from motor_control import calculate_distance_from_fret, send_motor_command, note_mapping, fretPositions, fretScaler 
+from motor_control import calculate_distance_from_fret, send_motor_command, note_mapping
 
 class MidiScheduler:
     def __init__(self):
