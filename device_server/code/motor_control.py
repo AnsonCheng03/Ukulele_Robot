@@ -7,10 +7,13 @@ serial_port = serial.Serial(
     timeout=1
 )
 
-fretPositions = [
-    0.0, 19.6, 38.1, 55.57, 72.05, 87.61, 102.29, 116.14,
+fretPosition = [5,40,80,120,160,190,220,250,280,310,330,350,380,400,420,450,470]
+
+fretPositions_scale = [
+    0.0, 19.06, 38.1, 55.57, 72.05, 87.61, 102.29, 116.14,
     129.24, 141.59, 153.24, 164.24, 174.83, 184.43
 ]
+
 
 fretScaler = 1.9
 
@@ -65,10 +68,11 @@ def calculate_distance_from_fret(fret):
         return -1  # empty string: skip rack down
     elif fret == 1:
         return 0  # exact base for calibration
-    elif fret + 1 >= len(fretPositions):
+    elif fret + 1 >= len(fretPosition):
         return None
     else:
-        return ((fretPositions[fret] + fretPositions[fret + 1]) / 2) * fretScaler
+        #return ((fretPositions_scale[fret] + fretPositions_scale[fret + 1]) / 2) * fretScaler
+        return fretPosition[fret]
 
 def send_motor_command(motor_id, command_type, *args):
     try:

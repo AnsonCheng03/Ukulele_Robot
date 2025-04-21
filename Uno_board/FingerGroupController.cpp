@@ -28,9 +28,9 @@ void FingerGroupController::update() {
     }
 
     if (!debugMoveQueued && areAllFingersReady()) {
-        int debugDistances[4] = {120, 350, 10, 230};
+        int debugDistances[4] = {40,40,40,38};
         moveFinger(debugDistances);
-        debugMoveQueued = true;
+        debugMoveQueued = true; 
     }
 }
 
