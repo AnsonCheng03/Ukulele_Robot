@@ -96,7 +96,7 @@ void handleSerialInput() {
         if (incomingByte == '\n') {
             inputLine.trim();
             if (inputLine.length() > 0) {
-                processCommand(inputLine, fingers);
+                processCommand(inputLine, fingerGroup);
             }
             inputLine = "";
         } else {
