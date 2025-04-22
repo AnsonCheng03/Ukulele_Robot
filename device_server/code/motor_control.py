@@ -228,7 +228,8 @@ def handle_command_input(command):
             "2": 2, "move": 2, "M": 2,
             "3": 3, "note": 3, "N": 3,
             "4": 4, "fingering": 4, "F": 4,
-            "debug": 5, "D": 5
+            "debug": 5, "D": 5,
+            "MF": 6, "6": 6
         }
 
         command_type_input = command_parts[0].lower()
