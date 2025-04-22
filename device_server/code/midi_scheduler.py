@@ -266,7 +266,10 @@ class MidiScheduler:
                 if any(d is not None for d in distances):
                     dist_out = [d if d is not None else -2 for d in distances]
                     print(f"[Scheduler] Sending MF @ t={current_time:.3f}s → {dist_out}")
-                    send_motor_command(0, 6, dist_out)
+                    send_motor_command(0, 6, *dist_out)
+                    
+            
+                    
 
         except Exception as e:
             print(f"Error during playback: {e}")
