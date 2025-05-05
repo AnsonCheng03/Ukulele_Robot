@@ -228,7 +228,7 @@ export default function PlayTabScreen({ device }: { device: Device }) {
         <ThemedText style={styles.largeNote}>
           {noteAliases[selectedNote]}
         </ThemedText>
-        <Text style={styles.largeOctave}>Octave {selectedOctave}</Text>
+        {/* <Text style={styles.largeOctave}>Octave {selectedOctave}</Text> */}
       </View>
       <View style={styles.bottomSection}>
         <ScrollView contentContainerStyle={styles.grid}>
@@ -236,9 +236,7 @@ export default function PlayTabScreen({ device }: { device: Device }) {
             <TouchableOpacity
               key={idx}
               style={styles.chordButton}
-              onPress={() =>
-                sendCommand(`chord ${selectedNote} ${selectedOctave} ${type}`)
-              }
+              onPress={() => sendCommand(`chord 0 ${selectedNote} ${type}`)}
             >
               <Text style={styles.chordButtonText}>{type}</Text>
             </TouchableOpacity>

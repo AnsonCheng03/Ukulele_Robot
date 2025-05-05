@@ -189,7 +189,7 @@ def send_motor_command(motor_id, command_type, *args):
                 print("Chord command requires exactly 2 arguments: note and type")
                 return
             note = args[0].upper()
-            chord_type = args[1].lower()
+            chord_type = args[1].capitalize()
             if chord_type not in chord_mapping:
                 print(f"Invalid chord type: {chord_type}")
                 return
