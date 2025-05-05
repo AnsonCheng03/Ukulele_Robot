@@ -206,12 +206,7 @@ class MidiScheduler:
     def group_notes_by_time(self, notes):
         grouped = defaultdict(list)
         for note in notes:
-            grouped[note["time"]].append({
-                "note": note["note"],
-                "octave": note["octave"],
-                "duration": note["duration"],
-                "time": note["time"]
-            })
+            grouped[note["time"]].append(note) 
         self.grouped_notes = [grouped[t] for t in sorted(grouped)]
         self.start_times = sorted(grouped)
         
