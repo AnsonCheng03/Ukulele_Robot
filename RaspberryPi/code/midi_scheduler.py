@@ -1,16 +1,20 @@
 import asyncio
 import os
-import traceback
 import tempfile
 import time
-from loop_manager import global_asyncio_loop
 from collections import defaultdict
+
 import pretty_midi
 from music21 import converter
+
+from loop_manager import global_asyncio_loop
 from motor_control import calculate_distance_from_fret, send_motor_command, note_mapping
 
 class MidiScheduler:
     def __init__(self):
+        self._reset_state()
+
+    def _reset_state(self):
         self.current_task = None
         self.grouped_notes = []
         self.start_times = []
@@ -19,167 +23,128 @@ class MidiScheduler:
         self.start_time = 0
         self.resume_offset = 0
         self.notes = []
-        self.min_same_string_gap = 3_000_000  # default minimum gap in µs (100ms)
+        self.min_same_string_gap = 3_000_000  # µs
         self.precomputed_fingering_timeline = []
 
     def set_min_gap(self, micros):
         self.min_same_string_gap = micros
 
     def estimate_movement_time_us(self, string_number, distance_mm):
-        SLIDER_DISTANCE_TO_DURATION_RATIO = 0.1     # tenths of seconds per mm
-        SLIDER_SPEED_SCALE = 100000                 # tenths to micros
-        RACK_UP_TIME_US = 1_000_000                 # Assume 1 second
-        RACK_DOWN_TIME_US = 1_000_000               # Assume 1 second
-        PLUCK_PULSE_TIME_US = 10_000                # Assume 10ms pulse
+        ratio = 0.1  # tenths of sec per mm
+        scale = 100_000  # to µs
+        rack_up = rack_down = 1_000_000
+        pluck_pulse = 10_000
 
-        slider_duration_us = int(distance_mm * SLIDER_DISTANCE_TO_DURATION_RATIO * SLIDER_SPEED_SCALE)
-        total_time_us = RACK_UP_TIME_US + slider_duration_us + RACK_DOWN_TIME_US + PLUCK_PULSE_TIME_US
-        return total_time_us
-    
-    
+        slider_us = int(distance_mm * ratio * scale)
+        return rack_up + slider_us + rack_down + pluck_pulse
+
     def assign_fingerings_to_notes(self, notes, check_gap=True):
-        active = {1: -9999, 2: -9999, 3: -9999, 4: -9999}
+        active = {s: -9999 for s in range(1, 5)}
         result = []
         EPSILON = 1e-4
 
-        i = 0
-        while i < len(notes):
+        for i in range(len(notes)):
             note_obj = notes[i]
             raw_note = note_obj["note"].upper()
             octave = note_obj.get("octave")
+            start_time = note_obj["time"]
             duration = note_obj["duration"]
-            current_time = note_obj["time"]
-            end_time = current_time + duration
+            end_time = start_time + duration
+            found, best = False, (None, None, start_time)
 
-            octaves_to_check = [octave] if octave in note_mapping else note_mapping.keys()
+            octaves = [octave] if octave in note_mapping else note_mapping.keys()
 
-            best_string = None
-            best_fret = None
-            latest_free_time = current_time
-            found = False  # ✅ initialize here
-
-            for o in octaves_to_check:
-                if raw_note in note_mapping.get(o, {}):
-                    for string, fret in note_mapping[o][raw_note]:
-                        if active[string] <= current_time + EPSILON:
-                            # ✅ Immediately use this available string
-                            distance = calculate_distance_from_fret(fret)
-                            if distance is None:
-                                print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
-                                continue
+            for o in octaves:
+                if raw_note not in note_mapping.get(o, {}):
+                    continue
+                for string, fret in note_mapping[o][raw_note]:
+                    gap_ok = not check_gap or ((start_time - active[string]) * 1_000_000 >= self.min_same_string_gap - EPSILON)
+                    if active[string] <= start_time + EPSILON:
+                        dist = calculate_distance_from_fret(fret)
+                        if dist is not None:
                             active[string] = end_time
-                            result.append((raw_note, string, distance, end_time, current_time))
+                            result.append((raw_note, string, dist, end_time, start_time))
                             found = True
                             break
-                        elif (not check_gap) or ((current_time - active[string]) * 1_000_000  + EPSILON  >= self.min_same_string_gap):
-                            if active[string] > latest_free_time:
-                                latest_free_time = active[string]
-                                best_string = string
-                                best_fret = fret
-                            if active[string] <= current_time + EPSILON:
-                                # ✅ Immediately use this available string
-                                distance = calculate_distance_from_fret(fret)
-                                if distance is None:
-                                    print(f"⚠️ Fret {fret} out of range for {raw_note}{o}")
-                                    continue
-                                active[string] = end_time
-                                result.append((raw_note, string, distance, end_time, current_time))
-                                found = True
-                                break
-                            else:
-                                # Track latest free time if none are currently available
-                                if active[string] > latest_free_time:
-                                    latest_free_time = active[string]
-                                    best_string = string
-                                    best_fret = fret
-                    if found:
-                        break
+                    elif gap_ok and active[string] > best[2]:
+                        best = (string, fret, active[string])
+                if found:
+                    break
 
             if found:
-                i += 1
-            elif best_string:
-                distance = calculate_distance_from_fret(best_fret)
-                if distance is None:
-                    print(f"⚠️ Fret {best_fret} out of range for {raw_note}{octave}")
-                    i += 1
-                else:
-                    delta = latest_free_time - current_time
-                    note_obj["time"] += delta
-                    for future_note in notes[i + 1:]:
-                        future_note["time"] += delta
-                    print(f"⏩ Shifted {raw_note}{octave} and future notes by {delta:.6f}s to wait for string availability")
-                    active[best_string] = latest_free_time + duration
-                    result.append((raw_note, best_string, distance, latest_free_time + duration, latest_free_time))
-                i += 1
+                continue
+
+            if best[0] is not None:
+                string, fret, latest_time = best
+                dist = calculate_distance_from_fret(fret)
+                if dist is None:
+                    print(f"⚠️ Fret {fret} out of range for {raw_note}{octave}")
+                    continue
+                delta = latest_time - start_time
+                note_obj["time"] += delta
+                for j in range(i + 1, len(notes)):
+                    notes[j]["time"] += delta
+                active[string] = latest_time + duration
+                result.append((raw_note, string, dist, latest_time + duration, latest_time))
+                print(f"⏩ Shifted {raw_note}{octave} by {delta:.6f}s to wait for string {string}")
             else:
-                print(f"⚠️ Could not assign string for {raw_note}{octave} at time {current_time}, currently active: {active}")
-                result.append((raw_note, None, None, None, current_time))
-                i += 1
+                print(f"⚠️ Could not assign string for {raw_note}{octave} at time {start_time}")
+                result.append((raw_note, None, None, None, start_time))
 
         return result
 
     def precompute_fingering_timeline(self):
-        self.precomputed_fingering_timeline = []
         all_notes = []
-        for group, start_time in zip(self.grouped_notes, self.start_times):
+        for group, start in zip(self.grouped_notes, self.start_times):
             for note in group:
-                note["time"] = start_time
+                note["time"] = start
                 all_notes.append(note)
 
-        assigned = self.assign_fingerings_to_notes(all_notes)
-        for _, string, _, _, time in assigned:
-            if string is not None:
-                self.precomputed_fingering_timeline.append((string, time))
-
+        fingerings = self.assign_fingerings_to_notes(all_notes)
+        self.precomputed_fingering_timeline = [ (s, t) for _, s, _, _, t in fingerings if s is not None ]
 
     def scale_timings(self, notes, min_gap):
-        print(f"[Scheduler] Scaling timings with min gap: {min_gap}µs")
-
-        original_fingerings = self.assign_fingerings_to_notes(notes, check_gap=False)
+        print(f"[Scheduler] Scaling with min gap {min_gap}µs")
+        raw = self.assign_fingerings_to_notes(notes, check_gap=False)
         by_string = defaultdict(list)
-        for _, string, _, _, time in original_fingerings:
-            if string is not None:
-                by_string[string].append(time)
+        for _, s, _, _, t in raw:
+            if s is not None:
+                by_string[s].append(t)
 
-        shortest = float("inf")
-        for string, times in by_string.items():
+        min_gap_s = float("inf")
+        for times in by_string.values():
             times.sort()
-            for i in range(1, len(times)):
-                gap = times[i] - times[i - 1]
+            for a, b in zip(times, times[1:]):
+                gap = b - a
                 if gap > 0:
-                    shortest = min(shortest, gap)
+                    min_gap_s = min(min_gap_s, gap)
 
-        if shortest == float("inf"):
-            print("[Scheduler] No valid same-string note gaps found — skipping scaling")
+        if min_gap_s == float("inf"):
+            print("[Scheduler] No valid gap — skipping scaling")
             return notes
 
-        actual_shortest_micro = shortest * 1_000_000
-        if actual_shortest_micro >= min_gap:
+        actual_gap_us = min_gap_s * 1_000_000
+        if actual_gap_us >= min_gap:
             return notes
 
-        scale_factor = min_gap / actual_shortest_micro
-        print(f"[Scheduler] Scaling all note timings by factor {scale_factor:.2f}")
+        scale = min_gap / actual_gap_us
+        print(f"[Scheduler] Scale factor: {scale:.2f}")
 
-        scaled_notes = []
-        for note in notes:
-            start = note["start"] * scale_factor
-            end = note["end"] * scale_factor
-            duration = end - start
-            scaled_notes.append({
-                **note,
-                "start": round(start, 6),
-                "end": round(end, 6),
-                "duration": round(duration, 6),
-                "time": round(start, 6),
+        scaled = []
+        for n in notes:
+            s, e = n["start"] * scale, n["end"] * scale
+            scaled.append({
+                **n,
+                "start": round(s, 6),
+                "end": round(e, 6),
+                "duration": round(e - s, 6),
+                "time": round(s, 6),
             })
 
-        print(f"[Scheduler] Shortest valid same-string gap: {shortest:.6f} sec")
-        print(f"[Scheduler] Scaling factor: {scale_factor:.2f}")
-        print("[Scheduler] First 5 scaled notes (time, duration):")
-        for note in scaled_notes[:5]:
-            print(f"  → {note['note']}{note['octave']} at {note['time']}s, duration {note['duration']}")
+        for note in scaled[:5]:
+            print(f"  → {note['note']}{note['octave']} @ {note['time']}, dur {note['duration']}")
 
-        return scaled_notes
+        return scaled
 
     def get_motor_for_note(self, note, octave):
         for motor_id, note_map in note_mapping.items():
@@ -188,21 +153,20 @@ class MidiScheduler:
         return None
 
     def note_number_to_components(self, note_number):
-        name_with_octave = pretty_midi.note_number_to_name(note_number)
-        if len(name_with_octave) == 3:
-            return name_with_octave[:2], int(name_with_octave[2])
-        else:
-            return name_with_octave[0], int(name_with_octave[1])
+        name = pretty_midi.note_number_to_name(note_number)
+        if len(name) == 3:
+            return name[:2], int(name[2])
+        return name[0], int(name[1])
 
     def parse_pretty_midi(self, pmidi):
         all_notes = []
-        for instrument in pmidi.instruments:
-            for note in instrument.notes:
-                note_name, octave = self.note_number_to_components(note.pitch)
+        for inst in pmidi.instruments:
+            for note in inst.notes:
+                name, octave = self.note_number_to_components(note.pitch)
                 all_notes.append({
                     "start": round(note.start, 3),
                     "end": round(note.end, 3),
-                    "note": note_name,
+                    "note": name,
                     "octave": octave,
                     "duration": round(note.end - note.start, 3)
                 })
@@ -220,24 +184,17 @@ class MidiScheduler:
     def parse_file(self, path):
         ext = os.path.splitext(path)[1].lower()
         if ext in [".mxl", ".musicxml", ".xml"]:
-            pmidi = self.parse_mxl_to_pretty_midi(path)
+            return self.parse_mxl_to_pretty_midi(path)
         elif ext == ".mid":
-            pmidi = pretty_midi.PrettyMIDI(path)
+            return pretty_midi.PrettyMIDI(path)
         else:
             raise ValueError("Unsupported file type.")
-        return pmidi
+
 
     async def schedule_notes(self, offset=0):
         print(f"Scheduling notes with offset: {offset}")
         try:
             self.start_time = time.time() - offset
-            all_notes = []
-            for group, start_time in zip(self.grouped_notes, self.start_times):
-                for note in group:
-                    note["time"] = start_time
-                    all_notes.append(note)
-
-            fingerings = self.assign_fingerings_to_notes(all_notes)
 
             for group, current_time in zip(self.grouped_notes, self.start_times):
                 distances = [None] * 4  # Strings 1–4
@@ -245,7 +202,6 @@ class MidiScheduler:
                 for note in group:
                     raw_note = note["note"].upper()
                     octave = note.get("octave")
-
                     for o in [octave] if octave in note_mapping else note_mapping:
                         if raw_note in note_mapping[o]:
                             string, fret = note_mapping[o][raw_note][0]
@@ -267,9 +223,6 @@ class MidiScheduler:
                     dist_out = [d if d is not None else -2 for d in distances]
                     print(f"[Scheduler] Sending MF @ t={current_time:.3f}s → {dist_out}")
                     send_motor_command(0, 6, *dist_out)
-                    
-            
-                    
 
         except Exception as e:
             print(f"Error during playback: {e}")
@@ -278,55 +231,45 @@ class MidiScheduler:
         try:
             print(f"Playing {path} from {offset}s")
             pmidi = self.parse_file(path)
-            all_notes = self.parse_pretty_midi(pmidi)
-            for n in all_notes:
+            notes = self.parse_pretty_midi(pmidi)
+            for n in notes:
                 n["time"] = n["start"]
 
             grouped = defaultdict(list)
-            for n in all_notes:
+            for n in notes:
                 grouped[n["time"]].append(n)
-            grouped_times = sorted(grouped)
 
-            clustered_notes = []
-            for t in grouped_times:
-                for note in grouped[t]:
-                    note["time"] = t
-                    clustered_notes.append(note)
-            scaled_notes = self.scale_timings(clustered_notes, self.min_same_string_gap)
+            flat = [note for t in sorted(grouped) for note in grouped[t]]
+            scaled = self.scale_timings(flat, self.min_same_string_gap)
 
-            # Adjust all note times earlier by estimated physical movement duration (AFTER scaling)
             grouped_by_time = defaultdict(list)
-            for note in scaled_notes:
+            for note in scaled:
                 grouped_by_time[note["time"]].append(note)
 
             for group_time, notes_in_group in grouped_by_time.items():
                 max_shift_us = 0
-
                 for note in notes_in_group:
                     raw_note = note["note"].upper()
                     octave = note.get("octave")
-
                     for o in [octave] if octave in note_mapping else note_mapping:
                         if raw_note in note_mapping[o]:
                             string, fret = note_mapping[o][raw_note][0]
                             distance = calculate_distance_from_fret(fret)
                             if distance is not None:
-                                movement_us = self.estimate_movement_time_us(string, distance)
-                                max_shift_us = max(max_shift_us, movement_us)
+                                move_us = self.estimate_movement_time_us(string, distance)
+                                max_shift_us = max(max_shift_us, move_us)
                             break
 
                 shift_s = max_shift_us / 1_000_000
-
                 for note in notes_in_group:
                     note["time"] = max(0, note["time"] - shift_s)
 
-            print(f"[DEBUG] Scaled first 5 notes:")
-            for note in scaled_notes[:5]:
+            print("[DEBUG] Scaled first 5 notes:")
+            for note in scaled[:5]:
                 print(f"  {note['note']}{note['octave']} — time: {note['time']}, dur: {note['duration']}")
 
-            self.notes = scaled_notes
             grouped_notes = defaultdict(list)
-            for note in scaled_notes:
+            for note in scaled:
                 grouped_notes[note["time"]].append({
                     "note": note["note"],
                     "octave": note["octave"],
@@ -336,8 +279,9 @@ class MidiScheduler:
 
             self.grouped_notes = [grouped_notes[t] for t in sorted(grouped_notes)]
             self.start_times = sorted(grouped_notes)
-
+            self.notes = scaled
             self.paused = False
+
             if self.current_task:
                 self.current_task.cancel()
 
