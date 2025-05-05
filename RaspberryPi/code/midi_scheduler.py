@@ -47,7 +47,7 @@ class MidiScheduler:
 
         for i in range(len(notes)):
             note_obj = notes[i]
-            logging.debug(f"[DEBUG] Processing note: {note_obj}")
+            print(f"[DEBUG] Processing note: {note_obj}")
             raw_note = note_obj["note"].upper()
             octave = note_obj.get("octave")
             start_time = note_obj["time"]
@@ -64,7 +64,7 @@ class MidiScheduler:
                     gap_ok = not check_gap or ((start_time - active[string]) * 1_000_000 >= self.min_same_string_gap - EPSILON)
                     if active[string] <= start_time + EPSILON:
                         dist = calculate_distance_from_fret(fret)
-                        logging.debug(f"[DEBUG] Assigned {raw_note}{o} → string {string}, fret {fret}, time {start_time}")
+                        print(f"[DEBUG] Assigned {raw_note}{o} → string {string}, fret {fret}, time {start_time}")
                         if dist is not None:
                             active[string] = end_time
                             result.append((raw_note, string, dist, end_time, start_time))
@@ -82,7 +82,7 @@ class MidiScheduler:
                 string, fret, latest_time = best
                 dist = calculate_distance_from_fret(fret)
                 if dist is None:
-                    logging.debug(f"⚠️ Fret {fret} out of range for {raw_note}{octave}")
+                    print(f"⚠️ Fret {fret} out of range for {raw_note}{octave}")
                     continue
                 delta = latest_time - start_time
                 note_obj["time"] += delta
@@ -90,9 +90,9 @@ class MidiScheduler:
                     notes[j]["time"] += delta
                 active[string] = latest_time + duration
                 result.append((raw_note, string, dist, latest_time + duration, latest_time))
-                logging.debug(f"⏩ Shifted {raw_note}{octave} by {delta:.6f}s to wait for string {string}")
+                print(f"⏩ Shifted {raw_note}{octave} by {delta:.6f}s to wait for string {string}")
             else:
-                logging.debug(f"⚠️ Could not assign string for {raw_note}{octave} at time {start_time}")
+                print(f"⚠️ Could not assign string for {raw_note}{octave} at time {start_time}")
                 result.append((raw_note, None, None, None, start_time))
 
         return result
@@ -107,7 +107,7 @@ class MidiScheduler:
         self.precomputed_fingering_timeline = [(s, t) for _, s, _, _, t in fingerings if s is not None]
 
     def scale_timings(self, notes, min_gap):
-        logging.debug(f"[Scheduler] Scaling with min gap {min_gap}µs")
+        print(f"[Scheduler] Scaling with min gap {min_gap}µs")
         raw = self.assign_fingerings_to_notes(notes, check_gap=False)
         by_string = defaultdict(list)
         for _, s, _, _, t in raw:
@@ -123,7 +123,7 @@ class MidiScheduler:
                     min_gap_s = min(min_gap_s, gap)
 
         if min_gap_s == float("inf"):
-            logging.info("[Scheduler] No valid gap — skipping scaling")
+            print("[Scheduler] No valid gap — skipping scaling")
             return notes
 
         actual_gap_us = min_gap_s * 1_000_000
@@ -131,7 +131,7 @@ class MidiScheduler:
             return notes
 
         scale = min_gap / actual_gap_us
-        logging.debug(f"[Scheduler] Scale factor: {scale:.2f}")
+        print(f"[Scheduler] Scale factor: {scale:.2f}")
 
         scaled = []
         for n in notes:
@@ -145,7 +145,7 @@ class MidiScheduler:
             })
 
         for note in scaled[:5]:
-            logging.debug(f"  → {note['note']}{note['octave']} @ {note['time']}, dur {note['duration']}")
+            print(f"  → {note['note']}{note['octave']} @ {note['time']}, dur {note['duration']}")
 
         return scaled
 
@@ -228,7 +228,7 @@ class MidiScheduler:
         return distances
 
     async def schedule_notes(self, offset=0):
-        logging.debug(f"Scheduling notes with offset: {offset}")
+        print(f"Scheduling notes with offset: {offset}")
         try:
             self.start_time = time.time() - offset
 
@@ -246,15 +246,15 @@ class MidiScheduler:
 
                 if any(d is not None for d in distances):
                     dist_out = [d if d is not None else -2 for d in distances]
-                    logging.debug(f"[Scheduler] Sending MF @ t={current_time:.3f}s → {dist_out}")
+                    print(f"[Scheduler] Sending MF @ t={current_time:.3f}s → {dist_out}")
                     send_motor_command(0, 6, *dist_out)
 
         except Exception as e:
-            logging.debug(f"Error during playback: {e}")
+            print(f"Error during playback: {e}")
 
     def play(self, path, offset=0):
         try:
-            logging.debug(f"Playing {path} from {offset}s")
+            print(f"Playing {path} from {offset}s")
             notes = self.parse_file_to_notes(path)
             scaled_notes = self.scale_timings(notes, self.min_same_string_gap)
             shifted_notes = self.apply_physical_shift(scaled_notes)
@@ -266,7 +266,7 @@ class MidiScheduler:
             if self.current_task:
                 self.current_task.cancel()
 
-            logging.info("Scheduling coroutine now...")
+            print("Scheduling coroutine now...")
             self.current_task = asyncio.run_coroutine_threadsafe(
                 self.schedule_notes(offset),
                 global_asyncio_loop
@@ -274,12 +274,12 @@ class MidiScheduler:
             
             print("[INFO] Final grouped notes distribution:")
             for i, (group, start_time) in enumerate(zip(self.grouped_notes, self.start_times)):
-                logging.debug(f"  Group {i} @ {start_time:.3f}s:")
+                print(f"  Group {i} @ {start_time:.3f}s:")
                 for note in group:
-                    logging.debug(f"    → {note['note']}{note['octave']} duration {note['duration']}")
+                    print(f"    → {note['note']}{note['octave']} duration {note['duration']}")
 
         except Exception as e:
-            logging.debug(f"Error in play request: {e}")
+            print(f"Error in play request: {e}")
 
     def pause(self):
         self.paused = True
