@@ -48,7 +48,7 @@ void FingerGroupController::moveFinger(const int distances[4]) {
     for (int i = 0; i < 4; ++i) {
         selectedToPluck[i] = false;  // reset
         if (distances[i] >= -1) {
-            fingers[i]->moveFingerWithoutPluck(distances[i] <= 0 ?  : distances[i]);
+            fingers[i]->moveFingerWithoutPluck(distances[i] <= 0 ? -1 : distances[i]);
             selectedToPluck[i] = true;
         }
     }
