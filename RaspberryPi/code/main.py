@@ -5,7 +5,9 @@ from bluetooth_server import start_bluetooth_server
 from utils import manual_input_handler
 
 import logging
-logging.basicConfig(filename='file_transfer.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='ukulele_robot.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+logging.info("Starting Ukulele Robot Main Program")
 
 
 # Setup UART Serial
