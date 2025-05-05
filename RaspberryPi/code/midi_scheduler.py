@@ -1,7 +1,6 @@
 import asyncio
 import os
 import tempfile
-import logging
 import time
 from collections import defaultdict
 
@@ -11,7 +10,6 @@ from music21 import converter
 from loop_manager import global_asyncio_loop
 from motor_control import calculate_distance_from_fret, send_motor_command, note_mapping
 
-logging.basicConfig(filename='score_scheduler.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class MidiScheduler:
     def __init__(self):
