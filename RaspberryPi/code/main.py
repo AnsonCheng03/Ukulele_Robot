@@ -1,9 +1,11 @@
 import threading
 import serial
-import asyncio
-import loop_manager 
+from loop_manager import start_background_loop
 from bluetooth_server import start_bluetooth_server
 from utils import manual_input_handler
+
+import logging
+logging.basicConfig(filename='file_transfer.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 # Setup UART Serial
@@ -25,6 +27,9 @@ else:
 # Start Bluetooth server for command input
 bluetooth_thread = threading.Thread(target=start_bluetooth_server, daemon=True)
 bluetooth_thread.start()
+
+# Start it in background thread
+threading.Thread(target=start_background_loop, daemon=True).start()
 
 # Handle manual input in the main thread
 manual_input_handler()

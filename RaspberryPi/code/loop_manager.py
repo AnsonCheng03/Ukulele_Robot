@@ -10,5 +10,4 @@ def start_background_loop():
     print("background loop started")
     global_asyncio_loop.run_forever()
 
-# Start it in background thread
-threading.Thread(target=start_background_loop, daemon=True).start()
+
