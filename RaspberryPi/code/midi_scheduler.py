@@ -66,6 +66,8 @@ class MidiScheduler:
                         dist = calculate_distance_from_fret(fret)
                         logging.debug(f"[DEBUG] Assigned {raw_note}{o} → string {string}, fret {fret}, time {start_time}")
                         if dist is not None:
+                            note_obj["string"] = string
+                            note_obj["distance"] = dist
                             active[string] = end_time
                             result.append((raw_note, string, dist, end_time, start_time))
                             found = True
@@ -216,15 +218,10 @@ class MidiScheduler:
     def prepare_motor_distances(self, group):
         distances = [None] * 4  # Strings 1–4
         for note in group:
-            raw_note = note["note"].upper()
-            octave = note.get("octave")
-            for o in [octave] if octave in note_mapping else note_mapping:
-                if raw_note in note_mapping[o]:
-                    string, fret = note_mapping[o][raw_note][0]
-                    distance = calculate_distance_from_fret(fret)
-                    if distance is not None:
-                        distances[string - 1] = distance
-                    break
+            string = note.get("string")
+            dist = note.get("distance")
+            if string is not None and dist is not None:
+                distances[string - 1] = dist
         return distances
 
     async def schedule_notes(self, offset=0):
