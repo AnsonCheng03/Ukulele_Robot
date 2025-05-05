@@ -207,6 +207,45 @@ class MidiScheduler:
             })
         self.grouped_notes = [grouped[t] for t in sorted(grouped)]
         self.start_times = sorted(grouped)
+        
+    def prepare_motor_distances(self, group):
+        distances = [None] * 4  # Strings 1–4
+        for note in group:
+            raw_note = note["note"].upper()
+            octave = note.get("octave")
+            for o in [octave] if octave in note_mapping else note_mapping:
+                if raw_note in note_mapping[o]:
+                    string, fret = note_mapping[o][raw_note][0]
+                    distance = calculate_distance_from_fret(fret)
+                    if distance is not None:
+                        distances[string - 1] = distance
+                    break
+        return distances
+
+    async def schedule_notes(self, offset=0):
+        print(f"Scheduling notes with offset: {offset}")
+        try:
+            self.start_time = time.time() - offset
+
+            for group, current_time in zip(self.grouped_notes, self.start_times):
+                distances = self.prepare_motor_distances(group)
+
+                now = time.time()
+                wait_time = current_time - (now - self.start_time)
+                if wait_time > 0:
+                    await asyncio.sleep(wait_time)
+
+                if self.paused:
+                    self.resume_offset = current_time
+                    return
+
+                if any(d is not None for d in distances):
+                    dist_out = [d if d is not None else -2 for d in distances]
+                    print(f"[Scheduler] Sending MF @ t={current_time:.3f}s → {dist_out}")
+                    send_motor_command(0, 6, *dist_out)
+
+        except Exception as e:
+            print(f"Error during playback: {e}")
 
     def play(self, path, offset=0):
         try:
