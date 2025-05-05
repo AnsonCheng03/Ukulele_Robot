@@ -27,11 +27,11 @@ void FingerGroupController::update() {
         triggerPluckSelected(selectedToPluck);
     }
 
-    if (!debugMoveQueued && areAllFingersReady()) {
-        int debugDistances[4] = {40,40,40,38};
-        moveFinger(debugDistances);
-        debugMoveQueued = true; 
-    }
+    // if (!debugMoveQueued && areAllFingersReady()) {
+    //     int debugDistances[4] = {40,40,40,38};
+    //     moveFinger(debugDistances);
+    //     debugMoveQueued = true; 
+    // }
 }
 
 bool FingerGroupController::areAllFingersReady() {

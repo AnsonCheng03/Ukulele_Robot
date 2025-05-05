@@ -57,10 +57,20 @@ note_mapping = {
 
    
 chord_mapping = {  # Chord: [Note, Address]
-    'Amaj': [['2', 1], ['1', 2], ['-1', 3], ['-1', 4]],
-    'Am': [['1', 1], ['-1', 2], ['-1', 3], ['-1', 4]],
-    'EM7': [['-1', 1], ['2', 2], ['2', 3], ['1', 4]],
-    'GB9': [['-1', 1], ['1', 2], ['1', 3], ['1', 4]]
+    'Maj': {
+        'C': [[4, 5], [3, 0], [2, 1], [1, 0]],
+        'D': [[4, 7], [3, 2], [2, 3], [1, 2]],
+        'E': [[4, 9], [3, 4], [2, 5], [1, 4]],
+        'F': [[4, 10], [3, 5], [2, 6], [1, 5]],
+        'G': [[4, 12], [3, 7], [2, 8], [1, 6]],
+        'A': [[4, 2], [3, 9], [2, 10], [1, 7]],
+        'B': [[4, 4], [3, 11], [2, 12], [1, 8]]
+    },
+    'Min': {
+        'C': [[4, 5], [3, 0], [2, 1], [1, 0]],
+        'D': [[4, 7], [3, 2], [2, 3], [1, 2]],
+        'E': [[4, 9], [3, 4], [2, 5], [1, 4]],
+    }
 } 
 
 def calculate_distance_from_fret(fret):
@@ -173,6 +183,28 @@ def send_motor_command(motor_id, command_type, *args):
                 return
 
             msg = f"MF {' '.join(str(d) for d in args)}\n"
+            
+        elif command_type == 7:  # Chord
+            if len(args) != 2:
+                print("Chord command requires exactly 2 arguments: note and type")
+                return
+            note = args[0].upper()
+            chord_type = args[1].lower()
+            if chord_type not in chord_mapping:
+                print(f"Invalid chord type: {chord_type}")
+                return
+            if note not in chord_mapping[chord_type]:
+                print(f"Invalid note for chord: {note}")
+                return
+            distances = []
+            for string, fret in chord_mapping[chord_type][note]:
+                distance = calculate_distance_from_fret(fret)
+                if distance is None:
+                    print(f"Fret {fret} out of range for distance calculation")
+                    return
+                distances.append(distance)
+            distances = [int(distance) for distance in distances]
+            msg = f"MF {' '.join(str(d) for d in distances)}\n"
 
         else:
             print("Unsupported command type")
@@ -228,7 +260,8 @@ def handle_command_input(command):
             "3": 3, "note": 3, "N": 3,
             "4": 4, "fingering": 4, "F": 4,
             "debug": 5, "D": 5,
-            "MF": 6, "6": 6
+            "MF": 6, "6": 6,
+            "chord": 7, "C": 7,
         }
 
         command_type_input = command_parts[0].lower()

@@ -27,7 +27,7 @@ private:
     FingerUnit* fingers[4];
     bool selectedToPluck[4] = {false, false, false, false};
     bool hasPlucked = false;
-    bool debugMoveQueued = false;
+    // bool debugMoveQueued = false;
 
     void triggerPluckSelected(const bool selected[4], unsigned int pulseMicros = 10000);
 };
