@@ -3,12 +3,11 @@ import time
 from bt_gatt.service import Service, Characteristic
 import dbus
 from bt_gatt.constants import GATT_CHRC_IFACE
-import logging
 from midi_scheduler import MidiScheduler
 
 scheduler = MidiScheduler()
 
-logging.basicConfig(filename='audio_service.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 class PlayAudioService(Service):
     AUDIO_SERVICE_UUID = '0000180f-0000-1000-8000-00805f9b34fb'
