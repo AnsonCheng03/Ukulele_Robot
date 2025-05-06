@@ -53,7 +53,7 @@ void UpperMotor::moveBy(int distanceMm, bool reverse)
 }
 
 void UpperMotor::moveUntilTouchSensor(bool towardSensor = true) {
-    Serial.println("UpperMotor moving until sensor trigger (non-blocking)...!");
+    // Serial.println("UpperMotor moving until sensor trigger (non-blocking)...!");
 
     int directionSignal = towardSensor
         ? (reverseDirection ? HIGH : LOW)

@@ -86,11 +86,16 @@ void FingerUnit::update() {
 
         case FINGER_WAIT_AFTER_SLIDE:
             if (micros() - waitStartTime >= fingerWaitDelay) {
-                if (pendingDistance < 0) {
-                    fingeringMotor->move();
-                    moveState = FINGER_PRESS;
+                if (pendingDistance == -1) {
+                    if (skipPluck) {
+                        skipPluck = false;
+                        moveState = FINGER_IDLE;
+                    } else {
+                        fingeringMotor->move();
+                        moveState = FINGER_PRESS;
+                    }
                 } else {
-                    rackMotor->down();
+                    rackMotor->down();  // normal downward pressing
                     moveState = FINGER_DOWN;
                 }
             }

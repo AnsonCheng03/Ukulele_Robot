@@ -19,7 +19,7 @@ void RackMotor::update() {
         bool movingTowardSensor = currentDirectionSignal == (reverseDirection ? LOW : HIGH);
 
         if (movingTowardSensor) {
-            Serial.println("Rack sensor triggered while moving toward it. Stopping. ID: " + String(motorID));
+            // Serial.println("Rack sensor triggered while moving toward it. Stopping. ID: " + String(motorID));
             stopMovement();
             currentPosition = 0;
             isCalibrated = true;
