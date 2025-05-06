@@ -142,12 +142,17 @@ bool FingerUnit::isMovementComplete() {
 }
 
 void FingerUnit::moveFinger(int distanceMm) {
-    if (moveState == FINGER_IDLE) {
-        pendingDistance = distanceMm;
-        rackMotor->up();
-        moveState = FINGER_UP;
-    }
+    slider->stopMovement();
+    rackMotor->stopMovement();
+    fingeringMotor->stop();
+
+    pendingDistance = distanceMm;
+    skipPluck = false;
+    moveState = FINGER_UP;
+
+    rackMotor->up();
 }
+
 
 void FingerUnit::moveFingerWithoutPluck(int distanceMm) {
     skipPluck = true;

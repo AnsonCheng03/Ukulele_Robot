@@ -15,6 +15,7 @@ public:
     void update() override;
     bool isMovementComplete() override;
     void moveUntilTouchSensor(bool toward = true);
+    void stopMovement();
 
 protected:
     int startPin, directionPin, speedPin, motorID;
@@ -32,7 +33,6 @@ protected:
     bool movingIndefinitely = false; 
 
     void startMovement(unsigned long durationTenths);
-    void stopMovement();
     void start();
     void stop();
     void setDirection(int direction);
