@@ -52,7 +52,7 @@ void FingerGroupController::moveFinger(const int distances[4]) {
             continue;
         }
 
-        fingers[i]->moveFinger(distances[i]);
+        fingers[i]->moveFingerWithoutPluck(distances[i]);
         selectedToPluck[i] = true;
     }
 
